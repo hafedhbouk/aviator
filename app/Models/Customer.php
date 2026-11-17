@@ -63,15 +63,23 @@ class Customer extends Model
 
     protected static function booted(): void
     {
-        static::saving(function (Customer $customer): void {
-            $customer->search_name = SearchNormalizer::name($customer->displayName());
-            $customer->phone_search = $customer->phone !== null && $customer->phone !== ''
-                ? SearchNormalizer::phone($customer->phone)
-                : null;
-            $customer->id_document_hash = $customer->id_document_number !== null && $customer->id_document_number !== ''
-                ? app(BlindIndex::class)->hash($customer->id_document_number, self::ID_DOCUMENT_INDEX)
-                : null;
-        });
+        static::saving(fn (Customer $customer) => $customer->refreshSearchKeys());
+    }
+
+    /**
+     * Recalcule les clés de recherche exacte : nom et téléphone normalisés,
+     * empreinte HMAC de la pièce (D8). Utilisée à chaque enregistrement et
+     * par « aviator:rehash-blind-index » après un changement de clé.
+     */
+    public function refreshSearchKeys(): void
+    {
+        $this->search_name = SearchNormalizer::name($this->displayName());
+        $this->phone_search = $this->phone !== null && $this->phone !== ''
+            ? SearchNormalizer::phone($this->phone)
+            : null;
+        $this->id_document_hash = $this->id_document_number !== null && $this->id_document_number !== ''
+            ? app(BlindIndex::class)->hash($this->id_document_number, self::ID_DOCUMENT_INDEX)
+            : null;
     }
 
     /**

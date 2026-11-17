@@ -20,6 +20,17 @@ it('calcule le nom de recherche, le téléphone normalisé et l\'empreinte de la
         ->and($customer->id_document_hash)->toBe(app(BlindIndex::class)->hash('12345678', Customer::ID_DOCUMENT_INDEX));
 });
 
+it('retrouve la même pièce quelle que soit la saisie, pour que la liste noire ne soit pas contournée', function () {
+    $first = Customer::factory()->create(['id_document_number' => '0123 4567']);
+    $second = Customer::factory()->create(['id_document_number' => '0123-4567']);
+    $third = Customer::factory()->create(['id_document_number' => '01234567']);
+
+    expect($first->id_document_hash)
+        ->toBe($second->id_document_hash)
+        ->toBe($third->id_document_hash)
+        ->and(Customer::query()->where('id_document_hash', $third->id_document_hash)->count())->toBe(3);
+});
+
 it('stocke le numéro de pièce chiffré, jamais en clair (D8)', function () {
     $customer = Customer::factory()->create(['id_document_number' => '12345678']);
 

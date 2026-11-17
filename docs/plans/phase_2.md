@@ -219,6 +219,7 @@ Oxahost a confirmé PHP 8.3 (PHP Selector, CloudLinux), SSH avec Git, Composer, 
 
 - **Cadence réelle du planificateur** : chaque passage écrit son horodatage (les deux derniers sont conservés). La commande affiche l'âge du dernier passage et l'intervalle mesuré (1 min attendu ; 5 min = mode dégradé, avec le conseil d'activer `send_urgent_in_request` ; plus de 10 min ou aucun passage = ÉCHEC).
 - **Liste complète** des extensions chargées et des fonctions désactivées (`disable_functions`), en plus des contrôles déjà prévus (§5.5).
+- **Clés (D23)** : `APP_KEY` et `AVIATOR_BLIND_INDEX_KEY` présentes, non vides et bien formées (ÉCHEC sinon), **sans jamais afficher leur valeur** ; les clés VAPID s'ajouteront en phase 9.
 
 ### Budget
 

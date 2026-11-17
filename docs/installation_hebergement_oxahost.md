@@ -66,12 +66,17 @@ git clone git@github-aviator:<organisation>/aviator.git ~/apps/prod
 
 ## 4. Configuration de l'application (pour chaque environnement)
 
+Les clés suivent `docs/gestion_des_cles.md` (D23). **`php artisan key:generate` ne se lance qu'ici, une seule fois par environnement.** Ensuite, il est interdit en recette et en production.
+
 ```bash
 cd ~/apps/recette                      # puis ~/apps/prod
 composer install --no-dev --optimize-autoloader
 cp .env.example .env
-php artisan key:generate
+php artisan key:generate               # UNE SEULE FOIS, à l'installation
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"   # valeur de AVIATOR_BLIND_INDEX_KEY, à coller dans .env
 ```
+
+Reportez aussitôt `APP_KEY` et `AVIATOR_BLIND_INDEX_KEY` dans le gestionnaire de mots de passe d'Aviator et sur la copie papier (environnement, date).
 
 Dans `.env` :
 
@@ -87,11 +92,13 @@ QUEUE_CONNECTION=database
 CACHE_STORE=database
 SESSION_DRIVER=database
 MAIL_MAILER=smtp            # compte e-mail cPanel : sécurité des comptes uniquement
+AVIATOR_BLIND_INDEX_KEY=<64 caractères hexadécimaux, générés ci-dessus>
 ```
 
 Puis :
 
 ```bash
+php artisan aviator:check-environment  # aucune clé absente ou vide, extensions, base, droits d'écriture
 php artisan migrate --force
 # Pas de « storage:link » : l'application ne dépend pas des liens symboliques (D21).
 php artisan optimize
