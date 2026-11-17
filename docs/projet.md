@@ -64,11 +64,11 @@ Dernière mise à jour : 17/11/2026
 | 6. Facturation, encaissements, cautions | 1 | 31 | | | | | |
 | 7. CRM et recommandations | 1 | 21 | | | | | Projeté 20,75 j : table des recommandations créée en phase 4 |
 | 8. Maintenance, dépenses, exports | 1 | 20 | | | | | |
-| 9. Statistiques, mobile et sécurité | 1 | 38 | | | | | |
+| 9. Statistiques, mobile et sécurité | 1 | 38 | | | | | Projeté 38,5 j : purge des journaux (Q77, `docs/plans/phase_9.md`) |
 | 10. Recette et mise en production du lot 1 | 1 | 19 | | | | | |
 | 11. Espace client | 2 | 45 | | | | | |
 | **Total** | | **290** | | | | | |
-| **Écart cumulé du lot 1** (au 17/11/2026) | 1 | **245** prévus | **246,75** projetés | **+1,75 j (+0,7 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 18,5 j. Mise à jour à chaque fin de phase |
+| **Écart cumulé du lot 1** (au 17/11/2026) | 1 | **245** prévus | **247,25** projetés | **+2,25 j (+0,9 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 18,5 j. Mise à jour à chaque fin de phase |
 
 Statuts : À démarrer · En cours · En attente de validation · Validée · Validée avec réserves.
 
