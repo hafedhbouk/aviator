@@ -16,8 +16,8 @@ use Illuminate\Support\Str;
  *
  * - Seuls les profils admin et utilisateur d'agence s'attribuent ici ; un super
  *   admin se crée par « aviator:create-super-admin » et ne se modifie pas ici (Q2).
- * - Un utilisateur d'agence a une agence par défaut, toujours comprise dans ses
- *   agences autorisées (Q69) ; l'admin n'est rattaché à aucune agence.
+ * - Un utilisateur d'agence a une agence par défaut ; l'admin n'est rattaché à aucune
+ *   agence. Les remplacements dans d'autres agences passent par AssignReplacementAgency (Q69).
  * - Personne ne se désactive soi-même.
  * - Un nouveau compte reçoit un mot de passe aléatoire inconnu de tous : son titulaire
  *   choisit le sien par le lien de réinitialisation (envoyé par l'interface).
@@ -27,7 +27,7 @@ final class SaveUser
     public function __construct(private readonly SessionRevoker $sessions) {}
 
     /**
-     * @param  array<string, mixed>  $data  Données du formulaire : name, email, role, agency_id, agency_ids, is_active
+     * @param  array<string, mixed>  $data  Données du formulaire : name, email, role, agency_id, is_active
      */
     public function handle(?User $user, array $data, User $actor): User
     {
@@ -47,9 +47,9 @@ final class SaveUser
             throw UserManagementException::cannotDeactivateSelf();
         }
 
-        [$agencyId, $agencyIds] = $this->resolveAgencies($role, $data);
+        $agencyId = $this->resolveAgency($role, $data);
 
-        return DB::transaction(function () use ($user, $data, $role, $isActive, $agencyId, $agencyIds, $actor): User {
+        return DB::transaction(function () use ($user, $data, $role, $isActive, $agencyId, $actor): User {
             $user ??= new User(['password' => Str::password(64)]);
             $previousRole = $user->exists ? $user->profile() : null;
             $wasActive = $user->exists && $user->is_active;
@@ -63,7 +63,6 @@ final class SaveUser
             $user->save();
 
             $user->syncRoles([$role->value]);
-            $user->agencies()->sync($agencyIds);
 
             if ($wasActive && ! $isActive) {
                 // Désactivation : toutes les sessions et jetons « se souvenir de moi » sont coupés.
@@ -92,30 +91,16 @@ final class SaveUser
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{0: int|null, 1: list<int>}
      */
-    private function resolveAgencies(Role $role, array $data): array
+    private function resolveAgency(Role $role, array $data): ?int
     {
         if ($role !== Role::AgencyUser) {
-            return [null, []];
+            return null;
         }
 
-        $agencyId = is_numeric($data['agency_id'] ?? null) ? (int) $data['agency_id'] : null;
-
-        if ($agencyId === null) {
-            throw UserManagementException::agencyRequired();
-        }
-
-        $others = is_array($data['agency_ids'] ?? null) ? $data['agency_ids'] : [];
-        $agencyIds = [$agencyId];
-
-        foreach ($others as $id) {
-            if (is_numeric($id)) {
-                $agencyIds[] = (int) $id;
-            }
-        }
-
-        return [$agencyId, array_values(array_unique($agencyIds))];
+        return is_numeric($data['agency_id'] ?? null)
+            ? (int) $data['agency_id']
+            : throw UserManagementException::agencyRequired();
     }
 
     /**

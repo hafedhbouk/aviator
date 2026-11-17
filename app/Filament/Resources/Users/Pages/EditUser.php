@@ -33,10 +33,6 @@ class EditUser extends EditRecord
         $user = $this->getRecord();
 
         $data['role'] = $user->profile()?->value;
-        $data['agency_ids'] = $user->agencies()
-            ->whereKeyNot($user->agency_id ?? 0)
-            ->pluck('agencies.id')
-            ->all();
 
         return $data;
     }

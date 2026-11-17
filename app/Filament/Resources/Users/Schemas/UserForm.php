@@ -46,13 +46,8 @@ class UserForm
                         Select::make('agency_id')
                             ->label('Agence par défaut')
                             ->options(fn (): array => self::agencyOptions())
+                            ->helperText('Les remplacements dans d\'autres agences se gèrent dans « Affectations de remplacement », après l\'enregistrement.')
                             ->required($isAgencyUser)
-                            ->visible($isAgencyUser),
-                        Select::make('agency_ids')
-                            ->label('Autres agences autorisées')
-                            ->helperText('Pour remplacer un collègue absent (Q69). L\'agence par défaut est toujours incluse.')
-                            ->multiple()
-                            ->options(fn (): array => self::agencyOptions())
                             ->visible($isAgencyUser),
                         Toggle::make('is_active')
                             ->label('Compte actif')

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -89,14 +89,19 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
-     * Agences sur lesquelles l'utilisateur peut agir : agence par défaut et agences
-     * de remplacement (Q69). Vide pour un compte sans agence.
+     * Agences sur lesquelles l'utilisateur peut agir aujourd'hui : son agence par
+     * défaut, plus celles de ses affectations de remplacement actives à la date du
+     * jour (Africa/Tunis, Q69). Vide pour un compte sans agence.
      *
      * @return list<int>
      */
     public function authorizedAgencyIds(): array
     {
-        $ids = $this->agencies()->pluck('agencies.id')->map(fn (mixed $id): int => (int) $id)->all();
+        $ids = $this->agencyAssignments()
+            ->activeOn()
+            ->pluck('agency_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
 
         if ($this->agency_id !== null) {
             $ids[] = $this->agency_id;
@@ -128,12 +133,12 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
-     * Agences sur lesquelles l'utilisateur peut agir (Q69).
+     * Affectations de remplacement (Q69), passées, en cours et à venir.
      *
-     * @return BelongsToMany<Agency, $this>
+     * @return HasMany<AgencyAssignment, $this>
      */
-    public function agencies(): BelongsToMany
+    public function agencyAssignments(): HasMany
     {
-        return $this->belongsToMany(Agency::class)->withTimestamps();
+        return $this->hasMany(AgencyAssignment::class);
     }
 }

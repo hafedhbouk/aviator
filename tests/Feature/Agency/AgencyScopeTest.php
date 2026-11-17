@@ -32,7 +32,14 @@ beforeEach(function () {
 function agentOf(Agency $agency, Agency ...$replacements): User
 {
     $agent = userWithProfile(Role::AgencyUser, ['agency_id' => $agency->id]);
-    $agent->agencies()->attach([$agency->id, ...array_map(fn (Agency $a): int => $a->id, $replacements)]);
+
+    foreach ($replacements as $replacement) {
+        $agent->agencyAssignments()->create([
+            'agency_id' => $replacement->id,
+            'starts_on' => now()->subDay()->toDateString(),
+            'ends_on' => now()->addWeek()->toDateString(),
+        ]);
+    }
 
     return $agent;
 }
@@ -178,7 +185,7 @@ it('revient à l\'agence par défaut si l\'agence choisie n\'est plus autorisée
     $this->actingAs($agent);
     app(CurrentAgency::class)->switchTo($agent, $this->sousse->id);
 
-    $agent->agencies()->detach($this->sousse->id);
+    $agent->agencyAssignments()->where('agency_id', $this->sousse->id)->update(['ends_on' => now()->subDay()->toDateString()]);
 
     expect(app(CurrentAgency::class)->id($agent))->toBe($this->sfax->id);
 });

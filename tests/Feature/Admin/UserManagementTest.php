@@ -38,9 +38,9 @@ it('liste les comptes pour le super admin', function () {
         ->assertTableActionDoesNotExist('delete');
 });
 
-it('crée un utilisateur d\'agence rattaché à son agence et à une agence de remplacement, et lui envoie un lien', function () {
+it('crée un utilisateur d\'agence rattaché à son agence par défaut, et lui envoie un lien', function () {
     Notification::fake();
-    [$sfax, $sousse] = Agency::factory()->count(2)->create();
+    $sfax = Agency::factory()->create();
 
     $this->actingAs($this->superAdmin);
 
@@ -50,7 +50,6 @@ it('crée un utilisateur d\'agence rattaché à son agence et à une agence de r
             'email' => 'agent.sfax@example.test',
             'role' => Role::AgencyUser->value,
             'agency_id' => $sfax->id,
-            'agency_ids' => [$sousse->id],
             'is_active' => true,
         ])
         ->call('create')
@@ -60,8 +59,7 @@ it('crée un utilisateur d\'agence rattaché à son agence et à une agence de r
 
     expect($user->hasProfile(Role::AgencyUser))->toBeTrue()
         ->and($user->agency_id)->toBe($sfax->id)
-        ->and($user->agencies()->pluck('agencies.id')->sort()->values()->all())
-        ->toBe(collect([$sfax->id, $sousse->id])->sort()->values()->all());
+        ->and($user->authorizedAgencyIds())->toBe([$sfax->id]);
 
     Notification::assertSentTo($user, ResetPassword::class);
 });
@@ -98,7 +96,7 @@ it('crée un admin sans agence', function () {
 
     expect($admin->hasProfile(Role::Admin))->toBeTrue()
         ->and($admin->agency_id)->toBeNull()
-        ->and($admin->agencies()->count())->toBe(0);
+        ->and($admin->agencyAssignments()->count())->toBe(0);
 });
 
 it('ne propose pas le profil super admin dans le formulaire', function () {
@@ -125,7 +123,6 @@ it('refuse de modifier un compte super admin depuis l\'interface', function () {
 it('désactive un utilisateur d\'agence', function () {
     $agency = Agency::factory()->create();
     $agent = userWithProfile(Role::AgencyUser, ['agency_id' => $agency->id]);
-    $agent->agencies()->attach($agency);
 
     $this->actingAs($this->superAdmin);
 

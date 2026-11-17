@@ -148,7 +148,7 @@ Colonne « Agence » : ✔ = la table porte `agency_id` et est soumise à `Agenc
 | Table | Modèle | Rôle | Agence | Points clés |
 | --- | --- | --- | --- | --- |
 | `users` | `User` | Les 6 comptes (J-01) | — | `agency_id` (agence par défaut), `is_active`, champs 2FA de Filament |
-| `agency_user` **[Ajout]** | — | Rattachement à plusieurs agences [Q69] | — | Pivot |
+| `agency_assignments` **[Ajout]** | `AgencyAssignment` | Remplacements à durée limitée dans une autre agence [Q69] | — | Dates de début et de fin incluses (Africa/Tunis) ; créées par le super admin, journalisées |
 | `roles`, `permissions`, `model_has_*` | (Spatie) | 3 rôles fixes (J-02) | — | Créés par seeder ; pas d'éditeur de rôles dans l'interface (§9.3) |
 | `activity_log` | (Spatie) | Audit et historique avant/après (J-04, J-05), consultations du carnet (RG-14) | — | Journaux nommés : `audit`, `customer_access`, `security` |
 | `approval_requests` **[Ajout]** | `ApprovalRequest` | Demandes au super admin : remise (RG-10), retenue (F-05), liste noire (K-11), dérogation (RG-15) | ✔ | `type`, sujet polymorphe, demandeur, `status` (`pending`, `approved`, `rejected`, `cancelled`), décideur, décision le, commentaire ; données de la demande figées |
@@ -174,7 +174,8 @@ erDiagram
     agencies ||--o{ agency_locations : "propose"
     agencies ||--o{ vehicles : "rattache"
     agencies ||--o{ users : "agence par défaut"
-    users }o--o{ agencies : "agency_user (Q69)"
+    users ||--o{ agency_assignments : "remplacements (Q69)"
+    agencies ||--o{ agency_assignments : "agence remplacée"
     vehicle_categories ||--o{ vehicles : "classe"
     vehicle_categories ||--o{ rate_plans : "tarife"
     seasons ||--o{ rate_plans : "période"

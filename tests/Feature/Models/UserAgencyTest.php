@@ -7,13 +7,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('rattache un utilisateur à une agence par défaut et à plusieurs agences (Q69)', function () {
+it('rattache un utilisateur à une agence par défaut et à une agence de remplacement (Q69)', function () {
     [$sfax, $sousse] = Agency::factory()->count(2)->create();
     $user = User::factory()->create(['agency_id' => $sfax->id]);
-    $user->agencies()->attach([$sfax->id, $sousse->id]);
+    $user->agencyAssignments()->create([
+        'agency_id' => $sousse->id,
+        'starts_on' => now()->toDateString(),
+        'ends_on' => now()->addDays(3)->toDateString(),
+    ]);
 
     expect($user->agency?->is($sfax))->toBeTrue()
-        ->and($user->agencies()->pluck('agencies.id')->sort()->values()->all())
+        ->and(collect($user->authorizedAgencyIds())->sort()->values()->all())
         ->toBe(collect([$sfax->id, $sousse->id])->sort()->values()->all());
 });
 

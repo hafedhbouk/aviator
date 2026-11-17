@@ -9,7 +9,7 @@ Version de la phase 2 (lot 2), 18/11/2026. Il complète `docs/architecture.md` �
 | Sujet | Règle |
 | --- | --- |
 | Moteur et interclassement | InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`, imposés par la connexion `mariadb` (D12) |
-| Noms | Tables et colonnes en anglais, au pluriel et en `snake_case` ; pivots par ordre alphabétique (`agency_user`) |
+| Noms | Tables et colonnes en anglais, au pluriel et en `snake_case` ; pivots par ordre alphabétique (`customer_segment_members`…) |
 | Clé primaire | `id` `BIGINT UNSIGNED AUTO_INCREMENT` |
 | Clés étrangères | `BIGINT UNSIGNED`, toujours avec une contrainte. Par défaut `ON DELETE RESTRICT` : un document métier n'est jamais supprimé en cascade (RG-11). `CASCADE` seulement pour les lignes qui n'existent pas sans leur parent (lignes de facture, pivots) |
 | Montants | `DECIMAL(15,3)` (dinar à 3 décimales), suffixe `_amount` ; jamais de `FLOAT` ni de `DOUBLE` ; calculs avec `brick/math` (cast `MoneyCast`) |
@@ -62,15 +62,19 @@ Abréviations des tableaux : **NN** = non nul ; **N** = nullable ; **U** = uniqu
 | `remember_token` | VARCHAR(100) | N | |
 | `created_at`, `updated_at` | TIMESTAMP | N | |
 
-### `agency_user` — P2
+### `agency_assignments` — P2 (remplace `agency_user`, lot 5)
 
 | Colonne | Type | Contraintes | Remarque |
 | --- | --- | --- | --- |
-| `agency_id` | BIGINT UNSIGNED | NN, FK CASCADE | PK composite (`agency_id`, `user_id`) |
-| `user_id` | BIGINT UNSIGNED | NN, FK CASCADE, I | |
+| `id` | BIGINT UNSIGNED | PK | |
+| `user_id` | BIGINT UNSIGNED | NN, FK `users` CASCADE | Utilisateur d'agence remplaçant |
+| `agency_id` | BIGINT UNSIGNED | NN, FK `agencies` RESTRICT | Agence où il remplace |
+| `starts_on` | DATE | NN | Premier jour inclus |
+| `ends_on` | DATE | NN | Dernier jour inclus (≥ `starts_on`, contrôle applicatif) |
+| `created_by` | BIGINT UNSIGNED | N, FK `users` RESTRICT | Super admin qui a créé l'affectation |
 | `created_at`, `updated_at` | TIMESTAMP | N | |
 
-Agences sur lesquelles un utilisateur d'agence peut agir (Q69). L'agence par défaut (`users.agency_id`) en fait toujours partie.
+Index (`user_id`, `starts_on`, `ends_on`). **Remplacements à durée limitée (Q69)** : l'accès à l'agence n'est actif qu'entre `starts_on` et `ends_on` inclus, appréciés dans le fuseau `Africa/Tunis`. Plusieurs périodes par agence sont possibles, sans chevauchement. Seul le super admin crée ou révoque une affectation, et chaque opération est journalisée. L'agence par défaut reste `users.agency_id`.
 
 ### `sequences` — P2
 

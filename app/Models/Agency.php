@@ -6,7 +6,6 @@ use Database\Factories\AgencyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -47,12 +46,12 @@ class Agency extends Model
     }
 
     /**
-     * Utilisateurs autorisés à agir sur cette agence (Q69).
+     * Affectations de remplacement vers cette agence (Q69).
      *
-     * @return BelongsToMany<User, $this>
+     * @return HasMany<AgencyAssignment, $this>
      */
-    public function users(): BelongsToMany
+    public function assignments(): HasMany
     {
-        return $this->belongsToMany(User::class)->withTimestamps();
+        return $this->hasMany(AgencyAssignment::class);
     }
 }
