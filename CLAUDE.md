@@ -1,0 +1,57 @@
+# CLAUDE.md — Aviator (Laravel)
+
+Application de location de voitures pour Aviator (4 agences, 6 utilisateurs, ~1 000 clients), en Laravel 13 / PHP 8.3 / MySQL 8 / Filament v5.
+Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour toute tâche sur ce dépôt. Source fonctionnelle : `docs/reference/cahier_des_charges_aviator.md`.
+
+## Avant toute tâche
+
+1. Lis `docs/projet.md` : phase en cours, validations, décisions.
+2. Ne travaille que sur la phase en cours, sur sa branche.
+3. Lis dans la skill uniquement les références utiles à la tâche.
+4. Il me manque une information de `docs/projet.md` ? Demande-la avant d'agir.
+
+## Règles non négociables
+
+1. **Plan avant code**, validé quand la phase le demande.
+2. **Rien n'est « fait » sans test exécuté** : cite la commande et son résultat.
+3. **Aucune règle fiscale inventée** (TVA, timbre, mentions, numérotation) : seuls les documents de `docs/reference/regles_fiscales_validees/` font foi.
+4. **Signaler plutôt que deviner** : question dans `docs/questions_ouvertes.md` + valeur par défaut paramétrable.
+5. **Budget** : lot 1 = 245 j, lot 2 = 45 j ; phase en dépassement de plus de 20 % → arrête-toi et signale-le.
+6. **Fin de phase** : rapport `docs/rapports/phase_N.md`, puis attente d'une validation explicite.
+7. **Hors périmètre** : comptabilité générale, paiement en ligne, SMS, application native.
+
+## Poste de développement
+
+- Windows 11 + Laragon : PHP 8.3.16, MySQL 8.4.3, projet dans `C:\laragon\www\aviator`, site local `https://aviator.test`.
+- Commandes exécutées dans Git Bash : chemins au format `/c/laragon/www/aviator`, fins de ligne LF.
+- Production en « MySQL 8 » (version exacte à confirmer) : n'utilise aucune fonctionnalité propre à MySQL 8.4.
+
+## Contraintes techniques
+
+- **PHP 8.3 maximum**, **MySQL 8**, hébergement **mutualisé** : pas de Redis, pas de Supervisor, pas de processus permanent ; files en `database` traitées par le planificateur (cron chaque minute) ; assets compilés avant déploiement.
+- Montants en `DECIMAL(15,3)`, calculs avec `brick/math`, jamais de `float`.
+- Règles métier dans `app/Domain/*`, appelées par Filament et par l'espace client ; jamais dans les ressources ou les vues.
+- Droits contrôlés côté serveur (policies) ; `AgencyScope` pour les utilisateurs d'agence.
+- **Carnet d'adresses complet et exports clients : super admin uniquement** ; vérifier aussi recherche globale, sélecteurs, exports de tableaux.
+- Notifications : **push uniquement** (Web Push + `database`), sans donnée sensible dans le texte ; e-mail seulement pour la sécurité des comptes.
+- Code en anglais ; interface, messages et documentation en français.
+
+## Interdits
+
+- Toute action sur les serveurs de recette ou de production : prépare les commandes, le responsable technique les exécute.
+- Toute donnée copiée hors de Tunisie (sauvegardes ou services étrangers).
+- Désactiver une validation, une policy ou un test pour faire passer une fonctionnalité.
+- SQL avec valeurs concaténées ; secrets dans le code, les seeders ou Git.
+- Paquet payant sans accord écrit ; paquet non compatible PHP 8.3.
+
+## Commandes
+
+```bash
+php artisan test
+vendor/bin/pint --test
+vendor/bin/phpstan analyse
+composer audit
+npm run build
+```
+
+Branches : `phase/NN-nom` ; commits `feat:` / `fix:` / `test:` / `docs:` / `chore:`.
