@@ -9,6 +9,7 @@ use App\Support\Privacy\BlindIndex;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Activitylog\Models\Activity;
@@ -38,6 +39,11 @@ class AppServiceProvider extends ServiceProvider
             ->mixedCase()
             ->numbers()
             ->symbols());
+
+        // HTTPS obligatoire en recette et en production (§6.2 du cahier).
+        if (! $this->app->environment(['local', 'testing'])) {
+            URL::forceScheme('https');
+        }
 
         Event::subscribe(RecordAuthenticationEvents::class);
 

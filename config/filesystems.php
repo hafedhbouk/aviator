@@ -30,11 +30,23 @@ return [
 
     'disks' => [
 
+        // Disque privé : pièces, permis, photos, signatures, documents (D21).
+        // « serve » désactivé : aucune route automatique ; les fichiers ne sont servis que
+        // par le contrôleur de l'application, après policy (phase 4).
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'serve' => false,
             'throw' => false,
+            'report' => false,
+        ],
+
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
             'report' => false,
         ],
 
@@ -47,18 +59,9 @@ return [
             'report' => false,
         ],
 
-        's3' => [
-            'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION'),
-            'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
-            'endpoint' => env('AWS_ENDPOINT'),
-            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
-            'report' => false,
-        ],
+        // Aucun disque externe : les données restent en Tunisie (loi 2004-63, art. 52). Le disque
+        // « s3 » par défaut du framework reste défini par fusion de configuration, mais il est
+        // inutilisable (aucune clé AWS) ; un test vérifie que rien n'y fait référence.
 
     ],
 
