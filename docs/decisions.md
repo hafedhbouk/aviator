@@ -19,6 +19,12 @@ Les décisions validées sont aussi reportées dans `docs/projet.md` §6. Statut
 | D11 | Fiche client accessible aux non-super-admins seulement après une recherche exacte (accès temporaire) ou par un document actif de leur agence | Empêche de parcourir le carnet en changeant le numéro de fiche dans l'adresse de la page (RG-14) | Proposée (paramètres : Q64) | |
 | D12 | Base MariaDB 10.11 en local, en test et en production ; connexion Laravel `mariadb` (`DB_CONNECTION=mariadb`), interclassement `utf8mb4_unicode_ci` ; aucune fonctionnalité propre à MySQL 8 (index fonctionnels, index JSON, `joinLateral`, interclassements `utf8mb4_0900_*`) | La production Oxahost est en MariaDB 10.11.19 (confirmé par Oxahost le 17/11/2026, Q70) : le poste et les tests utilisent le même moteur | **Validée** (17/11/2026) | Responsable technique |
 | D13 | **RG-14 précisée (Q27)** : voir ci-dessous | Lever l'ambiguïté entre le carnet d'adresses réservé au super admin et les listes métier de l'admin (ventes, impayés, statistiques, segments) | **Appliquée par défaut** (17/11/2026), **à confirmer par la direction** | Responsable technique |
+| D14 | Aucune dépendance à `exec`, `proc_open`, `shell_exec`, `system`, `passthru` ni `popen` dans l'application (test d'architecture) ; `spatie/laravel-backup` retiré ; sauvegardes par `scripts/deploy.sh` (mysqldump en SSH) et JetBackup | `exec` peut être désactivée sur le mutualisé (Q71) | **Validée** (17/11/2026) | Responsable technique |
+| D15 | Planificateur exécuté dans son processus (`Schedule::call()` / `Schedule::job()`) ; file traitée par `queue:work --stop-when-empty --max-time=50` sous **verrou anti-chevauchement**, prouvé par un test (une seconde exécution ne démarre pas tant que la première tient le verrou) | `Schedule::command()` exige `proc_open` | **Validée** (17/11/2026) | Responsable technique |
+| D16 | Permissions déclarées dans le code (énumération), rôles et permissions synchronisés par `aviator:sync-permissions` (idempotente), sans compte utilisateur dans les seeders | Q2 ; rejouable à chaque déploiement | **Validée** (17/11/2026) | Responsable technique |
+| D17 | Assouplir D13 = `aviator:permission grant <rôle> <permission>` (ou `revoke`), limitée aux permissions marquées assouplissables ; chaque changement est tracé dans `activity_log` (qui, quoi, quand) ; refus en production sans `--force` | Q27 à confirmer par la direction, sans réécrire le code | **Validée** (17/11/2026) | Responsable technique |
+| D18 | Migrations du socle seulement en phase 2, plus la table `customers` (structure) pour les tests de D13 ; autres tables migrées dans leur phase d'après `docs/modele_donnees.md` | Éviter de réécrire des migrations | **Validée** (17/11/2026) | Responsable technique |
+| D19 | Règles locales de mot de passe, sans vérification en ligne (voir ci-dessous) | La vérification des mots de passe compromis appelle un service étranger | **Validée** (17/11/2026) | Responsable technique |
 
 ## RG-14 précisée (D13, Q27)
 
@@ -41,3 +47,20 @@ Conséquences, appliquées par défaut :
 | Envois groupés de notifications push aux clients (K-18, lot 2) | Oui, seul profil | Non | Non |
 
 **Point à confirmer par la direction** : par prudence, un export de liste métier fait par l'admin (meilleurs clients, segments) est considéré comme un « fichier clients » dès qu'il contient des noms. L'admin peut donc **voir** ces noms à l'écran, mais pas les **exporter** ; ses exports ne contiennent que des agrégats. Si la direction veut autoriser l'export de ces noms par l'admin, il suffit de modifier la policy correspondante.
+
+## Règles de mot de passe (D19)
+
+Appliquées à tous les comptes du back-office : création par `aviator:create-super-admin` ou par le super admin, réinitialisation, changement.
+
+| Règle | Valeur |
+| --- | --- |
+| Longueur minimale | **12 caractères** |
+| Longueur maximale | 128 caractères |
+| Composition | Au moins une majuscule, une minuscule, un chiffre et un symbole |
+| Contenu interdit | Le mot de passe ne doit contenir ni l'adresse e-mail ni le nom de l'utilisateur |
+| Vérification en ligne des mots de passe compromis | **Aucune** (pas d'appel à un service extérieur) |
+| Stockage | Hachage bcrypt de Laravel (coût par défaut), jamais en clair ni dans les journaux |
+| Tentatives de connexion | Limitées par Filament : 5 essais par minute |
+| 2FA | Obligatoire pour `super_admin` et `admin` (D9), activée à la première connexion |
+
+Ces règles sont définies à un seul endroit (`Password::defaults()`, dans `AppServiceProvider`) et couvertes par des tests.
