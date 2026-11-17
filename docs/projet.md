@@ -25,7 +25,7 @@ Dernière mise à jour : 17/11/2026
 | Framework | Laravel 13, Filament v5 |
 | PHP | 8.3 (maximum disponible chez Oxahost) |
 | Base de données | MariaDB 10.11.19 en production (confirmé par Oxahost le 17/11/2026) ; MariaDB 10.11 en local |
-| Poste de développement | Windows 11 + Laragon (PHP 8.3.16, MariaDB 10.11), `C:\laragon\www\aviator`, `https://aviator.test` — `docs/installation_poste_dev.md` |
+| Poste de développement | Windows 11 + Laragon (PHP 8.3.16, MariaDB 10.11) ; dépôt dans `D:\aviator`, jonction `C:\laragon\www\aviator` → `D:\aviator` pour Laragon ; `https://aviator.test` — `docs/installation_poste_dev.md` |
 | Dépôt Git | [À COMPLÉTER] |
 | Hébergement | Oxahost Ultimate (mutualisé cPanel), Tunis — `docs/installation_hebergement_oxahost.md` |
 | Domaine | [À COMPLÉTER — question Q6] |
@@ -56,7 +56,7 @@ Dernière mise à jour : 17/11/2026
 
 | Phase | Lot | Charge prévue (j) | Charge réelle (j) | Statut | Validée par | Date | Réserves |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1. Analyse et maquettes | 1 | 12 | | À démarrer | | | |
+| 1. Analyse et maquettes | 1 | 12 | | Validée avec réserves | [À COMPLÉTER] | 17/11/2026 | 1) Ateliers avec les 4 agences, à tenir pendant la phase 2 et avant la phase 4 ; 2) Q27 (carnet d'adresses) appliquée par défaut, à confirmer par la direction ; 3) Q70 : bascule du poste et des tests en MariaDB 10.11, à vérifier en phase 2. Rapport : `docs/rapports/phase_1.md` |
 | 2. Architecture et socle | 1 | 19 | | | | | |
 | 3. Paramétrage et référentiels | 1 | 16 | | | | | |
 | 4. Parc, leasing et réservations | 1 | 39 | | | | | |
@@ -80,6 +80,13 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 17/11/2026 | Hébergement Oxahost Ultimate (mutualisé), recette en sous-domaine | Responsable technique |
 | 17/11/2026 | Espace client en lot 2 ; pas de paiement en ligne ni de SMS ; notifications push uniquement | Direction |
 | 17/11/2026 | Base MariaDB 10.11 en local, en test et en production ; connexion Laravel `mariadb` (production Oxahost en MariaDB 10.11.19, confirmé par Oxahost) | Responsable technique |
+| 17/11/2026 | Validation de la phase 1 avec réserves ; décisions techniques D1 à D13 (`docs/decisions.md`) | [À COMPLÉTER] |
+| 17/11/2026 | D6 : `config.platform.php = 8.3.16` dans `composer.json` ; versions majeures compatibles PHP 8.3 (Pest 4, laravel-activitylog 4, laravel-backup `~10.3.0`) | Responsable technique |
+| 17/11/2026 | D5 : planning sur `guava/calendar`, prototype obligatoire au début de la phase 4 ; repli : frise Livewire maison | Responsable technique |
+| 17/11/2026 | D13 (RG-14, Q27) : le carnet d'adresses = coordonnées des clients en liste et tout export de fichier clients, réservés au super admin ; l'admin voit les noms dans les listes métier ; exports comptables limités au nom et au matricule fiscal ; envois groupés aux clients : super admin | Responsable technique ; **à confirmer par la direction** |
+| 17/11/2026 | Dépôt dans `D:\aviator`, jonction `C:\laragon\www\aviator` pour Laragon | Responsable technique |
+| 17/11/2026 | Q11, Q30 et Q16 envoyées à l'expert-comptable ; la phase 3 reste bloquée sur les taxes, mentions et numérotation | Responsable technique |
+| 17/11/2026 | Ateliers avec les agences pendant la phase 2, avant la phase 4 ; maquettes publiées sur une page privée pour ces ateliers | Responsable technique |
 
 ## 7. Points à confirmer avec Oxahost avant commande
 
@@ -95,8 +102,8 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 
 | Règle | Document | Date d'effet | Statut |
 | --- | --- | --- | --- |
-| Taux de TVA sur la location, les options et les frais | — | — | Non fournie |
-| Timbre fiscal | — | — | Non fournie |
-| Mentions obligatoires et numérotation des factures | — | — | Non fournie |
+| Taux de TVA sur la location, les options et les frais | — | — | Non fournie ; demandée le 17/11/2026 (Q11) |
+| Timbre fiscal | — | — | Non fournie ; demandée le 17/11/2026 (Q11) |
+| Mentions obligatoires et numérotation des factures et des avoirs | — | — | Non fournie ; demandée le 17/11/2026 (Q11, Q30) |
 | Format des exports pour l'expert-comptable | — | — | Non fourni |
-| Facturation électronique (TEIF / TTN) | — | — | Non instruite |
+| Facturation électronique (TEIF / TTN) | — | — | Demandée le 17/11/2026 (Q16) |

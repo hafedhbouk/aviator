@@ -22,8 +22,8 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 
 ## Poste de développement
 
-- Windows 11 + Laragon : PHP 8.3.16, MariaDB 10.11 (comme en production), projet dans `C:\laragon\www\aviator`, site local `https://aviator.test`.
-- Commandes exécutées dans Git Bash : chemins au format `/c/laragon/www/aviator`, fins de ligne LF.
+- Windows 11 + Laragon : PHP 8.3.16, MariaDB 10.11 (comme en production), dépôt dans `D:\aviator`, exposé à Laragon par la jonction `C:\laragon\www\aviator` → `D:\aviator` ; site local `https://aviator.test`.
+- Commandes exécutées dans Git Bash depuis `/d/aviator` (chemins au format `/d/aviator/...`), fins de ligne LF. Git : `D:/aviator` en `safe.directory` global.
 - Production en MariaDB 10.11.19 : `DB_CONNECTION=mariadb` ; n'utilise aucune fonctionnalité propre à MySQL 8 (index fonctionnels, index JSON, `joinLateral`, interclassements `utf8mb4_0900_*`).
 
 ## Contraintes techniques

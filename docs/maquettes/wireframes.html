@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquettes Aviator</title>
+<style>
+  :root {
+    --bg: #f4f4f2; --paper: #ffffff; --ink: #1f1f1f; --muted: #6b6b6b; --line: #c9c9c4;
+    --fill: #e6e6e2; --fill2: #d6d6d0; --accent: #3a3a3a; --warn: #8a5a00; --warn-bg: #fff4dc;
+    --danger: #8f1d1d; --danger-bg: #fde8e8; --ok: #1f5f2e; --ok-bg: #e5f3e8; --note: #2f4f8f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1b1a; --paper: #262624; --ink: #ececea; --muted: #a3a39e; --line: #4a4a46;
+      --fill: #34342f; --fill2: #42423d; --accent: #dcdcd6; --warn: #f0c060; --warn-bg: #3b2f14;
+      --danger: #f2a0a0; --danger-bg: #3d1d1d; --ok: #9fd8ac; --ok-bg: #1d3524; --note: #9db7ee; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1b1a; --paper: #262624; --ink: #ececea; --muted: #a3a39e; --line: #4a4a46;
+    --fill: #34342f; --fill2: #42423d; --accent: #dcdcd6; --warn: #f0c060; --warn-bg: #3b2f14;
+    --danger: #f2a0a0; --danger-bg: #3d1d1d; --ok: #9fd8ac; --ok-bg: #1d3524; --note: #9db7ee; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header.doc { padding: 24px 16px 8px; max-width: 1280px; margin: 0 auto; }
+  header.doc h1 { margin: 0 0 4px; font-size: 22px; }
+  header.doc p { margin: 4px 0; color: var(--muted); max-width: 80ch; }
+  nav.toc { max-width: 1280px; margin: 0 auto; padding: 8px 16px 16px; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: var(--paper); font-size: 13px; }
+  section.screen { max-width: 1280px; margin: 0 auto 40px; padding: 0 16px; }
+  section.screen > h2 { font-size: 18px; margin: 24px 0 2px; }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .notes { flex: 1 1 240px; min-width: 220px; max-width: 420px; font-size: 13px; }
+  .notes ol { margin: 0; padding-left: 0; list-style: none; counter-reset: n; }
+  .notes li { margin: 0 0 8px; padding-left: 28px; position: relative; }
+  .notes li::before { counter-increment: n; content: counter(n); position: absolute; left: 0; top: 0; }
+  .notes li::before, .n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--note); color: var(--paper); font-size: 11px; font-weight: 700; }
+  .n { vertical-align: middle; margin: 0 4px; flex: none; }
+
+  .frame { background: var(--paper); border: 2px solid var(--accent); border-radius: 10px; overflow: hidden; max-width: 100%; }
+  .frame.desktop { flex: 3 1 760px; min-width: 0; }
+  .frame.tablet { flex: 0 1 620px; border-radius: 22px; padding: 14px 10px; }
+  .frame.phone { flex: 0 0 280px; width: 280px; border-radius: 30px; padding: 12px 8px 18px; }
+  .phones { display: flex; gap: 16px; flex-wrap: wrap; flex: 1 1 880px; min-width: 0; }
+  .screen-inner { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--paper); }
+  .phone .screen-inner { border-radius: 18px; min-height: 560px; }
+  .caption { text-align: center; font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--fill); font-weight: 600; }
+  .topbar .sp { flex: 1; }
+  .topbar small { font-weight: 400; color: var(--muted); }
+  .app { display: flex; min-height: 420px; }
+  .side { width: 150px; flex: none; border-right: 1px solid var(--line); padding: 10px 8px; background: var(--fill); font-size: 12px; }
+  .side div { padding: 5px 8px; border-radius: 6px; margin-bottom: 2px; color: var(--muted); }
+  .side div.on { background: var(--paper); color: var(--ink); font-weight: 600; }
+  .side .grp { text-transform: uppercase; font-size: 10px; letter-spacing: .05em; padding: 8px 8px 2px; }
+  .main { flex: 1; padding: 12px; min-width: 0; }
+  @media (max-width: 720px) { .side { display: none; } }
+
+  .steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .steps span { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .steps span.done { background: var(--fill2); color: var(--ink); }
+  .steps span.cur { border: 2px solid var(--accent); color: var(--ink); font-weight: 600; }
+  .cols { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 10px; }
+  @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--paper); margin-bottom: 10px; overflow-x: auto; }
+  .box h4 { margin: 0 0 8px; font-size: 13px; display: flex; align-items: center; gap: 4px; }
+  .field { margin-bottom: 8px; }
+  .field .flabel { display: block; font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .input { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: var(--bg); min-height: 32px; font-size: 13px; }
+  .input.big { min-height: 44px; font-size: 18px; font-weight: 600; }
+  .inline { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .inline > * { flex: 1 1 auto; }
+  .btn { display: inline-block; border: 1px solid var(--accent); border-radius: 6px; padding: 6px 12px; font-size: 13px; text-align: center; background: var(--paper); flex: 0 0 auto; max-width: 100%; }
+  .btn.primary { background: var(--accent); color: var(--paper); }
+  .btn.big { padding: 12px 16px; font-size: 15px; min-height: 48px; display: block; width: 100%; margin-top: 8px; }
+  .btn.disabled { opacity: .45; border-style: dashed; }
+  .btn.danger { border-color: var(--danger); color: var(--danger); }
+  .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--fill2); color: var(--ink); white-space: nowrap; }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  .badge.danger { background: var(--danger-bg); color: var(--danger); }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .banner { border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 13px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .banner.warn { background: var(--warn-bg); color: var(--warn); }
+  .banner.danger { background: var(--danger-bg); color: var(--danger); }
+  .banner.ok { background: var(--ok-bg); color: var(--ok); }
+  table.t { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.t th, table.t td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.t th { color: var(--muted); font-weight: 600; }
+  table.t td.num, table.t th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.t tr.off td { color: var(--muted); text-decoration: line-through; }
+  table.t tr.sel td { background: var(--fill); }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+  .total { display: flex; justify-content: space-between; font-weight: 700; padding-top: 6px; border-top: 2px solid var(--accent); margin-top: 4px; }
+  .kv { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 13px; }
+  .kv span:last-child { font-variant-numeric: tabular-nums; text-align: right; }
+  .scroll { overflow-x: auto; }
+
+  /* Planning */
+  .plan { display: grid; grid-template-columns: 170px repeat(14, minmax(34px, 1fr)); font-size: 11px; min-width: 760px; }
+  .plan > div { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); min-height: 30px; padding: 3px 4px; }
+  .plan .h { background: var(--fill); font-weight: 600; text-align: center; }
+  .plan .h.we { background: var(--fill2); }
+  .plan .lab { font-weight: 600; background: var(--paper); }
+  .plan .lab small { display: block; font-weight: 400; color: var(--muted); }
+  .plan .grp { grid-column: 1 / -1; background: var(--fill2); font-weight: 700; min-height: 0; }
+  .blk { border-radius: 5px; margin: 2px 0; padding: 3px 5px; font-size: 10.5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border: 1px solid var(--accent); }
+  .blk.res { background: var(--fill); }
+  .blk.ctr { background: var(--fill2); font-weight: 600; }
+  .blk.mnt { background: repeating-linear-gradient(45deg, var(--fill) 0 5px, var(--paper) 5px 10px); }
+  .blk.busy { background: var(--fill); color: var(--muted); border-style: dashed; }
+  .blk.late { border: 2px solid var(--danger); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .legend i { display: inline-block; width: 22px; height: 12px; border-radius: 3px; border: 1px solid var(--accent); }
+
+  /* Inspection */
+  .fuel { display: flex; gap: 3px; }
+  .fuel b { flex: 1; height: 28px; border: 1px solid var(--accent); border-radius: 4px; background: var(--paper); }
+  .fuel b.on { background: var(--accent); }
+  .photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .photos div { aspect-ratio: 4/3; background: var(--fill); border: 1px solid var(--line); border-radius: 6px; display: grid; place-items: center; font-size: 11px; color: var(--muted); }
+  .photos div.add { border: 2px dashed var(--accent); color: var(--ink); font-weight: 600; }
+  .sign { height: 90px; border: 2px dashed var(--line); border-radius: 8px; display: grid; place-items: center; color: var(--muted); font-style: italic; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .two { grid-template-columns: 1fr; } }
+  svg.car { width: 100%; max-width: 260px; height: auto; display: block; margin: 0 auto; }
+  svg.car .body { fill: var(--fill); stroke: var(--accent); stroke-width: 2; }
+  svg.car .glass { fill: var(--paper); stroke: var(--accent); stroke-width: 1.5; }
+  svg.car .wheel { fill: var(--accent); }
+  svg.car .dmg { fill: var(--note); }
+  svg.car .dmg.new { fill: var(--danger); }
+  svg.car text { fill: var(--paper); font-size: 10px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+  svg.car text.lbl { fill: var(--muted); font-weight: 400; font-size: 9px; }
+
+  /* Phone */
+  .status { display: flex; justify-content: space-between; font-size: 11px; padding: 6px 12px; color: var(--muted); }
+  .appbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  .appbar .sp { flex: 1; }
+  .pbody { padding: 10px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+  .card .big { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lock { background: var(--fill2); min-height: 560px; padding: 30px 10px; }
+  .lock .time { text-align: center; font-size: 44px; font-weight: 300; margin: 20px 0 30px; }
+  .push { background: var(--paper); border-radius: 14px; padding: 10px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.15); font-size: 13px; }
+  .push b { display: block; }
+  .push small { color: var(--muted); }
+  .list-item { display: flex; gap: 8px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+  .list-item .grow { flex: 1; min-width: 0; }
+  .list-item .grow div:first-child { font-weight: 600; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 110px; padding: 6px 0; border-bottom: 1px solid var(--accent); }
+  .bars div { flex: 1; display: flex; gap: 2px; align-items: flex-end; height: 100%; }
+  .bars i { flex: 1; display: block; background: var(--accent); border-radius: 2px 2px 0 0; }
+  .bars i.c { background: var(--fill2); border: 1px solid var(--accent); }
+  .bars-x { display: flex; gap: 6px; font-size: 10px; color: var(--muted); }
+  .bars-x span { flex: 1; text-align: center; }
+  .rank { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .rank .bar { height: 8px; background: var(--accent); border-radius: 4px; }
+  .rank .bar.neg { background: var(--danger); }
+  .sheet { border-top: 1px solid var(--line); padding: 8px 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  footer.doc { max-width: 1280px; margin: 0 auto; padding: 16px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header class="doc">
+  <h1>Maquettes en fils de fer — Aviator</h1>
+  <p>Phase 1, version du 17/11/2026, à valider en atelier avec les agences et le super admin. Les parcours sont décrits dans <code>parcours.md</code>. Les pastilles numérotées renvoient aux notes à droite de chaque écran.</p>
+  <p><strong>Données fictives.</strong> Les montants ne servent qu'à illustrer ; aucun taux de taxe n'est affiché, car les règles fiscales ne sont pas encore validées (Q11). Le style est volontairement neutre : la charte d'Aviator n'est pas encore fournie (Q6).</p>
+</header>
+
+<nav class="toc" aria-label="Écrans">
+  <a href="#e1">E1 Comptoir</a><a href="#e2">E2 Cas d'erreur</a><a href="#e3">E3 Planning</a><a href="#e4">E4 Départ</a><a href="#e5">E5 Retour</a><a href="#e6">E6 Approbation mobile</a><a href="#e7">E7 Statistiques mobile</a><a href="#e8">E8 Clients et carnet</a>
+</nav>
+
+<!-- ===================== E1 ===================== -->
+<section class="screen" id="e1">
+  <h2>E1 — Comptoir : nouvelle location</h2>
+  <div class="meta">Parcours P1 · Utilisateur d'agence (Sfax) · Ordinateur ou tablette en paysage · C-01 à C-07, C-10, D-04, K-04, K-10, RG-10</div>
+  <div class="row">
+    <div class="frame desktop">
+      <div class="topbar">Aviator <small>· Agence Sfax</small><span class="sp"></span><small>Notifications (2)</small><small>Utilisateur Sfax</small></div>
+      <div class="app">
+        <div class="side">
+          <div class="grp">Comptoir</div><div class="on">Nouvelle location</div><div>Départs et retours</div><div>Disponibilité</div><div>Planning</div>
+          <div class="grp">Locations</div><div>Réservations</div><div>Contrats</div>
+          <div class="grp">Facturation</div><div>Factures</div><div>Encaissements</div><div>Cautions</div><div>Caisse du jour</div>
+          <div class="grp">Clients</div><div>Rechercher</div>
+        </div>
+        <div class="main">
+          <div class="steps"><span class="done">1 Client ✓</span><span class="done">2 Période ✓</span><span class="cur">3 Véhicule</span><span>4 Options et devis</span><span>5 Validation</span><span class="n">1</span></div>
+          <div class="cols">
+            <div>
+              <div class="box">
+                <h4>Client <span class="n">2</span></h4>
+                <div class="inline"><div class="input" style="flex:0 0 96px">Permis ▾</div><div class="input">12/345678</div><span class="btn">Rechercher</span></div>
+                <div style="margin-top:8px" class="small"><strong>Sami T.</strong> · Particulier<br>Permis 12/345678 · obtenu le 14/05/2015<br>Pièce : CIN ••••5612 <span class="badge ok">Recommandé</span></div>
+                <div class="small muted" style="margin-top:6px">3 locations dans le réseau · dernière : Djerba, 09/2026</div>
+              </div>
+              <div class="box">
+                <h4>Période <span class="n">3</span></h4>
+                <div class="field"><div class="flabel">Départ</div><div class="input">Sfax · mer. 03/12/2026 · 09:00</div></div>
+                <div class="field"><div class="flabel">Retour</div><div class="input">Sfax · dim. 07/12/2026 · 09:00</div></div>
+                <div class="field"><div class="flabel">Catégorie</div><div class="input">Citadine ▾</div></div>
+                <div class="small muted">☐ Retour dans une autre agence <span class="badge">désactivé, Q3</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="box">
+                <h4>Véhicules disponibles · Citadine · Sfax <span class="n">4</span></h4>
+                <table class="t">
+                  <thead><tr><th></th><th>Véhicule</th><th>Immat.</th><th class="num">Km</th><th>Documents</th></tr></thead>
+                  <tbody>
+                    <tr class="sel"><td>◉</td><td>Renault Clio 5</td><td>123 TU 4567</td><td class="num">42 310</td><td><span class="badge ok">à jour</span></td></tr>
+                    <tr><td>○</td><td>Hyundai i20</td><td>210 TU 8812</td><td class="num">18 905</td><td><span class="badge warn">assurance le 05/12</span></td></tr>
+                    <tr><td>○</td><td>Kia Picanto</td><td>198 TU 1022</td><td class="num">61 448</td><td><span class="badge ok">à jour</span></td></tr>
+                    <tr class="off"><td></td><td>VW Polo</td><td>205 TU 3390</td><td class="num">35 120</td><td>maintenance jusqu'au 05/12</td></tr>
+                  </tbody>
+                </table>
+                <div class="small" style="margin-top:8px">○ Catégorie seulement : véhicule affecté au plus tard au départ <span class="muted">(capacité restante : 2)</span></div>
+              </div>
+              <div class="box">
+                <h4>Options</h4>
+                <div class="kv"><span>☑ Siège enfant</span><span>par jour</span></div>
+                <div class="kv"><span>☐ Conducteur additionnel</span><span>par jour</span></div>
+                <div class="kv"><span>☐ Franchise réduite</span><span>par jour</span></div>
+                <div class="kv"><span>☐ GPS · ☐ Livraison</span><span></span></div>
+              </div>
+            </div>
+            <div>
+              <div class="box">
+                <h4>Devis (calculé par le serveur) <span class="n">5</span></h4>
+                <div class="kv"><span>Location 4 j × 95,000</span><span>380,000</span></div>
+                <div class="kv"><span>Siège enfant 4 j × 5,000</span><span>20,000</span></div>
+                <div class="kv"><span>Remise 10 % <span class="badge warn">approbation requise</span></span><span>−40,000</span></div>
+                <div class="total"><span>Total HT</span><span>360,000 DT</span></div>
+                <div class="banner warn small" style="margin-top:8px">Taxes : règle fiscale non validée</div>
+                <div class="small muted">Saison : basse · Tranche 4 à 7 jours · Caution demandée : à saisir (Q14)</div>
+              </div>
+              <div class="box">
+                <h4>Acompte (facultatif) <span class="n">6</span></h4>
+                <div class="inline"><div class="input">100,000</div><div class="input" style="flex:0 0 100px">Espèces ▾</div></div>
+              </div>
+              <span class="btn primary big">Enregistrer la réservation</span>
+              <span class="btn big">Louer maintenant (contrat immédiat)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><ol>
+      <li>Assistant en 5 étapes. On peut revenir en arrière sans perdre la saisie.</li>
+      <li>Recherche <strong>exacte</strong> (pièce, permis, téléphone, nom). Le numéro de pièce est masqué. Le niveau de recommandation est toujours visible (K-10).</li>
+      <li>Retour à l'agence de départ par défaut (Q3). Le délai de préparation est inclus dans le contrôle de disponibilité.</li>
+      <li>Les véhicules indisponibles sur la période sont barrés, avec leur motif. Un document qui expire pendant la location est signalé.</li>
+      <li>Le devis est recalculé par le serveur à chaque changement : l'interface ne calcule rien (RG-18). Une remise au-delà du seuil (0 % par défaut, Q52) part en approbation.</li>
+      <li>Acompte enregistré comme encaissement non imputé (Q40). Le contrôle définitif de disponibilité se fait sous verrou à l'enregistrement (RG-02).</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ===================== E2 ===================== -->
+<section class="screen" id="e2">
+  <h2>E2 — Comptoir : cas d'erreur</h2>
+  <div class="meta">Parcours P1 · RG-02 (scénario 1), RG-15 (scénario 14), règle fiscale non validée</div>
+  <div class="row">
+    <div class="frame desktop" style="padding:12px">
+      <div class="banner danger"><strong>Ce véhicule vient d'être réservé sur cette période.</strong> Rien n'a été enregistré. <span class="n">1</span></div>
+      <div class="box small">Véhicules encore disponibles : <strong>Kia Picanto 198 TU 1022</strong> · <strong>Hyundai i20 210 TU 8812</strong> <span class="btn">Choisir</span></div>
+      <div class="banner danger" style="margin-top:14px"><strong>Client sur liste noire.</strong> Réservation impossible sans dérogation du super admin. <span class="sp"></span><span class="btn">Demander une dérogation</span> <span class="n">2</span></div>
+      <div class="box small">Motif et historique : visibles sur la fiche du client (profils autorisés). L'enregistrement de la réservation est désactivé. <span class="btn disabled">Enregistrer la réservation</span></div>
+      <div class="banner warn" style="margin-top:14px"><strong>Client en vigilance.</strong> Signalé par l'agence de Tunis le 12/11/2026. <span class="btn">Voir la fiche</span> <span class="n">3</span></div>
+      <div class="banner warn" style="margin-top:14px"><strong>Règle fiscale non validée.</strong> L'émission de factures est bloquée en production tant que l'expert-comptable n'a pas validé les taxes. <span class="n">4</span></div>
+      <div class="banner ok" style="margin-top:14px">Réservation <strong>RES-2026-00412</strong> enregistrée. Remise en attente d'approbation : vous serez notifié. <span class="n">5</span></div>
+    </div>
+    <div class="notes"><ol>
+      <li>Saisie simultanée : la seconde saisie attend le verrou, constate le chevauchement et propose des véhicules de remplacement.</li>
+      <li>Liste noire : blocage côté serveur. Le bouton crée une demande d'approbation de type « dérogation », tracée.</li>
+      <li>Vigilance : alerte non bloquante, affichée dans toutes les agences, à la recherche, à la réservation et au contrat.</li>
+      <li>Le message fiscal reste visible tant que les règles ne sont pas déposées dans <code>regles_fiscales_validees/</code>.</li>
+      <li>Confirmation : numéro de réservation et état de la remise.</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ===================== E3 ===================== -->
+<section class="screen" id="e3">
+  <h2>E3 — Planning (frise par véhicule)</h2>
+  <div class="meta">Parcours P2 · Tous les profils · Ordinateur · C-02, RG-13, Q38</div>
+  <div class="row">
+    <div class="frame desktop">
+      <div class="topbar">Planning <small>· semaine du 01/12 au 14/12/2026</small><span class="sp"></span><small>Agence : Sfax ▾ · Toutes ▾</small><small>Catégorie : Toutes ▾</small><small>◀ Aujourd'hui ▶</small></div>
+      <div class="scroll" style="padding:8px">
+        <div class="plan">
+          <div class="h">Véhicule <span class="n">1</span></div>
+          <div class="h">L 1</div><div class="h">M 2</div><div class="h">M 3</div><div class="h">J 4</div><div class="h">V 5</div><div class="h we">S 6</div><div class="h we">D 7</div><div class="h">L 8</div><div class="h">M 9</div><div class="h">M 10</div><div class="h">J 11</div><div class="h">V 12</div><div class="h we">S 13</div><div class="h we">D 14</div>
+
+          <div class="grp">Sfax (mon agence)</div>
+          <div class="lab">Clio 5<small>123 TU 4567 · Citadine</small></div>
+          <div style="grid-column: 2 / 4"><div class="blk ctr late">CTR-00398 · Karim B.</div></div>
+          <div style="grid-column: 4 / 9"><div class="blk res">RES-00412 · Sami T. <span class="n">2</span></div></div>
+          <div style="grid-column: 9 / 16"></div>
+
+          <div class="lab">Hyundai i20<small>210 TU 8812 · Citadine</small></div>
+          <div style="grid-column: 2 / 6"></div>
+          <div style="grid-column: 6 / 13"><div class="blk ctr">CTR-00401 · Société M.</div></div>
+          <div style="grid-column: 13 / 16"></div>
+
+          <div class="lab">VW Polo<small>205 TU 3390 · Citadine</small></div>
+          <div style="grid-column: 2 / 6"><div class="blk mnt">Maintenance · vidange <span class="n">3</span></div></div>
+          <div style="grid-column: 6 / 16"></div>
+
+          <div class="lab">Catégorie seule<small>Citadine · 1 réservation</small></div>
+          <div style="grid-column: 2 / 10"></div>
+          <div style="grid-column: 10 / 13"><div class="blk res">RES-00415 · à affecter <span class="n">4</span></div></div>
+          <div style="grid-column: 13 / 16"></div>
+
+          <div class="grp">Tunis (lecture seule)</div>
+          <div class="lab">Peugeot 208<small>187 TU 7755 · Citadine</small></div>
+          <div style="grid-column: 2 / 5"><div class="blk busy">Occupé</div></div>
+          <div style="grid-column: 5 / 8"></div>
+          <div style="grid-column: 8 / 14"><div class="blk busy">Occupé <span class="n">5</span></div></div>
+          <div style="grid-column: 14 / 16"></div>
+        </div>
+      </div>
+      <div class="legend" style="padding:0 10px 10px">
+        <span><i style="background:var(--fill)"></i>Réservation</span>
+        <span><i style="background:var(--fill2)"></i>Contrat en cours</span>
+        <span><i style="background:repeating-linear-gradient(45deg,var(--fill) 0 4px,var(--paper) 4px 8px)"></i>Maintenance, immobilisation</span>
+        <span><i style="border-style:dashed"></i>Autre agence</span>
+        <span><i style="border:2px solid var(--danger)"></i>En retard</span>
+      </div>
+    </div>
+    <div class="notes"><ol>
+      <li>Une ligne par véhicule, regroupée par agence. Vue semaine ou mois ; sur tablette, défilement horizontal.</li>
+      <li>Les blocs de son agence affichent le numéro et le client ; un clic ouvre le document. Un clic sur une case vide ouvre E1, déjà rempli.</li>
+      <li>Les maintenances et immobilisations bloquent la disponibilité au même titre que les locations (G-03).</li>
+      <li>Les réservations sans véhicule apparaissent sur une ligne « catégorie » jusqu'à leur affectation (C-05).</li>
+      <li>Autres agences : « Occupé », sans nom ni numéro (Q38). Données fournies par une projection sans information client.</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ===================== E4 ===================== -->
+<section class="screen" id="e4">
+  <h2>E4 — Départ : contrat et état des lieux (tablette)</h2>
+  <div class="meta">Parcours P3 · Utilisateur d'agence · Tablette en portrait · D-01 à D-06, F-01, B-05, scénario 10</div>
+  <div class="row">
+    <div class="frame tablet"><div class="screen-inner">
+      <div class="topbar">Départ · CTR-2026-00412<span class="sp"></span><small>Sfax · 03/12 09:05</small></div>
+      <div class="main">
+        <div class="steps"><span class="done">Conducteurs ✓</span><span class="done">Véhicule ✓</span><span class="done">Caution ✓</span><span class="cur">État des lieux</span><span>Signature</span></div>
+        <div class="banner ok small">Clio 5 · 123 TU 4567 · assurance valide jusqu'au 31/03/2027 · visite valide jusqu'au 12/06/2027 <span class="n">1</span></div>
+        <div class="two">
+          <div class="box"><h4>Kilométrage <span class="n">2</span></h4><div class="input big">42 310</div><div class="small muted">Dernier relevé : 42 310 (retour du 01/12)</div></div>
+          <div class="box"><h4>Carburant (8 crans)</h4><div class="fuel"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b></div><div class="small muted">Plein (8/8)</div></div>
+        </div>
+        <div class="box">
+          <h4>Dommages existants et nouveaux <span class="n">3</span></h4>
+          <div class="two">
+            <svg class="car" viewBox="0 0 200 300" role="img" aria-label="Schéma du véhicule vu de dessus">
+              <rect class="wheel" x="18" y="52" width="14" height="40" rx="4"/><rect class="wheel" x="168" y="52" width="14" height="40" rx="4"/>
+              <rect class="wheel" x="18" y="208" width="14" height="40" rx="4"/><rect class="wheel" x="168" y="208" width="14" height="40" rx="4"/>
+              <rect class="body" x="28" y="14" width="144" height="272" rx="46"/>
+              <rect class="glass" x="48" y="78" width="104" height="44" rx="10"/>
+              <rect class="glass" x="52" y="196" width="96" height="34" rx="10"/>
+              <text class="lbl" x="100" y="36">AVANT</text><text class="lbl" x="100" y="270">ARRIÈRE</text>
+              <circle class="dmg" cx="60" cy="36" r="10"/><text x="60" y="36">1</text>
+              <circle class="dmg" cx="166" cy="170" r="10"/><text x="166" y="170">2</text>
+            </svg>
+            <div class="small">
+              <div class="list-item"><span class="badge">1</span><div class="grow"><div>Rayure pare-chocs avant gauche</div><div class="muted">Existant · retour du 01/12</div></div></div>
+              <div class="list-item"><span class="badge">2</span><div class="grow"><div>Bosse portière arrière droite</div><div class="muted">Existant · 14/10</div></div></div>
+              <span class="btn" style="margin-top:8px">+ Toucher le schéma pour ajouter</span>
+            </div>
+          </div>
+        </div>
+        <div class="box"><h4>Photos <span class="n">4</span></h4>
+          <div class="photos"><div>Avant</div><div>Arrière</div><div>Gauche</div><div>Droite</div><div>Compteur</div><div>Intérieur</div><div class="add">+ Photo</div><div class="add">+ Photo</div></div>
+        </div>
+        <div class="box"><h4>Signature du client <span class="n">5</span></h4><div class="sign">Signer ici</div><div class="small muted" style="margin-top:4px">☑ J'ai lu les conditions générales (PDF) · Modèle non validé (Q15)</div></div>
+        <span class="btn primary big">Valider le départ</span>
+      </div>
+    </div></div>
+    <div class="notes"><ol>
+      <li>Le départ est refusé si l'assurance ou la visite technique n'est pas valide à la date de départ (scénario 10). Une alerte s'affiche si elle expire pendant la location.</li>
+      <li>Valeur proposée = dernier relevé ; une baisse est refusée (B-03). Pavé numérique de grande taille.</li>
+      <li>Les dommages du dernier retour sont repris automatiquement. Un appui sur le schéma ajoute un dommage (zone, description, photo).</li>
+      <li>Photos prises avec l'appareil de la tablette, compressées à l'envoi, stockées dans un dossier privé.</li>
+      <li>Signature au doigt. Le PDF du contrat, de l'état des lieux et des conditions générales est généré à la validation (D-10). Véhicule « Loué ».</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ===================== E5 ===================== -->
+<section class="screen" id="e5">
+  <h2>E5 — Retour : état des lieux, frais, facture et caution (tablette)</h2>
+  <div class="meta">Parcours P4 · Utilisateur d'agence · Tablette · D-06, D-09, E-01, E-05, E-06, F-03 à F-06, RG-04, RG-09, scénarios 4 et 6</div>
+  <div class="row">
+    <div class="frame tablet"><div class="screen-inner">
+      <div class="topbar">Retour · CTR-2026-00412<span class="sp"></span><small>Sfax · 07/12 12:20</small></div>
+      <div class="main">
+        <div class="box">
+          <h4>Comparaison départ / retour <span class="n">1</span></h4>
+          <table class="t">
+            <thead><tr><th></th><th class="num">Départ</th><th class="num">Retour</th></tr></thead>
+            <tbody>
+              <tr><td>Date et heure</td><td class="num">03/12 09:05</td><td class="num">07/12 12:20</td></tr>
+              <tr><td>Kilométrage</td><td class="num">42 310</td><td class="num"><strong>42 955</strong></td></tr>
+              <tr><td>Carburant</td><td class="num">8/8</td><td class="num"><strong>6/8</strong></td></tr>
+              <tr><td>Nouveaux dommages</td><td class="num">—</td><td class="num"><span class="badge danger">1</span> rétroviseur droit</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="box">
+          <h4>Frais calculés <span class="n">2</span></h4>
+          <table class="t">
+            <thead><tr><th>Nature</th><th>Calcul</th><th class="num">HT</th></tr></thead>
+            <tbody>
+              <tr><td>Retard</td><td>3 h 15 &gt; tolérance 60 min → 1 j × 95,000</td><td class="num">95,000</td></tr>
+              <tr><td>Kilomètres</td><td>Kilométrage illimité</td><td class="num">0,000</td></tr>
+              <tr><td>Carburant</td><td>2/8 manquants · <span class="badge warn">prix du litre non paramétré (Q44)</span></td><td class="num">—</td></tr>
+              <tr><td>Dommage</td><td>Rétroviseur droit · justificatif : devis garage</td><td class="num">150,000</td></tr>
+            </tbody>
+          </table>
+          <div class="total"><span>Total des frais HT</span><span>245,000 DT</span></div>
+          <div class="banner warn small" style="margin-top:8px">Taxes : règle fiscale non validée · émission bloquée en production</div>
+          <span class="btn disabled">Émettre la facture complémentaire</span> <span class="btn">Encaisser</span> <span class="n">3</span>
+        </div>
+        <div class="box">
+          <h4>Caution · 500,000 DT reçus (espèces) <span class="n">4</span></h4>
+          <div class="two">
+            <div class="field"><div class="flabel">À restituer</div><div class="input big">350,000</div></div>
+            <div class="field"><div class="flabel">Retenue demandée (motif : dommage)</div><div class="input big">150,000</div></div>
+          </div>
+          <div class="small muted">Restitué + retenu = 500,000 ≤ reçu (RG-08)</div>
+          <span class="btn">Restituer 350,000 et imprimer le reçu</span> <span class="btn">Demander la retenue au super admin</span>
+        </div>
+        <span class="btn primary big">Clôturer le contrat <span class="n">5</span></span>
+      </div>
+    </div></div>
+    <div class="notes"><ol>
+      <li>Le kilométrage de retour ne peut pas être inférieur à celui du départ (RG-04). Différences mises en évidence.</li>
+      <li>Chaque frais affiche sa formule et le paramètre utilisé. Un paramètre vide n'est jamais remplacé par une valeur inventée : la ligne reste à compléter.</li>
+      <li>La facture reçoit son numéro à l'émission (RG-07). Paiements partiels possibles, avec plusieurs modes de paiement (scénario 5).</li>
+      <li>La retenue passe en approbation ; la caution reste « à restituer » jusqu'à la décision (scénario 6). Jamais comptée dans le chiffre d'affaires (F-07).</li>
+      <li>Contrat clôturé, non modifiable (D-11). Véhicule « Maintenance » si un dommage est signalé, sinon « Disponible ».</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ===================== E6 ===================== -->
+<section class="screen" id="e6">
+  <h2>E6 — Approbation par le super admin sur smartphone</h2>
+  <div class="meta">Parcours P5 · Super admin · Application installée (PWA) · RG-10, F-05, K-11, J-09, J-12, J-14, scénario 19</div>
+  <div class="row">
+    <div class="phones">
+      <div>
+        <div class="frame phone"><div class="screen-inner"><div class="lock">
+          <div class="time">09:12</div>
+          <div class="push"><b>Aviator</b>Nouvelle demande d'approbation à traiter<br><small>maintenant</small></div>
+          <p class="small muted" style="text-align:center;margin-top:16px">Aucun montant, nom ni motif dans la notification <span class="n">1</span></p>
+        </div></div></div>
+        <div class="caption">a. Notification push</div>
+      </div>
+      <div>
+        <div class="frame phone"><div class="screen-inner">
+          <div class="status"><span>09:13</span><span>4G</span></div>
+          <div class="appbar">Approbations <span class="sp"></span><span class="badge">3</span></div>
+          <div class="pbody">
+            <div class="small muted">En attente · plus anciennes en premier <span class="n">2</span></div>
+            <div class="list-item"><span class="badge warn">Remise</span><div class="grow"><div>Sfax · RES-00412</div><div class="small muted">Utilisateur Sfax · il y a 2 min</div></div>›</div>
+            <div class="list-item"><span class="badge warn">Retenue</span><div class="grow"><div>Djerba · CTR-00377</div><div class="small muted">Utilisateur Djerba · il y a 1 h</div></div>›</div>
+            <div class="list-item"><span class="badge danger">Liste noire</span><div class="grow"><div>Tunis · proposition</div><div class="small muted">Utilisateur Tunis · hier</div></div>›</div>
+            <div class="small muted" style="margin-top:12px">Traitées (7 derniers jours) ▾</div>
+          </div>
+        </div></div>
+        <div class="caption">b. Boîte de réception</div>
+      </div>
+      <div>
+        <div class="frame phone"><div class="screen-inner">
+          <div class="status"><span>09:13</span><span>4G</span></div>
+          <div class="appbar">‹ Remise · RES-00412</div>
+          <div class="pbody">
+            <div class="card"><div class="small muted">Remise demandée</div><div class="big">10 % · 40,000 DT</div><div class="small">Seuil de l'agence : 0 % <span class="n">3</span></div></div>
+            <div class="card small">
+              <div class="kv"><span>Client</span><span>Sami T. <span class="badge ok">Recommandé</span></span></div>
+              <div class="kv"><span>Période</span><span>03/12 → 07/12 (4 j)</span></div>
+              <div class="kv"><span>Véhicule</span><span>Clio 5 · Citadine</span></div>
+              <div class="kv"><span>Total HT avant remise</span><span>400,000</span></div>
+              <div class="kv"><span>Motif</span><span>Client fidèle, 4e location</span></div>
+            </div>
+            <div class="field"><div class="flabel">Commentaire (obligatoire pour un refus)</div><div class="input" style="min-height:44px"></div></div>
+            <div class="two"><span class="btn big danger">Refuser</span><span class="btn primary big">Approuver</span></div>
+            <p class="small muted">Le demandeur est notifié de la décision. <span class="n">4</span></p>
+          </div>
+        </div></div>
+        <div class="caption">c. Détail et décision</div>
+      </div>
+    </div>
+    <div class="notes"><ol>
+      <li>Texte générique (RG-20, J-14). Un appui ouvre l'application installée ; si la session a expiré : connexion, puis code 2FA (J-03).</li>
+      <li>Une seule liste pour les 4 types : remise, retenue, liste noire, dérogation. Badge de compteur dans le menu.</li>
+      <li>Le détail donne le contexte nécessaire à la décision, une fois connecté.</li>
+      <li>Le serveur vérifie le rôle et que la demande est toujours en attente (double approbation impossible). Décision journalisée.</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ===================== E7 ===================== -->
+<section class="screen" id="e7">
+  <h2>E7 — Statistiques sur smartphone</h2>
+  <div class="meta">Parcours P6 · Super admin (admin : sans statistiques clients) · I-01 à I-22, J-09, J-11, scénario 21</div>
+  <div class="row">
+    <div class="phones">
+      <div>
+        <div class="frame phone"><div class="screen-inner">
+          <div class="status"><span>18:40</span><span>Wi-Fi</span></div>
+          <div class="appbar">Tableau de bord <span class="sp"></span><small class="muted">Nov. 2026</small></div>
+          <div class="pbody">
+            <div class="grid2">
+              <div class="card"><div class="small muted">CA HT net</div><div class="big">48 210</div><div class="small">vs N-1 : — <span class="n">1</span></div></div>
+              <div class="card"><div class="small muted">Marge</div><div class="big">11 905</div><div class="small">24,7 %</div></div>
+              <div class="card"><div class="small muted">Utilisation</div><div class="big">68 %</div><div class="small">jours loués ÷ disponibles</div></div>
+              <div class="card"><div class="small muted">Impayés</div><div class="big">6 340</div><div class="small">dont &gt; 60 j : 1 200</div></div>
+            </div>
+            <div class="card">
+              <div class="small muted">CA HT et charges par mois</div>
+              <div class="bars"><div><i style="height:55%"></i><i class="c" style="height:40%"></i></div><div><i style="height:62%"></i><i class="c" style="height:42%"></i></div><div><i style="height:80%"></i><i class="c" style="height:45%"></i></div><div><i style="height:95%"></i><i class="c" style="height:50%"></i></div><div><i style="height:70%"></i><i class="c" style="height:47%"></i></div><div><i style="height:66%"></i><i class="c" style="height:49%"></i></div></div>
+              <div class="bars-x"><span>Juin</span><span>Juil.</span><span>Août</span><span>Sept.</span><span>Oct.</span><span>Nov.</span></div>
+              <div class="small muted">■ CA HT · □ charges</div>
+            </div>
+            <div class="card small">Retours en retard : <strong>1</strong> · Échéances sous 30 j : <strong>4</strong></div>
+          </div>
+          <div class="sheet"><span class="btn">Mois ▾</span><span class="btn">Agence ▾</span><span class="btn">Catégorie ▾</span> <span class="n">2</span></div>
+        </div></div>
+        <div class="caption">a. Indicateurs du mois</div>
+      </div>
+      <div>
+        <div class="frame phone"><div class="screen-inner">
+          <div class="status"><span>18:41</span><span>Wi-Fi</span></div>
+          <div class="appbar">‹ Rentabilité <span class="sp"></span><small class="muted">2026</small></div>
+          <div class="pbody">
+            <div class="small muted">Marge ÷ coût total engagé, du plus au moins rentable <span class="n">3</span></div>
+            <div class="rank"><span style="width:92px">Clio 5 · 4567</span><div style="flex:1"><div class="bar" style="width:90%"></div></div><span>31 %</span></div>
+            <div class="rank"><span style="width:92px">i20 · 8812</span><div style="flex:1"><div class="bar" style="width:72%"></div></div><span>24 %</span></div>
+            <div class="rank"><span style="width:92px">208 · 7755</span><div style="flex:1"><div class="bar" style="width:55%"></div></div><span>18 %</span></div>
+            <div class="rank"><span style="width:92px">Picanto · 1022</span><div style="flex:1"><div class="bar" style="width:20%"></div></div><span>6 %</span></div>
+            <div class="rank"><span style="width:92px">Polo · 3390 <span class="badge danger">à revoir</span></span><div style="flex:1"><div class="bar neg" style="width:12%"></div></div><span>−4 %</span></div>
+            <p class="small muted">Estimation de gestion, pas un résultat comptable. <u>Méthode</u></p>
+          </div>
+        </div></div>
+        <div class="caption">b. Classement des véhicules</div>
+      </div>
+      <div>
+        <div class="frame phone"><div class="screen-inner">
+          <div class="status"><span>18:41</span><span>Wi-Fi</span></div>
+          <div class="appbar">‹ Polo · 205 TU 3390</div>
+          <div class="pbody">
+            <div class="grid2">
+              <div class="card"><div class="small muted">CA HT (nov.)</div><div class="big">1 520</div></div>
+              <div class="card"><div class="small muted">Charges (nov.)</div><div class="big">1 790</div></div>
+              <div class="card"><div class="small muted">Point mort</div><div class="big">19 j</div><div class="small">loués : 16 j</div></div>
+              <div class="card"><div class="small muted">Coût au km</div><div class="big">0,412</div></div>
+            </div>
+            <div class="card small"><div class="muted" style="margin-bottom:4px">Charges par nature (nov.) <span class="n">4</span></div>
+              <div class="kv"><span>Loyer de leasing</span><span>980,000</span></div>
+              <div class="kv"><span>Réparations</span><span>520,000</span></div>
+              <div class="kv"><span>Assurance (1/12)</span><span>190,000</span></div>
+              <div class="kv"><span>Apport réparti</span><span>100,000</span></div>
+            </div>
+            <div class="card small">Leasing : 14 loyers restants · fin le 30/01/2028 · valeur résiduelle 4 500,000</div>
+          </div>
+        </div></div>
+        <div class="caption">c. Détail d'un véhicule</div>
+      </div>
+    </div>
+    <div class="notes"><ol>
+      <li>Comparaison avec le même mois de l'année précédente : « — » tant qu'il n'y a pas d'historique (Q60).</li>
+      <li>Filtres dans une barre en bas de l'écran, accessible au pouce : mois, année, agence, catégorie, véhicule.</li>
+      <li>Classement I-08, avec le badge « à revoir » de I-10 (marge négative ou réparations au-delà du seuil, Q62).</li>
+      <li>Chaque charge n'est comptée qu'une fois et dans un seul mois (RG-17, scénario 15). La répartition de l'apport dépend de Q19 ; celle de l'assurance, de Q58. Montants HT sous réserve de Q57.</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ===================== E8 ===================== -->
+<section class="screen" id="e8">
+  <h2>E8 — Clients : recherche limitée et carnet d'adresses</h2>
+  <div class="meta">Parcours P7 · K-02 à K-05, K-08 à K-11, RG-14, RG-16, scénario 13</div>
+  <div class="row">
+    <div class="frame desktop">
+      <div class="topbar">Clients · Rechercher <small>· Utilisateur Sfax</small></div>
+      <div class="main">
+        <div class="inline"><div class="input" style="flex:0 0 150px">Téléphone ▾</div><div class="input">+216 98 765 432</div><span class="btn primary">Rechercher</span><span class="n">1</span></div>
+        <p class="small muted">Correspondance exacte uniquement · 5 résultats au maximum · recherches journalisées</p>
+        <div class="cols" style="grid-template-columns: 1fr 1.4fr;">
+          <div class="box">
+            <h4>1 résultat</h4>
+            <div class="list-item"><div class="grow"><div>Leila M.</div><div class="small muted">Particulier · CIN ••••0921 · permis ••••4410</div></div><span class="badge warn">Vigilance</span></div>
+          </div>
+          <div class="box">
+            <h4>Fiche « contrat » · accès valable jusqu'à 17:05 <span class="n">2</span></h4>
+            <div class="banner warn small">Vigilance · retard de restitution de 2 jours sans prévenir · Tunis, 12/11/2026</div>
+            <div class="kv"><span>Identité</span><span>Leila M. · née le 02/03/1990</span></div>
+            <div class="kv"><span>Pièce / permis</span><span>CIN ••••0921 · permis ••••4410 (valide)</span></div>
+            <div class="kv"><span>Téléphone</span><span class="muted">visible sur un contrat en cours de l'agence (Q4)</span></div>
+            <div class="kv"><span>Locations dans le réseau</span><span>5 · impayé : 0</span></div>
+            <div class="inline" style="margin-top:8px"><span class="btn">Ajouter une recommandation</span><span class="btn danger">Proposer la liste noire</span><span class="btn primary">Nouvelle location</span><span class="n">3</span></div>
+          </div>
+        </div>
+        <div class="box" style="margin-top:6px">
+          <h4>Super admin · Carnet d'adresses <span class="n">4</span></h4>
+          <div class="inline small"><div class="input">Filtrer : nom, agence d'origine, segment…</div><span class="btn">Exporter (Excel)</span></div>
+          <table class="t" style="margin-top:6px">
+            <thead><tr><th>Client</th><th>Type</th><th>Téléphone</th><th>E-mail</th><th>Agence d'origine</th><th>Niveau</th></tr></thead>
+            <tbody>
+              <tr><td>Client 0001</td><td>Particulier</td><td>+216 •• ••• •••</td><td>••••@••••</td><td>Djerba</td><td><span class="badge">Standard</span></td></tr>
+              <tr><td>Client 0002</td><td>Entreprise</td><td>+216 •• ••• •••</td><td>••••@••••</td><td>Tunis</td><td><span class="badge ok">Recommandé</span></td></tr>
+              <tr><td colspan="6" class="muted">… 1 000 clients · consultation enregistrée au journal <em>customer_access</em></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="banner danger"><strong>Accès refusé.</strong> Le carnet d'adresses est réservé au super admin. Cette tentative a été enregistrée. <span class="n">5</span></div>
+      </div>
+    </div>
+    <div class="notes"><ol>
+      <li>Un seul champ, un critère explicite (pièce, permis, téléphone, nom exact). Pas de liste complète, pas d'export, pas de recherche partielle (K-04). Limite anti-énumération (Q63).</li>
+      <li>Seules les informations nécessaires au contrat. Accès temporaire (Q64) : changer le numéro dans l'adresse de la page ne donne accès à rien.</li>
+      <li>Recommandations en ajout seul (RG-16). La proposition de liste noire crée une demande d'approbation pour le super admin (K-11).</li>
+      <li>Super admin uniquement : liste complète, filtres, export. Chaque consultation et chaque export sont journalisés (K-03).</li>
+      <li>Message affiché à l'admin ou à l'utilisateur d'agence qui tente d'ouvrir le carnet ou d'exporter (scénario 13).</li>
+    </ol></div>
+  </div>
+</section>
+
+<footer class="doc">Aviator · maquettes en fils de fer de la phase 1 · document de travail, données fictives.</footer>
+</body>
+</html>
