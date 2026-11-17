@@ -6,6 +6,7 @@ namespace App\Domain\Administration\Actions;
 
 use App\Domain\Administration\Exceptions\UserManagementException;
 use App\Models\User;
+use App\Support\Auth\SessionRevoker;
 use App\Support\Authorization\Role;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -23,6 +24,8 @@ use Illuminate\Support\Str;
  */
 final class SaveUser
 {
+    public function __construct(private readonly SessionRevoker $sessions) {}
+
     /**
      * @param  array<string, mixed>  $data  Données du formulaire : name, email, role, agency_id, agency_ids, is_active
      */
@@ -49,6 +52,7 @@ final class SaveUser
         return DB::transaction(function () use ($user, $data, $role, $isActive, $agencyId, $agencyIds, $actor): User {
             $user ??= new User(['password' => Str::password(64)]);
             $previousRole = $user->exists ? $user->profile() : null;
+            $wasActive = $user->exists && $user->is_active;
 
             $user->fill([
                 'name' => trim(self::string($data, 'name')),
@@ -60,6 +64,18 @@ final class SaveUser
 
             $user->syncRoles([$role->value]);
             $user->agencies()->sync($agencyIds);
+
+            if ($wasActive && ! $isActive) {
+                // Désactivation : toutes les sessions et jetons « se souvenir de moi » sont coupés.
+                $sessions = $this->sessions->revokeAll($user);
+
+                activity('security')
+                    ->causedBy($actor)
+                    ->performedOn($user)
+                    ->event('user_deactivated')
+                    ->withProperties(['revoked_sessions' => $sessions])
+                    ->log('Compte désactivé, sessions coupées');
+            }
 
             if ($previousRole !== $role) {
                 activity('audit')

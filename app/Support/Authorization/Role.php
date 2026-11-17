@@ -24,11 +24,15 @@ enum Role: string
     }
 
     /**
-     * Profils pour lesquels la 2FA est obligatoire (J-03, D9).
+     * 2FA obligatoire : toujours pour le super admin et l'admin (J-03, D9) ; pour
+     * l'utilisateur d'agence selon le réglage security.require_2fa_for_agency_users (Q76).
      */
-    public function requiresTwoFactor(): bool
+    public function requiresTwoFactor(bool $requiredForAgencyUsers = false): bool
     {
-        return $this === self::SuperAdmin || $this === self::Admin;
+        return match ($this) {
+            self::SuperAdmin, self::Admin => true,
+            self::AgencyUser => $requiredForAgencyUsers,
+        };
     }
 
     /**

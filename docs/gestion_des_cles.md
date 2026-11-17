@@ -85,3 +85,38 @@ Ces étapes s'ajoutent à `docs/installation_hebergement_oxahost.md` §4 :
 4. Reporter les deux clés dans le gestionnaire de mots de passe d'Aviator et sur la copie papier, avec le nom de l'environnement et la date.
 5. `php artisan aviator:check-environment` : aucune clé absente ou vide.
 6. Seulement ensuite : `php artisan migrate --force`, puis la suite de la procédure.
+
+## 6. Accès de secours
+
+### 6.1 Codes de récupération de la 2FA
+
+La 2FA du back-office (application d'authentification, TOTP) fournit des **codes de récupération** :
+
+- ils s'affichent **une seule fois**, à la dernière étape de l'activation de la 2FA, avec la consigne de les conserver et des boutons pour les copier ou les télécharger ;
+- chaque code ne sert qu'**une fois**, à la place du code de l'application ; il est stocké haché (puis chiffré), jamais en clair ;
+- le titulaire peut en générer de nouveaux depuis sa page de profil, ce qui annule les anciens.
+
+**Consigne pour le super admin et l'admin** : imprimer les codes de récupération et les ranger avec la copie papier des clés (§1, règle 3), sous enveloppe scellée à son nom. Ne jamais les conserver sur le téléphone qui porte l'application d'authentification.
+
+### 6.2 Réinitialisation de la 2FA : `aviator:reset-2fa`
+
+À utiliser seulement quand le titulaire a perdu **à la fois** son application d'authentification et ses codes de récupération, après vérification de son identité de vive voix. La commande est **réservée au terminal** du serveur : aucun écran de l'application ne permet de désactiver la 2FA d'un autre compte.
+
+```bash
+php artisan aviator:reset-2fa direction@<domaine>            # recette
+php artisan aviator:reset-2fa direction@<domaine> --force    # production (refusée sans --force)
+```
+
+La commande :
+
+1. affiche le nom et le profil du compte, et **demande une confirmation** ;
+2. efface le secret de la 2FA et les codes de récupération ;
+3. **coupe toutes les sessions** du compte et ses jetons « se souvenir de moi » ;
+4. inscrit l'opération dans le **journal de sécurité** (`activity_log`, journal `security`, événement `two_factor_reset`) ;
+5. impose une **nouvelle activation** de la 2FA à la prochaine connexion (super admin et admin ; utilisateur d'agence si le réglage `security.require_2fa_for_agency_users` est actif, Q76).
+
+Le titulaire se reconnecte avec son mot de passe, active la 2FA sur son nouveau téléphone et conserve ses **nouveaux** codes de récupération. L'opération est notée dans `docs/projet.md` §6 (date, compte, raison, auteur).
+
+### 6.3 Mot de passe oublié
+
+Le titulaire utilise « Mot de passe oublié ? » sur la page de connexion, ou le super admin lui envoie un lien de réinitialisation depuis la gestion des utilisateurs. Le lien arrive par e-mail : c'est l'un des seuls usages de l'e-mail dans l'application (sécurité des comptes). Pour un super admin qui n'a plus accès à sa boîte e-mail, le **compte de secours** (second super admin, Q2) lui envoie le lien après mise à jour de son adresse, ou le responsable technique procède en ligne de commande.

@@ -18,7 +18,7 @@ Statuts : **Ouverte** · **Répondue** (réponse à reporter dans `docs/decision
 5. [Facturation, encaissements et cautions (Q50 à Q56)](#5-facturation-encaissements-et-cautions-q50-à-q56)
 6. [Charges et statistiques (Q57 à Q62)](#6-charges-et-statistiques-q57-à-q62)
 7. [CRM et données personnelles (Q63 à Q68)](#7-crm-et-données-personnelles-q63-à-q68)
-8. [Organisation, hébergement et technique (Q69 à Q75)](#8-organisation-hébergement-et-technique-q69-à-q75)
+8. [Organisation, hébergement et technique (Q69 à Q76)](#8-organisation-hébergement-et-technique-q69-à-q76)
 9. [Récapitulatif par échéance](#9-récapitulatif-par-échéance)
 
 ---
@@ -155,7 +155,7 @@ Reprises de la section 9 du cahier des charges, complétées d'une valeur par d�
 
 ---
 
-## 8. Organisation, hébergement et technique (Q69 à Q75)
+## 8. Organisation, hébergement et technique (Q69 à Q76)
 
 | N° | Bloque | Question | Origine | Destinataire | Avant la phase | Valeur par défaut (paramètre) | Statut |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -166,6 +166,7 @@ Reprises de la section 9 du cahier des charges, complétées d'une valeur par d�
 | Q73 | — | Retours en dehors des heures d'ouverture (boîte à clés) : quelle heure de retour retenir ? | A-02, RG-09 | Direction | 5 | Heure réelle déclarée par le client et saisie à l'ouverture suivante, avec une mention dans l'état des lieux. Fuseau `Africa/Tunis`. | Ouverte |
 | Q74 | — | Phase 1 : quand ont lieu les ateliers avec les 4 agences prévus au chiffrage, et qui valide les maquettes ? | §7.1, phase 1 | Direction | Validation de la phase 1 | Maquettes de ce dépôt présentées en atelier. Validation par le super admin. | **Close** : ateliers pendant la phase 2, avant la phase 4 ; maquettes publiées sur une page privée |
 | Q75 | Phases 3 à 5 | Si les documents clients doivent être en arabe (Q5), il faut mPDF (licence GPL-2.0) au lieu de dompdf (LGPL), car dompdf gère mal l'écriture de droite à gauche. Accord sur cette licence ? | Q5, J-06 | Responsable technique | 5 | dompdf, documents en français uniquement. | Ouverte |
+| Q76 | — | La 2FA doit-elle être obligatoire aussi pour les **utilisateurs d'agence** ? Elle l'est déjà pour le super admin et l'admin (J-03). **Recommandation du responsable technique : l'activer**, car un compte d'agence ouvre les contrats, les encaissements et la recherche de clients ; une application d'authentification gratuite sur le téléphone de l'agent suffit. | J-03, sécurité | Direction | 9 | Réglage `security.require_2fa_for_agency_users`, **désactivé par défaut** ; le super admin pourra l'activer sans développement (écran en phase 3). | Ouverte |
 
 ---
 
@@ -181,6 +182,6 @@ Reprises de la section 9 du cahier des charges, complétées d'une valeur par d�
 | 6 — Facturation | Q16, Q25, Q40 (document), Q50, Q51, Q53, Q54, Q55, Q56 | **Q16** (périmètre, envoyée à l'expert-comptable le 17/11/2026), **Q40** (document fiscal) |
 | 7 — CRM | Q17, Q18, Q63, Q64, Q65, Q66 | — |
 | 8 — Exports | Q1 (format), Q57, Q58, Q62 | **Q1** (acceptation de la phase 8) |
-| 9 — Statistiques | Q9, Q19, Q20, Q59, Q61, Q68 | — |
+| 9 — Statistiques | Q9, Q19, Q20, Q59, Q61, Q68, Q76 | — |
 | 10 — Mise en production | Q21, Q60, Q67 | **Q67** (INPDP) |
 | 11 — Espace client | Q5 (espace client), Q22, Q23 | Q23 |
