@@ -578,7 +578,7 @@ Portée de chaque modèle pour un **utilisateur d'agence** (le super admin et l'
 | Demandes d'approbation (5) | **Filtré** | `agency_id` | L'agent suit ses demandes ; le super admin décide pour toutes |
 | Agrégats mensuels par véhicule (9) | **Filtré** | `agency_id` | Statistiques d'activité de l'agence (Q61) ; lecture explicite par `App\Domain\Statistics` |
 | Affectations de remplacement (2) | Gestion : super admin | `user_id` | L'agent ne voit que les siennes (agence active) |
-| **Clients** (7) | **Commun**, accès restreint | `origin_agency_id` sans scope | Pas de liste complète ni d'export (D13). Recherche et affichage : **à trancher** (voir Q63, question en cours) |
+| **Clients** (4, 7) | **Commun**, accès restreint | `origin_agency_id` sans scope | Pas de liste complète ni d'export (D13). Recherche et affichage : **décidé (D24)**, codé en phase 4 avec la réservation. Nom exact (prénom et nom complets, dans n'importe quel ordre), ou pièce, permis ou téléphone (+216XXXXXXXX) ; 10 résultats au plus ; affichage du nom, du statut sur la liste noire et du nombre de locations ; recherche journalisée sans la valeur recherchée ; 30 par heure au plus |
 | **Recommandations, liste noire** (7) | **Commun** | via `customer_id` | Alerte et blocage dans **toutes** les agences (K-10, K-11, RG-15, scénario 14) ; motif visible selon le profil |
 | Conducteurs (5) | **Commun**, accès restreint | via `customer_id` | Comme les clients |
 | Consentements, segments (7) | Super admin (segments) ; commun (consentements) | via `customer_id` | |

@@ -29,6 +29,7 @@ Les décisions validées sont aussi reportées dans `docs/projet.md` §6. Statut
 | D21 | Aucune dépendance à `symlink` (pas de `storage:link`) : documents clients sur le disque `private` servis par un contrôleur soumis aux policies ; fichiers publics (logo) servis par une route dédiée | `symlink` non confirmé par Oxahost (Q71) | **Validée** (17/11/2026) | Responsable technique |
 | D22 | Variante manuelle du déploiement par le terminal cPanel, en annexe de `docs/installation_hebergement_oxahost.md` | SSH depuis l'extérieur non confirmé (Q8) | **Validée** (17/11/2026) | Responsable technique |
 | D23 | Gestion des clés (`APP_KEY`, `AVIATOR_BLIND_INDEX_KEY`, VAPID) : une clé par environnement, générée une seule fois ; copie chez Aviator en Tunisie (gestionnaire de mots de passe et copie papier) ; `key:generate` interdit en recette et en production après l'installation ; changement par `APP_PREVIOUS_KEYS` et `aviator:reencrypt-secrets`, ou par `aviator:rehash-blind-index` ; `aviator:check-environment` signale une clé absente sans afficher sa valeur. Détail : `docs/gestion_des_cles.md` | Perte de clé = perte de données chiffrées ou contournement de la liste noire | **Validée** (18/11/2026) | Responsable technique |
+| D24 | Recherche de clients par un admin ou un utilisateur d'agence (K-04, RG-14) : nom exact ou numéro de pièce, de permis ou de téléphone ; 10 résultats au plus ; journalisée sans la valeur recherchée ; 30 recherches par heure au plus. Détail ci-dessous. **Codée en phase 4**, avec la réservation (ne tient pas dans le budget de la phase 2) | Conforme à K-04 et RG-14 ; empêche de parcourir le carnet par petits morceaux | **Validée** (17/11/2026) | Responsable technique |
 
 ## RG-14 précisée (D13, Q27)
 
@@ -68,3 +69,18 @@ Appliquées à tous les comptes du back-office : création par `aviator:create-s
 | 2FA | Obligatoire pour `super_admin` et `admin` (D9), activée à la première connexion |
 
 Ces règles sont définies à un seul endroit (`Password::defaults()`, dans `AppServiceProvider`) et couvertes par des tests.
+
+## Recherche de clients (D24)
+
+Pour l'admin et l'utilisateur d'agence. Le super admin dispose en plus du carnet d'adresses (D13). Mise en œuvre en **phase 4** (`docs/plans/phase_4.md`).
+
+| Sujet | Règle |
+| --- | --- |
+| Critères | Un seul critère par recherche : **nom exact**, ou **numéro de pièce**, ou **numéro de permis**, ou **téléphone** |
+| Nom | Prénom et nom **complets**, dans n'importe quel ordre, insensibles à la casse et aux accents ; aucune recherche partielle |
+| Pièce et permis | Harmonisés comme pour l'empreinte (majuscules, sans espaces, tirets ni points), puis comparés par **empreinte HMAC** : le numéro reste chiffré en base. « 0123 4567 », « 0123-4567 » et « 01234567 » donnent le même résultat, avec des tests |
+| Téléphone | Harmonisé au format **+216XXXXXXXX**, que l'utilisateur l'ait saisi avec ou sans indicatif, avec ou sans espaces (à ajuster dans `SearchNormalizer::phone`, qui renvoie aujourd'hui les chiffres sans « + »). Le téléphone est une coordonnée affichée en clair à qui y a droit : il n'est pas chiffré ; s'il l'était un jour, la recherche passerait par une empreinte, comme la pièce |
+| Résultats | **10 au plus**. Affichage : nom, statut sur la liste noire, nombre de locations ; aucune liste complète, aucun export (D13) |
+| Journal | Chaque recherche est inscrite dans le journal `customer_access` : utilisateur, critère utilisé, nombre de résultats, **jamais la valeur recherchée** |
+| Fréquence | Au-delà de **30 recherches par heure** pour un même utilisateur, les suivantes sont refusées et le super admin est notifié, **sans donnée client**. Avant la phase 9, la notification passe par le centre de notifications ; le push s'y ajoute en phase 9 |
+| Prérequis de données | Le permis est porté par la table `drivers` (empreinte `license_hash`) : sa migration est avancée de la phase 5 à la phase 4 pour la recherche |

@@ -232,3 +232,52 @@ Oxahost a confirmé PHP 8.3 (PHP Selector, CloudLinux), SSH avec Git, Composer, 
 | L10 | 1 | Variante manuelle : **+0,25** (1,25 j) |
 | Aléas | 1 | Inchangé : **1 j** restant |
 | **Total** | **19** | **19 j, inchangé** |
+
+---
+
+## Point budgétaire au 17/11/2026, après le lot 5
+
+**Correction** : le tableau de l'avenant 1 annonçait un total inchangé de 19 j. C'est une erreur de calcul : −1 j sur les lots 1 et 2, mais +1,5 j sur les lots 7, 9 et 10, soit un total réel de **19,5 j**, aléas compris.
+
+### Réalisé (estimation du temps passé)
+
+| Lot ou travail | Prévu (j) | Réalisé (j) | Écart |
+| --- | ---: | ---: | ---: |
+| L1. Installation et outillage | 1,5 | 1 | −0,5 |
+| L2. Modèle de données et migrations | 3 | 2,5 | −0,5 |
+| Compléments du 17/11 : gestion des clés (D23), empreintes, CI | — | 0,75 | +0,75 |
+| L3. Authentification et utilisateurs | 3 | 2,5 | −0,5 |
+| Compléments du 17/11 : accès de secours, coupure des sessions, 2FA des agences | — | 1 | +1 |
+| L4. Agences et portée | 2,5 | 2 | −0,5 |
+| L5. Données clients (D13), `aviator:permission`, remplacements à durée limitée, règle hors Eloquent | 1,5 | 2,5 | +1 |
+| **Total réalisé** | **11,5** | **12,25** | **+0,75** |
+
+### Reste à faire (plan actuel)
+
+| Lot | Prévu (j) |
+| --- | ---: |
+| L6. Audit | 1 |
+| L7. Mutualisé et sécurité (D20, D21) | 2,5 |
+| L8. Money, séquences, concurrence | 1,5 |
+| L9. `aviator:check-environment` | 1,25 |
+| L10. Installation et déploiement (CI déjà faite) | 1,25 |
+| L11. Rapport | 0,5 |
+| **Total restant** | **8** |
+| Aléas restants | **0** (le jour d'aléas est absorbé par les compléments) |
+
+**Projection : 12,25 + 8 = 20,25 j, soit 1,25 j (+6,6 %) au-delà des 19 j.** C'est sous le seuil d'alerte de +20 % (22,8 j), mais au-delà du budget. Le lot 6 n'est pas commencé.
+
+### Proposition de rééquilibrage, à valider
+
+| Lot | Actuel (j) | Proposé (j) | Changement |
+| --- | ---: | ---: | --- |
+| L6. Audit | 1 | 1 | Inchangé |
+| L7. Mutualisé et sécurité | 2,5 | 1,5 | Le contrôleur des fichiers privés (D21) passe en **phase 4**, avec les premiers documents de véhicule ; la route du logo passe en **phase 3**, avec la fiche société (A-01). En phase 2, D21 se limite à ne jamais utiliser `storage:link`, plus un test d'architecture |
+| L8. Money, séquences, concurrence | 1,5 | 1,5 | Inchangé (premier test de concurrence) |
+| L9. `aviator:check-environment` | 1,25 | 1 | Contrôles du plan et de l'avenant, sans option supplémentaire |
+| L10. Installation et déploiement | 1,25 | 0,75 | La CI est faite (lot 1) ; restent les commandes de première installation, l'annexe manuelle (D22) et la relecture de `deploy.sh` |
+| L11. Rapport | 0,5 | 0,5 | Inchangé |
+| **Total restant** | **8** | **6,25** | |
+| **Total de la phase** | **20,25** | **18,5** | **0,5 j d'aléas** |
+
+À partir de maintenant, aucun ajout en phase 2 : toute nouvelle idée va dans le plan de la phase concernée (`docs/plans/phase_N.md`).
