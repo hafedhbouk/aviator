@@ -74,25 +74,16 @@ jobs:
           # Clé d'empreinte générée à chaque exécution : rien n'est stocké dans la CI.
           echo "AVIATOR_BLIND_INDEX_KEY=$(php -r 'echo bin2hex(random_bytes(32));')" >> "$GITHUB_ENV"
 
-      - name: Pint
-        run: vendor/bin/pint --test
-
-      - name: Larastan
-        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
-
-      - name: Audit des dépendances
-        run: composer audit
-
       - name: Node 22
         uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
 
-      - name: Assets
-        run: |
-          npm ci
-          npm run build
+      - name: Dépendances front
+        run: npm ci
 
-      - name: Tests Pest (MariaDB)
-        run: php artisan test
+      # Exactement les contrôles du poste de développement (composer check), sans cache :
+      # Pint, Larastan, Pest sur MariaDB, composer audit, npm run build.
+      - name: Contrôles (composer check)
+        run: composer check

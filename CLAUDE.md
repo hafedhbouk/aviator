@@ -48,11 +48,11 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 ## Commandes
 
 ```bash
-php artisan test
-vendor/bin/pint --test
-vendor/bin/phpstan analyse
-composer audit
-npm run build
+composer check   # contrôles de la CI, sans aucun cache : Pint (test), Larastan, Pest sur MariaDB, composer audit, npm run build
 ```
+
+- `composer check` est **la** commande de contrôle : la CI GitHub l'exécute telle quelle, le poste et la CI ne peuvent donc pas diverger. Elle supprime le cache de Pint, vide celui de Larastan et celui de la configuration avant de lancer les contrôles.
+- Lance `composer check` **avant chaque commit** et cite son résultat (nombre de tests, statut de chaque outil) dans le compte rendu.
+- Un contrôle isolé reste possible pendant le développement (`php artisan test --filter=…`), mais ne vaut jamais validation.
 
 Branches : `phase/NN-nom` ; commits `feat:` / `fix:` / `test:` / `docs:` / `chore:`.

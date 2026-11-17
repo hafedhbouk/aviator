@@ -76,6 +76,17 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "check": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"@unlink('storage/framework/cache/pint.cache');\"",
+            "@php vendor/bin/pint --test --cache-file=storage/framework/cache/pint.cache",
+            "@php vendor/bin/phpstan clear-result-cache --quiet",
+            "@php vendor/bin/phpstan analyse --no-progress --memory-limit=1G",
+            "@php artisan config:clear --ansi",
+            "@php artisan test",
+            "@composer audit",
+            "npm run build"
         ]
     },
     "extra": {
@@ -96,5 +107,8 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "scripts-descriptions": {
+        "check": "Contrôles de la CI, sans cache : Pint, Larastan, Pest (MariaDB), composer audit, npm run build"
+    }
 }
