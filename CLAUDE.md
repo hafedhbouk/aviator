@@ -1,6 +1,6 @@
 # CLAUDE.md — Aviator (Laravel)
 
-Application de location de voitures pour Aviator (4 agences, 6 utilisateurs, ~1 000 clients), en Laravel 13 / PHP 8.3 / MySQL 8 / Filament v5.
+Application de location de voitures pour Aviator (4 agences, 6 utilisateurs, ~1 000 clients), en Laravel 13 / PHP 8.3 / MariaDB 10.11 / Filament v5.
 Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour toute tâche sur ce dépôt. Source fonctionnelle : `docs/reference/cahier_des_charges_aviator.md`.
 
 ## Avant toute tâche
@@ -22,13 +22,13 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 
 ## Poste de développement
 
-- Windows 11 + Laragon : PHP 8.3.16, MySQL 8.4.3, projet dans `C:\laragon\www\aviator`, site local `https://aviator.test`.
+- Windows 11 + Laragon : PHP 8.3.16, MariaDB 10.11 (comme en production), projet dans `C:\laragon\www\aviator`, site local `https://aviator.test`.
 - Commandes exécutées dans Git Bash : chemins au format `/c/laragon/www/aviator`, fins de ligne LF.
-- Production en « MySQL 8 » (version exacte à confirmer) : n'utilise aucune fonctionnalité propre à MySQL 8.4.
+- Production en MariaDB 10.11.19 : `DB_CONNECTION=mariadb` ; n'utilise aucune fonctionnalité propre à MySQL 8 (index fonctionnels, index JSON, `joinLateral`, interclassements `utf8mb4_0900_*`).
 
 ## Contraintes techniques
 
-- **PHP 8.3 maximum**, **MySQL 8**, hébergement **mutualisé** : pas de Redis, pas de Supervisor, pas de processus permanent ; files en `database` traitées par le planificateur (cron chaque minute) ; assets compilés avant déploiement.
+- **PHP 8.3 maximum**, **MariaDB 10.11**, hébergement **mutualisé** : pas de Redis, pas de Supervisor, pas de processus permanent ; files en `database` traitées par le planificateur (cron chaque minute) ; assets compilés avant déploiement.
 - Montants en `DECIMAL(15,3)`, calculs avec `brick/math`, jamais de `float`.
 - Règles métier dans `app/Domain/*`, appelées par Filament et par l'espace client ; jamais dans les ressources ou les vues.
 - Droits contrôlés côté serveur (policies) ; `AgencyScope` pour les utilisateurs d'agence.

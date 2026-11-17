@@ -1,4 +1,4 @@
-# PROMPT MAÎTRE CLAUDE CODE — Aviator, application de location de voitures (Laravel, MySQL)
+# PROMPT MAÎTRE CLAUDE CODE — Aviator, application de location de voitures (Laravel, MariaDB)
 
 > **Mode d'emploi**
 > 1. Placez ce kit à la racine du dépôt (le `CLAUDE.md` court y est déjà).
@@ -34,7 +34,7 @@ Règles de conduite non négociables :
 | --- | --- | --- |
 | Framework | **Laravel 13** | Sécurité jusqu'au 17/03/2028 |
 | PHP | **8.3** | Version maximale disponible chez Oxahost ; ne rien utiliser qui exige PHP 8.4 |
-| Base de données | **MySQL 8**, InnoDB, `utf8mb4` | Fournie par Oxahost (version exacte à confirmer) ; poste en MySQL 8.4.3 : aucune fonctionnalité propre à 8.4 ; tests sur MySQL, pas SQLite (verrous de ligne) |
+| Base de données | **MariaDB 10.11**, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci` | Fournie par Oxahost : MariaDB 10.11.19 (confirmé le 17/11/2026) ; connexion Laravel `mariadb` ; poste et tests en MariaDB 10.11 ; aucune fonctionnalité propre à MySQL 8 (index fonctionnels, index JSON, `joinLateral`, interclassements `utf8mb4_0900_*`) ; tests sur MariaDB, pas SQLite (verrous de ligne) |
 | Back-office | **Filament v5** (Livewire), panneau `/admin` | Responsive, utilisable sur smartphone par le super admin |
 | Espace client (lot 2) | Blade + Livewire + Tailwind CSS, garde d'authentification `customer` séparée | Conçu d'abord pour le smartphone |
 | Rôles et droits | `spatie/laravel-permission` + Policies | Contrôle serveur systématique |
@@ -44,9 +44,9 @@ Règles de conduite non négociables :
 | PDF | Bibliothèque PHP pure (dompdf ; mPDF si documents en arabe) | Aucun binaire externe sur le mutualisé |
 | Files et tâches | Driver de file `database`, planificateur lancé par cron chaque minute | Pas de Redis, pas de processus permanent |
 | Montants | `DECIMAL(15,3)` (dinar à 3 décimales), calculs avec `brick/math` | Jamais de `float` pour l'argent |
-| Tests | Pest, base MySQL de test dédiée | Tests de concurrence obligatoires |
+| Tests | Pest, base MariaDB de test dédiée | Tests de concurrence obligatoires |
 | Qualité | Laravel Pint, Larastan (niveau 6 au moins), `composer audit` | Bloquants en intégration continue |
-| Poste de développement | Windows 11 + Laragon (PHP 8.3.16, MySQL 8.4.3), Git Bash | Projet dans `C:\laragon\www\aviator`, site local `https://aviator.test` ; commandes compatibles Git Bash ; fins de ligne LF |
+| Poste de développement | Windows 11 + Laragon (PHP 8.3.16, MariaDB 10.11), Git Bash | Projet dans `C:\laragon\www\aviator`, site local `https://aviator.test` ; commandes compatibles Git Bash ; fins de ligne LF |
 | Hébergement | Oxahost Ultimate (mutualisé cPanel), Tunis | Production + recette en sous-domaine ; voir `docs/installation_hebergement_oxahost.md` |
 
 Vérifie la compatibilité Laravel 13 / PHP 8.3 de chaque paquet **avant** de l'ajouter. Aucun paquet payant sans accord écrit.
@@ -143,7 +143,7 @@ Statuts : `available`, `reserved`, `rented`, `maintenance`, `unavailable`, `reti
 | ID | Règle | Mise en œuvre |
 | --- | --- | --- |
 | RG-01 | Pas de chevauchement sur un véhicule, délai de préparation compris | Requête d'intersection `start < other_end + buffer AND end + buffer > other_start` dans `Availability` |
-| RG-02 | Robuste aux saisies simultanées | Transaction + `lockForUpdate()` sur la ligne du véhicule avant le contrôle ; test de concurrence avec deux connexions MySQL |
+| RG-02 | Robuste aux saisies simultanées | Transaction + `lockForUpdate()` sur la ligne du véhicule avant le contrôle ; test de concurrence avec deux connexions à la base |
 | RG-03 | Contrat issu d'une réservation confirmée ou d'une saisie comptoir contrôlée | Même service |
 | RG-04 | Km retour ≥ km départ | Validation de l'état des lieux |
 | RG-05 | Une période d'un contrat n'est facturée qu'une fois | Contrôle à l'émission |
@@ -291,7 +291,7 @@ PHASE 1 — Analyse et maquettes. Tu ne crées aucun code applicatif.
 ```text
 Phase 1 validée. Décisions : [colle les décisions et réponses].
 Branche phase/02-socle.
-1. Installe Laravel 13 (PHP 8.3) dans C:\laragon\www\aviator sans écraser le kit (CLAUDE.md, docs/, scripts/), puis Filament v5, spatie/laravel-permission, spatie/laravel-activitylog, Pest, Pint, Larastan ; configure MySQL de dev (aviator_dev) et de test (aviator_test, fichier .env.testing) ; ajoute un .gitattributes forçant les fins de ligne LF.
+1. Installe Laravel 13 (PHP 8.3) dans C:\laragon\www\aviator sans écraser le kit (CLAUDE.md, docs/, scripts/), puis Filament v5, spatie/laravel-permission, spatie/laravel-activitylog, Pest, Pint, Larastan ; configure MariaDB de dev (aviator_dev) et de test (aviator_test, fichier .env.testing) avec DB_CONNECTION=mariadb (connexion mariadb de config/database.php : charset utf8mb4, collation utf8mb4_unicode_ci), et retire de phpunit.xml les variables DB_CONNECTION et DB_DATABASE de SQLite ; ajoute un .gitattributes forçant les fins de ligne LF.
 2. Crée les agences, les 3 profils, AgencyScope, les policies de base, la 2FA du super admin et de l'admin, le journal d'audit.
 3. Configure files et cache en driver database, le planificateur compatible mutualisé (section 10), le disque privé.
 4. Mets en place l'intégration continue (tests, Pint, Larastan, composer audit) et un script de déploiement (scripts/deploy.sh) que j'exécuterai.
@@ -310,7 +310,7 @@ Rapport, puis attends ma validation.
 ```text
 Phase 3 validée. Branche phase/04-parc-leasing-reservations.
 Modules B (dont leasing, apport, échéancier) et C, P1 d'abord.
-Priorité : service Availability (RG-01, RG-02) avec test de concurrence sur deux connexions MySQL, puis VehicleStatusService.
+Priorité : service Availability (RG-01, RG-02) avec test de concurrence sur deux connexions à la base, puis VehicleStatusService.
 Scénarios 1, 2, 10, 15 verts. Rapport, puis attends ma validation.
 ```
 

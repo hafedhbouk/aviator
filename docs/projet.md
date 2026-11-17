@@ -24,8 +24,8 @@ Dernière mise à jour : 17/11/2026
 | --- | --- |
 | Framework | Laravel 13, Filament v5 |
 | PHP | 8.3 (maximum disponible chez Oxahost) |
-| Base de données | MySQL 8 en production (version exacte à confirmer) ; MySQL 8.4.3 en local |
-| Poste de développement | Windows 11 + Laragon (PHP 8.3.16, MySQL 8.4.3), `C:\laragon\www\aviator`, `https://aviator.test` — `docs/installation_poste_dev.md` |
+| Base de données | MariaDB 10.11.19 en production (confirmé par Oxahost le 17/11/2026) ; MariaDB 10.11 en local |
+| Poste de développement | Windows 11 + Laragon (PHP 8.3.16, MariaDB 10.11), `C:\laragon\www\aviator`, `https://aviator.test` — `docs/installation_poste_dev.md` |
 | Dépôt Git | [À COMPLÉTER] |
 | Hébergement | Oxahost Ultimate (mutualisé cPanel), Tunis — `docs/installation_hebergement_oxahost.md` |
 | Domaine | [À COMPLÉTER — question Q6] |
@@ -79,6 +79,7 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 17/11/2026 | Comptabilité tenue par l'expert-comptable à partir des exports | [À confirmer par la direction] |
 | 17/11/2026 | Hébergement Oxahost Ultimate (mutualisé), recette en sous-domaine | Responsable technique |
 | 17/11/2026 | Espace client en lot 2 ; pas de paiement en ligne ni de SMS ; notifications push uniquement | Direction |
+| 17/11/2026 | Base MariaDB 10.11 en local, en test et en production ; connexion Laravel `mariadb` (production Oxahost en MariaDB 10.11.19, confirmé par Oxahost) | Responsable technique |
 
 ## 7. Points à confirmer avec Oxahost avant commande
 
@@ -88,7 +89,7 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | Cron toutes les minutes et Composer en SSH | À confirmer |
 | Lieu de stockage des sauvegardes (Tunisie) | À confirmer |
 | Prix annuel exact (358,80 ou 418,68 DT HT) | À confirmer |
-| Version exacte de MySQL (le poste est en 8.4.3) | À confirmer |
+| Version exacte de la base de données | Confirmé : MariaDB 10.11.19 |
 
 ## 8. Règles fiscales validées
 

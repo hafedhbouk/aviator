@@ -1,10 +1,10 @@
-# Cahier des charges — Aviator, application de location de voitures (Laravel, MySQL)
+# Cahier des charges — Aviator, application de location de voitures (Laravel, MariaDB)
 
 Version du 17/11/2026 — à valider par la direction d'Aviator et l'expert-comptable.
 
 ## 1. Présentation du projet
 
-Le projet consiste à développer, avec Laravel et MySQL, une application de gestion sur mesure pour Aviator, société tunisienne de location de voitures (20 à 50 véhicules, 4 agences, 6 utilisateurs, environ 1 000 clients). Elle couvre le parc, les réservations, les contrats, la facturation commerciale, les encaissements, les cautions, la maintenance, le leasing des véhicules, la relation client (CRM), des statistiques de rentabilité pour la prise de décision et, dans un second temps, un espace en ligne pour les clients. Toute l'application est utilisable sur smartphone et les notifications passent par des notifications push, sans SMS. **La comptabilité générale n'est pas incluse** : elle reste tenue par l'expert-comptable dans son propre logiciel, alimenté par des exports produits par l'application.
+Le projet consiste à développer, avec Laravel et MariaDB 10.11, une application de gestion sur mesure pour Aviator, société tunisienne de location de voitures (20 à 50 véhicules, 4 agences, 6 utilisateurs, environ 1 000 clients). Elle couvre le parc, les réservations, les contrats, la facturation commerciale, les encaissements, les cautions, la maintenance, le leasing des véhicules, la relation client (CRM), des statistiques de rentabilité pour la prise de décision et, dans un second temps, un espace en ligne pour les clients. Toute l'application est utilisable sur smartphone et les notifications passent par des notifications push, sans SMS. **La comptabilité générale n'est pas incluse** : elle reste tenue par l'expert-comptable dans son propre logiciel, alimenté par des exports produits par l'application.
 
 Ce document remplace, pour cette option technique, le cahier des charges ERPNext du 17/10/2026. Il doit être validé par la direction et l'expert-comptable avant tout développement.
 
@@ -15,7 +15,7 @@ Ce document remplace, pour cette option technique, le cahier des charges ERPNext
 - **Parc** : environ 20 à 50 véhicules, achetés ou financés en leasing.
 - **Utilisateurs** : 6 comptes — un super admin, un admin au siège de Djerba et un utilisateur par agence.
 - **Clients** : environ 1 000 clients existants, à reprendre dans le CRM.
-- **Socle technique** : application web Laravel, base MySQL, hébergée en Tunisie (voir section 2).
+- **Socle technique** : application web Laravel, base MariaDB 10.11, hébergée en Tunisie (voir section 2).
 - **Mode de réalisation** : développement assisté par IA (Claude Code), sous contrôle d'un responsable technique.
 - **Évolutions envisagées** : vente de véhicules, gestion immobilière, prestations de services.
 
@@ -71,13 +71,13 @@ Les factures restent émises par l'application : leurs mentions obligatoires et 
 
 ## 2. Choix techniques
 
-L'application est un monolithe Laravel 13 sur PHP 8.3, avec une base MySQL 8, hébergé sur l'offre mutualisée **Oxahost Ultimate** à Tunis. Elle comprend le back-office responsive des 6 utilisateurs (lot 1) puis l'espace client (lot 2). L'hébergement mutualisé supprime l'administration système ; ses conditions sont détaillées en 2.2.
+L'application est un monolithe Laravel 13 sur PHP 8.3, avec une base MariaDB 10.11, hébergé sur l'offre mutualisée **Oxahost Ultimate** à Tunis. Elle comprend le back-office responsive des 6 utilisateurs (lot 1) puis l'espace client (lot 2). L'hébergement mutualisé supprime l'administration système ; ses conditions sont détaillées en 2.2.
 
 | Composant | Choix | Justification |
 | --- | --- | --- |
 | Framework | Laravel 13 | Version actuelle, sortie le 17/03/2026 ; corrections de sécurité jusqu'au 17/03/2028 ; montée de version annuelle prévue dans la maintenance |
 | Langage | PHP 8.3 | Minimum exigé par Laravel 13 et version la plus récente proposée par Oxahost ; passage à PHP 8.4 dès qu'elle est disponible |
-| Base de données | MySQL 8 fourni par Oxahost, moteur InnoDB | Transactions et verrous de ligne nécessaires aux règles anti-chevauchement |
+| Base de données | MariaDB 10.11 fourni par Oxahost (10.11.19), moteur InnoDB | Transactions et verrous de ligne nécessaires aux règles anti-chevauchement |
 | Back-office | Filament v5 (sur Livewire), responsive | Écrans de gestion utilisables sur ordinateur, tablette et smartphone |
 | Application installable | Application web installable (PWA) : icône sur l'écran d'accueil, plein écran | Accès du super admin depuis son téléphone, sans magasin d'applications |
 | Notifications | Notifications push du navigateur (Web Push), paquet libre laravel-notification-channels/webpush | Gratuites, sans SMS ni prestataire payant ; sur iPhone, elles exigent iOS 16.4 ou plus et l'application ajoutée à l'écran d'accueil |
@@ -103,7 +103,7 @@ L'offre Ultimate convient à Aviator. La page des fonctionnalités d'Oxahost con
 | Espace disque | Confirmé | NVMe illimité ; 4 Go correspondent à la mémoire vive. Limite de 1 000 000 de fichiers (inodes), largement suffisante |
 | Puissance | Confirmé | 4 vCores, 4 Go de RAM, 70 requêtes PHP simultanées, débit disque de 8 Mo/s |
 | Accès SSH | Confirmé | Inclus dans l'offre Ultimate (absent des offres inférieures) |
-| Base de données | Confirmé | MySQL 8 |
+| Base de données | Confirmé | MariaDB 10.11.19 (confirmé par Oxahost le 17/11/2026) |
 | Sites | Confirmé | Sites illimités : production et recette en sous-domaine sur le même compte |
 | Sauvegardes | Confirmé | Quotidiennes et à la demande (JetBackup), chiffrées, conservées jusqu'à 30 jours |
 | Disponibilité | Confirmé | Engagement de 99,9 %, avec compensation ; support prioritaire |
@@ -115,7 +115,7 @@ L'offre Ultimate convient à Aviator. La page des fonctionnalités d'Oxahost con
 
 La garantie « satisfait ou remboursé » de 30 jours permet de vérifier ces points en installant le socle de l'application (phase 2) avant de s'engager pour l'année.
 
-Sources : [Laravel, notes de version et politique de support](https://laravel.com/docs/13.x/releases.md) ; [MySQL, dates de fin de support (endoflife.date)](https://endoflife.date/mysql) ; [Filament v5](https://dev.to/hafiz619/filament-v5-released-whats-new-what-changed-and-should-you-upgrade-2h8l).
+Sources : [Laravel, notes de version et politique de support](https://laravel.com/docs/13.x/releases.md) ; [MariaDB, dates de fin de support (endoflife.date)](https://endoflife.date/mariadb) ; [Filament v5](https://dev.to/hafiz619/filament-v5-released-whats-new-what-changed-and-should-you-upgrade-2h8l).
 
 ## 3. Acteurs et profils utilisateurs
 
@@ -450,7 +450,7 @@ L'espace client est livré dans un second temps (lot 2). Il permet à un client 
 
 ## 5. Règles de gestion et modèle de données
 
-Le cycle central est : réservation → contrat → facture → encaissement, avec la caution suivie à part. Toutes les règles ci-dessous sont contrôlées côté serveur, dans des transactions MySQL.
+Le cycle central est : réservation → contrat → facture → encaissement, avec la caution suivie à part. Toutes les règles ci-dessous sont contrôlées côté serveur, dans des transactions MariaDB (InnoDB).
 
 ### 5.1 Statuts du véhicule
 
@@ -584,7 +584,7 @@ Pour l'espace client, ouvert sur Internet :
 
 | Environnement | Où | Usage |
 | --- | --- | --- |
-| Développement | Poste du développeur : Windows 11 avec Laragon (PHP 8.3.16, MySQL 8.4.3) | Développement et tests automatisés |
+| Développement | Poste du développeur : Windows 11 avec Laragon (PHP 8.3.16, MariaDB 10.11) | Développement et tests automatisés |
 | Recette | Sous-domaine du compte Oxahost Ultimate (par exemple `recette.aviator.tn`), base séparée, accès protégé par mot de passe | Essais des utilisateurs, validation des phases |
 | Production | Compte Oxahost Ultimate, Tunis : back-office et espace client | Exploitation |
 
@@ -706,7 +706,7 @@ Le chiffrage ERPNext part du chiffrage du 18/10/2026 (130 jours) et ajoute 85 jo
 | Espace client | Portail natif (compte, factures) complété d'un parcours de réservation sur mesure | Entièrement sur mesure |
 | Délai du lot 1 | Plus court (175 jours) | Plus long (245 jours) |
 | Développeurs disponibles en Tunisie | Rares (spécialistes Frappe) | Nombreux (PHP, Laravel) |
-| Base de données | MariaDB | MySQL 8 |
+| Base de données | MariaDB | MariaDB 10.11 |
 
 **Comment choisir.** ERPNext est le meilleur choix si Aviator veut tenir sa comptabilité dans le même outil et limiter l'investissement de départ. Laravel est préférable si Aviator veut un hébergement mutualisé sans administration, une interface pensée pour le téléphone et l'espace client, et une maintenance confiable à un développeur facile à trouver ; la comptabilité reste alors chez l'expert-comptable. Les montants des deux options reposent sur les mêmes tarifs journaliers ; le détail est dans la feuille « ERPNext même périmètre » du fichier `Chiffrage_Aviator_Laravel_vs_ERPNext.xlsx`. Le paiement en ligne pourra être ajouté plus tard dans les deux cas.
 

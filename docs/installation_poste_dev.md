@@ -1,16 +1,14 @@
 # Installation du poste de développement (Windows 11 + Laragon)
 
-Poste du développeur : **Windows 11**, **Laragon** avec **PHP 8.3.16** et **MySQL 8.4.3**.
+Poste du développeur : **Windows 11**, **Laragon** avec **PHP 8.3.16** et **MariaDB 10.11**, comme la production Oxahost (MariaDB 10.11.19).
 Ce document complète Laragon pour le projet Aviator :
 - extensions PHP nécessaires à Laravel 13, Filament et aux notifications push ;
-- deux bases MySQL : `aviator_dev` (développement) et `aviator_test` (tests automatisés) ;
+- MariaDB 10.11 et deux bases : `aviator_dev` (développement) et `aviator_test` (tests automatisés) ;
 - Node.js pour compiler les assets ;
 - Git pour Windows (Git Bash), nécessaire à Claude Code et au script de déploiement ;
 - Claude Code installé nativement sous Windows.
 
-Durée : environ 45 minutes.
-
-> **Écart de versions à surveiller** : la production Oxahost propose PHP 8.3 (comme vous) et « MySQL 8 » sans préciser la version. Votre MySQL 8.4.3 est plus récent : n'utilisez aucune fonctionnalité propre à MySQL 8.4 et faites confirmer la version exacte par Oxahost (voir `docs/projet.md`).
+Durée : environ 1 heure.
 
 ---
 
@@ -19,7 +17,7 @@ Durée : environ 45 minutes.
 1. Menu Laragon → **PHP** → **Version** : sélectionnez `php-8.3.16`.
 2. Menu Laragon → **PHP** → **Extensions** : cochez au minimum `bcmath`, `fileinfo`, `gd`, `gmp`, `intl`, `mbstring`, `openssl`, `pdo_mysql`, `sodium`, `zip`.
 3. Menu Laragon → **PHP** → **php.ini** : `memory_limit = 512M`, `upload_max_filesize = 16M`, `post_max_size = 20M`.
-4. Menu Laragon → **Tools** → **Path** → **Add Laragon to Path**, pour que `php`, `composer` et `mysql` soient disponibles dans tous les terminaux (PowerShell, Git Bash, Claude Code).
+4. Menu Laragon → **Tools** → **Path** → **Add Laragon to Path**, pour que `php`, `composer` et `mysql` (le client de MariaDB) soient disponibles dans tous les terminaux (PowerShell, Git Bash, Claude Code).
 5. Redémarrez Laragon (**Stop**, puis **Start All**).
 
 Vérifiez dans un **nouveau** terminal :
@@ -30,9 +28,30 @@ php -m | grep -iE "bcmath|gmp|intl|pdo_mysql|zip|gd|sodium"
 composer -V
 ```
 
-## 2. Bases MySQL
+## 2. MariaDB 10.11 et bases de données
 
-Laragon fournit MySQL 8.4.3 avec l'utilisateur `root` sans mot de passe. Créez un utilisateur dédié (terminal Laragon ou HeidiSQL) :
+La production Oxahost est en **MariaDB 10.11.19**. Le poste utilise la même version majeure, pour que le développement et les tests portent sur le même moteur. MariaDB utilise le même pilote PHP que MySQL (`pdo_mysql`) ; côté Laravel, la connexion est `mariadb` (`DB_CONNECTION=mariadb`).
+
+### 2.1 Installer MariaDB 10.11 dans Laragon
+
+1. Sur [mariadb.org/download](https://mariadb.org/download/), téléchargez la **dernière version 10.11** pour Windows x86_64, au format **ZIP** (et non MSI).
+2. Arrêtez Laragon (**Stop**).
+3. Décompressez l'archive dans `C:\laragon\bin\mysql\`. Vous obtenez par exemple `C:\laragon\bin\mysql\mariadb-10.11.x-winx64\`, qui contient directement un dossier `bin\`.
+4. Menu Laragon → **MySQL** → **Version** : sélectionnez `mariadb-10.11.x-winx64`.
+5. **Start All**. Au premier démarrage, Laragon initialise un nouveau dossier de données. **Ne réutilisez pas les données de MySQL 8.4** : leur format est incompatible avec MariaDB. Les bases `aviator_dev` et `aviator_test` sont recréées ci-dessous ; si `aviator_dev` contenait des données utiles, exportez-les en SQL avant de changer de version.
+
+Vérifiez dans un **nouveau** terminal :
+
+```bash
+mysql --version                       # doit mentionner MariaDB et 10.11
+mysql -u root -e "SELECT VERSION();"  # 10.11.x-MariaDB
+```
+
+Gardez l'ancienne version de MySQL dans `C:\laragon\bin\mysql\` le temps de vérifier que tout fonctionne, puis supprimez-la.
+
+### 2.2 Créer les bases
+
+Laragon démarre MariaDB avec l'utilisateur `root` sans mot de passe. Créez un utilisateur dédié (terminal Laragon ou HeidiSQL) :
 
 ```sql
 CREATE DATABASE aviator_dev  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -43,7 +62,20 @@ GRANT ALL PRIVILEGES ON aviator_test.* TO 'aviator'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-Les tests utilisent MySQL, pas SQLite : les règles anti-double réservation reposent sur des verrous de ligne que SQLite ne reproduit pas. Le mot de passe va dans `.env` et `.env.testing`, jamais dans Git.
+Interclassement imposé : `utf8mb4_unicode_ci`, comme dans la connexion `mariadb` de Laravel. Les interclassements `utf8mb4_0900_*` de MySQL 8 n'existent pas dans MariaDB 10.11.
+
+Dans `.env` **et** dans `.env.testing` (base `aviator_test`) :
+
+```ini
+DB_CONNECTION=mariadb
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=aviator_dev       # aviator_test dans .env.testing
+DB_USERNAME=aviator
+DB_PASSWORD=<mot de passe>
+```
+
+Les tests utilisent MariaDB, pas SQLite : les règles anti-double réservation reposent sur des verrous de ligne que SQLite ne reproduit pas. Le mot de passe va dans `.env` et `.env.testing`, jamais dans Git.
 
 ## 3. Node.js
 
@@ -157,7 +189,10 @@ L'ancienne skill `tunisia-car-rental-erpnext` (dans `C:\Users\<vous>\.claude\ski
 | Symptôme | Solution |
 | --- | --- |
 | `php` ou `composer` introuvable dans Git Bash ou Claude Code | Laragon → Tools → Path → Add Laragon to Path, puis nouveau terminal |
-| `could not find driver` | Activer `pdo_mysql` dans Laragon → PHP → Extensions |
+| `could not find driver` | Activer `pdo_mysql` dans Laragon → PHP → Extensions (pilote utilisé aussi par MariaDB) |
+| MariaDB ne démarre pas après le changement de version | Dossier de données de MySQL 8.4 réutilisé : laisser Laragon en créer un nouveau, puis recréer les bases (§2.2) |
+| `Unknown collation: 'utf8mb4_0900_ai_ci'` | Script ou dump issu de MySQL 8 : remplacer par `utf8mb4_unicode_ci` |
+| Les tests passent sur SQLite au lieu de MariaDB | Retirer `DB_CONNECTION` et `DB_DATABASE` de `phpunit.xml` : ces variables priment sur `.env.testing` |
 | Erreur `gmp` ou `sodium` lors de l'installation d'un paquet | Activer l'extension, redémarrer Laragon |
 | `aviator.test` ne répond pas | Laragon → Reload ; vérifier que le dossier `public/` existe (après la phase 2) |
 | Notifications push muettes | HTTPS local activé, navigateur autorisé ; pour l'iPhone, tester sur la recette |

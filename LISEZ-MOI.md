@@ -7,7 +7,7 @@
 | `CLAUDE.md` | Règles chargées par Claude Code à chaque session |
 | `PROMPT_MAITRE_AVIATOR_LARAVEL.md` | Référence complète, à transformer en skill `aviator-laravel` ; contient les prompts des 11 phases |
 | `docs/projet.md` | Fiche projet : environnements, personnes, budget, suivi des phases, décisions |
-| `docs/installation_poste_dev.md` | Préparation du PC Windows 11 + Laragon (extensions PHP, bases MySQL, Node, Git Bash, Claude Code) |
+| `docs/installation_poste_dev.md` | Préparation du PC Windows 11 + Laragon (extensions PHP, MariaDB 10.11 et ses bases, Node, Git Bash, Claude Code) |
 | `docs/installation_hebergement_oxahost.md` | Installation de la recette et de la production sur Oxahost Ultimate |
 | `scripts/deploy.sh` | Déploiement en recette ou en production (exécuté par le responsable technique) |
 | `docs/reference/cahier_des_charges_aviator.md` | Cahier des charges Aviator (version du 17/11/2026) |

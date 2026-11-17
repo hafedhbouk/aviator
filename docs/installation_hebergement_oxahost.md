@@ -7,7 +7,7 @@ Un seul compte Oxahost Ultimate (Tunis) héberge la **recette** et la **producti
 | Sous-domaine | `recette.<domaine>` | `gestion.<domaine>` (espace client au lot 2 : à définir) |
 | Dossier | `~/apps/recette` | `~/apps/prod` |
 | Racine web (document root) | `~/apps/recette/public` | `~/apps/prod/public` |
-| Base MySQL | `<cpaneluser>_recette` | `<cpaneluser>_prod` |
+| Base MariaDB (10.11.19) | `<cpaneluser>_recette` | `<cpaneluser>_prod` |
 | Accès | Protégé par mot de passe, non indexé | Public (connexion obligatoire) |
 
 ---
@@ -25,7 +25,7 @@ La garantie de 30 jours permet de vérifier le reste en installant le socle (pha
 ## 1. Réglages cPanel
 
 1. **Sélection de la version de PHP** : PHP **8.3** ; extensions : `bcmath`, `ctype`, `curl`, `dom`, `fileinfo`, `gd`, `gmp`, `intl`, `mbstring`, `openssl`, `pdo_mysql`, `tokenizer`, `xml`, `zip`. Options : `memory_limit` 256M, `max_execution_time` 120, `upload_max_filesize` 16M.
-2. **Bases de données MySQL** : créez `recette` et `prod`, un utilisateur par base avec un mot de passe fort, tous privilèges sur sa seule base.
+2. **Bases de données MySQL** (nom du menu cPanel ; le serveur est en MariaDB 10.11.19) : créez `recette` et `prod`, un utilisateur par base avec un mot de passe fort, tous privilèges sur sa seule base. Interclassement des bases : `utf8mb4_unicode_ci`.
 3. **Sous-domaines** : créez `recette` et `gestion` avec les racines web du tableau ci-dessus.
 4. **SSL/TLS** : certificat AutoSSL ou Let's Encrypt sur les deux sous-domaines.
 5. **Confidentialité des répertoires** : protégez `~/apps/recette/public` par mot de passe.
@@ -79,7 +79,7 @@ Dans `.env` :
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://recette.<domaine>
-DB_CONNECTION=mysql
+DB_CONNECTION=mariadb
 DB_DATABASE=<cpaneluser>_recette
 DB_USERNAME=<utilisateur>
 DB_PASSWORD=<mot de passe>
