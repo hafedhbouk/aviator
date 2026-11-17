@@ -15,3 +15,7 @@ arch('les règles métier ne dépendent pas de l\'interface Filament')
 arch('les modèles ne contiennent pas de règle d\'interface')
     ->expect('App\Models')
     ->not->toUse(['Filament\Forms', 'Filament\Tables', 'Filament\Actions', 'Livewire']);
+
+arch('aucune action d\'export Filament sans décision de CustomerDataAccess (RG-14, D13)')
+    ->expect(['Filament\Actions\ExportAction', 'Filament\Actions\ExportBulkAction'])
+    ->not->toBeUsed();
