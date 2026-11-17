@@ -25,6 +25,9 @@ Les décisions validées sont aussi reportées dans `docs/projet.md` §6. Statut
 | D17 | Assouplir D13 = `aviator:permission grant <rôle> <permission>` (ou `revoke`), limitée aux permissions marquées assouplissables ; chaque changement est tracé dans `activity_log` (qui, quoi, quand) ; refus en production sans `--force` | Q27 à confirmer par la direction, sans réécrire le code | **Validée** (17/11/2026) | Responsable technique |
 | D18 | Migrations du socle seulement en phase 2, plus la table `customers` (structure) pour les tests de D13 ; autres tables migrées dans leur phase d'après `docs/modele_donnees.md` | Éviter de réécrire des migrations | **Validée** (17/11/2026) | Responsable technique |
 | D19 | Règles locales de mot de passe, sans vérification en ligne (voir ci-dessous) | La vérification des mots de passe compromis appelle un service étranger | **Validée** (17/11/2026) | Responsable technique |
+| D20 | Cron toléré toutes les 5 minutes : tâches idempotentes calées sur des minutes multiples de 5 ; réglage `notifications.send_urgent_in_request` pour envoyer les notifications urgentes pendant la requête ; délais du mode dégradé documentés dans `docs/plans/phase_2.md` (avenant 1) | Cron toutes les minutes non confirmé par Oxahost (Q8) | **Validée** (17/11/2026) | Responsable technique |
+| D21 | Aucune dépendance à `symlink` (pas de `storage:link`) : documents clients sur le disque `private` servis par un contrôleur soumis aux policies ; fichiers publics (logo) servis par une route dédiée | `symlink` non confirmé par Oxahost (Q71) | **Validée** (17/11/2026) | Responsable technique |
+| D22 | Variante manuelle du déploiement par le terminal cPanel, en annexe de `docs/installation_hebergement_oxahost.md` | SSH depuis l'extérieur non confirmé (Q8) | **Validée** (17/11/2026) | Responsable technique |
 
 ## RG-14 précisée (D13, Q27)
 

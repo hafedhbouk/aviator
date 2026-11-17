@@ -71,6 +71,8 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate --no-interaction
+          # Clé d'empreinte générée à chaque exécution : rien n'est stocké dans la CI.
+          echo "AVIATOR_BLIND_INDEX_KEY=$(php -r 'echo bin2hex(random_bytes(32));')" >> "$GITHUB_ENV"
 
       - name: Pint
         run: vendor/bin/pint --test

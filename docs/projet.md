@@ -92,11 +92,19 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 
 | Point | Statut |
 | --- | --- |
-| Calendrier de disponibilité de PHP 8.4 | À confirmer |
-| Cron toutes les minutes et Composer en SSH | À confirmer |
-| Lieu de stockage des sauvegardes (Tunisie) | À confirmer |
+| Version de PHP | Confirmé (17/11/2026) : PHP 8.3 avec PHP Selector (CloudLinux) ; certaines extensions peuvent être restreintes |
+| Calendrier de disponibilité de PHP 8.4 | « Prochainement », sans date : le projet reste en PHP 8.3 |
+| SSH : Git, Composer, mysqldump, tar | Confirmé (17/11/2026) |
+| SSH depuis l'extérieur avec une clé, ou seulement le terminal cPanel | **Ouvert** (relance envoyée) ; variante manuelle du déploiement prévue (D22) |
+| Cron toutes les minutes | **Ouvert** (relance envoyée) ; l'application supporte un cron toutes les 5 minutes (D20) |
+| Fonctions `exec`, `proc_open`, `symlink` | **Ouvert** (relance envoyée) ; l'application n'en dépend pas (D14, D21) |
+| Liste des extensions PHP restreintes | **Ouvert** (relance envoyée) ; contrôlée par `aviator:check-environment` |
+| Lieu de stockage des sauvegardes (Tunisie) | Confirmé (17/11/2026) : JetBackup stocké en Tunisie |
+| Sous-domaines avec racine web hors de `public_html`, SSL gratuit | Confirmé (17/11/2026) |
 | Prix annuel exact (358,80 ou 418,68 DT HT) | À confirmer |
 | Version exacte de la base de données | Confirmé : MariaDB 10.11.19 |
+
+Les points encore ouverts seront vérifiés par le responsable technique pendant la garantie de 30 jours, notamment avec `php artisan aviator:check-environment`.
 
 ## 8. Règles fiscales validées
 

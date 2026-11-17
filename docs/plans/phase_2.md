@@ -192,3 +192,42 @@ Commandes de clôture : `php artisan test`, `vendor/bin/pint --test`, `vendor/bi
 | `proc_open` désactivé aussi en ligne de commande sur le serveur, ce qui gênerait Composer | Signalé par `check-environment` ; Composer peut tourner sur le poste et `vendor/` être envoyé (à étudier si besoin) |
 | Q27 / D13 non confirmée par la direction | Assouplissement par permission, sans code (D17) |
 | Domaine inconnu (Q6) | Déploiement en recette reporté à la fin de la phase ; commandes prêtes dans le rapport |
+
+---
+
+## Avenant 1 — réponse d'Oxahost (17/11/2026)
+
+Oxahost a confirmé PHP 8.3 (PHP Selector, CloudLinux), SSH avec Git, Composer, mysqldump et tar, JetBackup en Tunisie, et des sous-domaines hors de `public_html` avec SSL gratuit. Restent ouverts : cron toutes les minutes, SSH depuis l'extérieur, `exec`, `proc_open`, `symlink` et la liste des extensions restreintes. La phase 2 s'adapte **sans dépasser 19 j**.
+
+| N° | Décision | Lot | Mise en œuvre |
+| --- | --- | --- | --- |
+| D20 | **Cron toléré toutes les 5 minutes** | L7 | Toutes les tâches planifiées sont idempotentes et calées sur des minutes multiples de 5 (`:00`, `:05`…), ce qu'un test vérifie. La file est traitée à chaque passage (`--stop-when-empty --max-time=50`, sous verrou). Réglage `notifications.send_urgent_in_request` : quand il est actif, les notifications urgentes (demandes d'approbation, décisions) sont envoyées **pendant la requête** au lieu de passer par la file. Désactivé par défaut ; `aviator:check-environment` conseille de l'activer si la cadence mesurée est de 5 minutes |
+| D21 | **Aucune dépendance à `symlink`** : pas de `storage:link` | L7 | CIN, permis, contrats, photos et signatures sur le disque `private` uniquement, servis par un contrôleur soumis aux policies. Les rares fichiers vraiment publics (logo) sont servis par une route dédiée (`/fichiers/public/{chemin}`), en lecture seule, avec liste blanche et en-têtes de cache. Aucun fichier client sur un disque accessible par le web |
+| D22 | **Variante manuelle du déploiement** (terminal cPanel, sans SSH depuis le poste) | L10 | Annexe de `docs/installation_hebergement_oxahost.md` : commandes à coller dans le terminal cPanel. Les assets compilés sont envoyés en archive par le gestionnaire de fichiers, puis extraits avec `tar` |
+
+### Délais maximaux en mode dégradé (cron toutes les 5 minutes)
+
+| Traitement | Cron toutes les minutes | Cron toutes les 5 minutes |
+| --- | --- | --- |
+| Notification urgente, réglage `send_urgent_in_request` actif | Immédiate (pendant la requête) | Immédiate (pendant la requête) |
+| Notification urgente, réglage inactif ; notification ordinaire | ≤ 1 min + traitement | **≤ 5 min + traitement**, soit environ 6 min. Si une file pleine dépasse 50 s de traitement, le reste part au passage suivant (+5 min) |
+| Expiration des réservations (C-09, RG-21) | ≤ 5 min (tâche toutes les 5 min) | ≤ 5 min |
+| Alertes de retard de restitution | ≤ 15 min | ≤ 15 min (tâche aux minutes `:00`, `:15`, `:30`, `:45`) |
+| Alertes d'échéance quotidiennes, agrégats nocturnes | À l'heure prévue | À l'heure prévue, décalage d'au plus 5 min |
+
+### Compléments de `aviator:check-environment` (L9)
+
+- **Cadence réelle du planificateur** : chaque passage écrit son horodatage (les deux derniers sont conservés). La commande affiche l'âge du dernier passage et l'intervalle mesuré (1 min attendu ; 5 min = mode dégradé, avec le conseil d'activer `send_urgent_in_request` ; plus de 10 min ou aucun passage = ÉCHEC).
+- **Liste complète** des extensions chargées et des fonctions désactivées (`disable_functions`), en plus des contrôles déjà prévus (§5.5).
+
+### Budget
+
+| Lot | Charge prévue | Changement |
+| --- | ---: | --- |
+| L1 (réalisé) | 1,5 | Réalisé en environ 1 j : **−0,5** |
+| L2 (en cours) | 3 | Prévu à 2,5 j : **−0,5** |
+| L7 | 1,5 | D20 et D21 : **+1** (2,5 j) |
+| L9 | 1 | Cadence et listes : **+0,25** (1,25 j) |
+| L10 | 1 | Variante manuelle : **+0,25** (1,25 j) |
+| Aléas | 1 | Inchangé : **1 j** restant |
+| **Total** | **19** | **19 j, inchangé** |

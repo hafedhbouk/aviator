@@ -93,7 +93,7 @@ Puis :
 
 ```bash
 php artisan migrate --force
-php artisan storage:link              # si refusé : signaler, Claude Code adaptera le disque public
+# Pas de « storage:link » : l'application ne dépend pas des liens symboliques (D21).
 php artisan optimize
 ```
 
