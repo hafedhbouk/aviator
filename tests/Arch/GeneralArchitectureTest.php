@@ -7,3 +7,11 @@ arch('pas de fonction de débogage oubliée dans le code')
 arch('le code applicatif est en types stricts côté domaine')
     ->expect('App\Domain')
     ->toUseStrictTypes();
+
+arch('les règles métier ne dépendent pas de l\'interface Filament')
+    ->expect('App\Domain')
+    ->not->toUse(['Filament', 'Livewire']);
+
+arch('les modèles ne contiennent pas de règle d\'interface')
+    ->expect('App\Models')
+    ->not->toUse(['Filament\Forms', 'Filament\Tables', 'Filament\Actions', 'Livewire']);
