@@ -281,3 +281,9 @@ Oxahost a confirmé PHP 8.3 (PHP Selector, CloudLinux), SSH avec Git, Composer, 
 | **Total de la phase** | **20,25** | **18,5** | **0,5 j d'aléas** |
 
 À partir de maintenant, aucun ajout en phase 2 : toute nouvelle idée va dans le plan de la phase concernée (`docs/plans/phase_N.md`).
+
+### Décision du 17/11/2026
+
+Rééquilibrage **validé** (L7 −1 j, L9 −0,25 j, L10 −0,5 j). Reports chiffrés dans `docs/plans/phase_3.md`, `docs/plans/phase_4.md` et `docs/plans/phase_5.md` ; écart cumulé du lot 1 dans `docs/projet.md` §5.
+
+**Règle pour la suite de la phase** : les aléas sont épuisés. Si un lot dépasse sa charge, aucun test n'est supprimé et aucun niveau de contrôle n'est abaissé : le dépassement est signalé. Plafond accepté par le responsable technique : **19,5 j**.

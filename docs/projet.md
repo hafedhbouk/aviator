@@ -57,17 +57,18 @@ Dernière mise à jour : 17/11/2026
 | Phase | Lot | Charge prévue (j) | Charge réelle (j) | Statut | Validée par | Date | Réserves |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1. Analyse et maquettes | 1 | 12 | | Validée avec réserves | [À COMPLÉTER] | 17/11/2026 | 1) Ateliers avec les 4 agences, à tenir pendant la phase 2 et avant la phase 4 ; 2) Q27 (carnet d'adresses) appliquée par défaut, à confirmer par la direction ; 3) Q70 : bascule du poste et des tests en MariaDB 10.11, à vérifier en phase 2. Rapport : `docs/rapports/phase_1.md` |
-| 2. Architecture et socle | 1 | 19 | | | | | |
-| 3. Paramétrage et référentiels | 1 | 16 | | | | | |
-| 4. Parc, leasing et réservations | 1 | 39 | | | | | |
-| 5. Contrats et états des lieux | 1 | 30 | | | | | |
+| 2. Architecture et socle | 1 | 19 | | En cours | | | Projeté 18,5 j après rééquilibrage ; plafond accepté 19,5 j (`docs/plans/phase_2.md`) |
+| 3. Paramétrage et référentiels | 1 | 16 | | | | | Projeté 16,25 j : reports de la phase 2 (`docs/plans/phase_3.md`) |
+| 4. Parc, leasing et réservations | 1 | 39 | | | | | Projeté 41,75 j : reports de la phase 2 (`docs/plans/phase_4.md`) |
+| 5. Contrats et états des lieux | 1 | 30 | | | | | Projeté 29,5 j : `drivers` avancé en phase 4 (`docs/plans/phase_5.md`) |
 | 6. Facturation, encaissements, cautions | 1 | 31 | | | | | |
-| 7. CRM et recommandations | 1 | 21 | | | | | |
+| 7. CRM et recommandations | 1 | 21 | | | | | Projeté 20,75 j : table des recommandations créée en phase 4 |
 | 8. Maintenance, dépenses, exports | 1 | 20 | | | | | |
 | 9. Statistiques, mobile et sécurité | 1 | 38 | | | | | |
 | 10. Recette et mise en production du lot 1 | 1 | 19 | | | | | |
 | 11. Espace client | 2 | 45 | | | | | |
 | **Total** | | **290** | | | | | |
+| **Écart cumulé du lot 1** (au 17/11/2026) | 1 | **245** prévus | **246,75** projetés | **+1,75 j (+0,7 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 18,5 j. Mise à jour à chaque fin de phase |
 
 Statuts : À démarrer · En cours · En attente de validation · Validée · Validée avec réserves.
 
