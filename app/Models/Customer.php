@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CustomerType;
+use App\Support\Audit\AuditsChanges;
 use App\Support\Privacy\BlindIndex;
 use App\Support\Text\SearchNormalizer;
 use Database\Factories\CustomerFactory;
@@ -41,6 +42,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Hidden(['id_document_number', 'id_document_hash', 'phone_search'])]
 class Customer extends Model
 {
+    use AuditsChanges;
+
     /** @use HasFactory<CustomerFactory> */
     use HasFactory;
 
@@ -59,6 +62,16 @@ class Customer extends Model
             'id_document_expires_at' => 'date',
             'anonymized_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Le numéro de pièce n'est jamais copié dans le journal d'audit : seul son changement est signalé.
+     *
+     * @return list<string>
+     */
+    public function sensitiveAuditAttributes(): array
+    {
+        return ['id_document_number'];
     }
 
     protected static function booted(): void

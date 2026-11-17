@@ -3,11 +3,15 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Policies\ActivityPolicy;
+use App\Support\Audit\RecordAuthenticationEvents;
 use App\Support\Privacy\BlindIndex;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +38,11 @@ class AppServiceProvider extends ServiceProvider
             ->mixedCase()
             ->numbers()
             ->symbols());
+
+        Event::subscribe(RecordAuthenticationEvents::class);
+
+        // Journal d'audit : consultation réservée au super admin, aucune modification.
+        Gate::policy(Activity::class, ActivityPolicy::class);
 
         Event::listen(Login::class, function (Login $event): void {
             if ($event->user instanceof User) {

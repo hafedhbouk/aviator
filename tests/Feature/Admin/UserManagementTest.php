@@ -8,6 +8,7 @@ use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Models\Agency;
 use App\Models\User;
 use App\Support\Authorization\Role;
+use Filament\Actions\Testing\TestAction;
 use Filament\Auth\Notifications\ResetPassword;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,7 +36,7 @@ it('liste les comptes pour le super admin', function () {
 
     Livewire::test(ListUsers::class)
         ->assertCanSeeTableRecords([$agent, $this->superAdmin])
-        ->assertTableActionDoesNotExist('delete');
+        ->assertActionDoesNotExist(TestAction::make('delete')->table($agent));
 });
 
 it('crée un utilisateur d\'agence rattaché à son agence par défaut, et lui envoie un lien', function () {

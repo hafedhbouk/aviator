@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Audit\AuditsChanges;
 use App\Support\Authorization\Permission;
 use App\Support\Authorization\Role;
 use Database\Factories\UserFactory;
@@ -31,9 +32,10 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token', 'app_authentication_secret', 'app_authentication_recovery_codes'])]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
+    use AuditsChanges;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable;
-
     use InteractsWithAppAuthentication;
     use InteractsWithAppAuthenticationRecovery;
 
@@ -50,6 +52,16 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'encrypted:array',
         ];
+    }
+
+    /**
+     * Valeurs jamais copiées dans le journal d'audit : seul leur changement est signalé.
+     *
+     * @return list<string>
+     */
+    public function sensitiveAuditAttributes(): array
+    {
+        return ['password', 'app_authentication_secret', 'app_authentication_recovery_codes'];
     }
 
     /**

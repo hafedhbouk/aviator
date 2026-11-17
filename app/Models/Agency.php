@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Audit\AuditsChanges;
 use Database\Factories\AgencyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['code', 'name', 'is_head_office', 'city', 'address', 'phone', 'email', 'is_active'])]
 class Agency extends Model
 {
+    use AuditsChanges;
+
     /** @use HasFactory<AgencyFactory> */
     use HasFactory;
 
