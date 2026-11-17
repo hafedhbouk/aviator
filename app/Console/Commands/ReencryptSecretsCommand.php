@@ -5,16 +5,22 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Console\Commands\Concerns\GuardsProduction;
+use App\Models\Customer;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
  * Rechiffre les colonnes chiffrées avec l'APP_KEY actuelle, après un changement
  * de clé (D23). L'ancienne clé doit figurer dans APP_PREVIOUS_KEYS pendant
  * l'opération ; elle peut en être retirée une fois la commande réussie.
+ *
+ * Les valeurs sont lues brutes (getRawOriginal), sans les casts, et réécrites sans
+ * toucher updated_at ; aucune portée d'agence ne s'applique (traitement complet).
  */
 class ReencryptSecretsCommand extends Command
 {
@@ -22,11 +28,13 @@ class ReencryptSecretsCommand extends Command
 
     /**
      * Toutes les colonnes chiffrées de l'application (cast « encrypted » ou
-     * « encrypted:… »). Un test vérifie que cette liste couvre tous les modèles.
+     * « encrypted:… »), par modèle. Un test vérifie que cette liste couvre tous les modèles.
+     *
+     * @var array<class-string<Model>, list<string>>
      */
     public const ENCRYPTED_COLUMNS = [
-        'customers' => ['id_document_number'],
-        'users' => ['app_authentication_secret', 'app_authentication_recovery_codes'],
+        Customer::class => ['id_document_number'],
+        User::class => ['app_authentication_secret', 'app_authentication_recovery_codes'],
     ];
 
     /** @var string */
@@ -43,10 +51,10 @@ class ReencryptSecretsCommand extends Command
 
         $total = 0;
 
-        foreach (self::ENCRYPTED_COLUMNS as $table => $columns) {
-            DB::table($table)->orderBy('id')->chunkById(200, function ($rows) use ($table, $columns, &$total): void {
-                foreach ($rows as $row) {
-                    $total += $this->reencryptRow($table, $columns, $row);
+        foreach (self::ENCRYPTED_COLUMNS as $modelClass => $columns) {
+            $modelClass::query()->withoutGlobalScopes()->chunkById(200, function (Collection $models) use ($columns, &$total): void {
+                foreach ($models as $model) {
+                    $total += $this->reencryptModel($model, $columns);
                 }
             });
         }
@@ -62,29 +70,29 @@ class ReencryptSecretsCommand extends Command
     }
 
     /**
-     * Rechiffre les colonnes non vides d'une ligne ; renvoie 1 si la ligne a été modifiée.
+     * Rechiffre les colonnes non vides d'un enregistrement ; renvoie 1 s'il a été modifié.
      *
      * @param  list<string>  $columns
      */
-    private function reencryptRow(string $table, array $columns, object $row): int
+    private function reencryptModel(Model $model, array $columns): int
     {
         $changes = [];
 
         foreach ($columns as $column) {
-            $value = $row->{$column} ?? null;
+            $value = $model->getRawOriginal($column);
 
             if ($value === null || $value === '') {
                 continue;
             }
 
-            $changes[$column] = $this->reencrypt((string) $value, "{$table}.{$column}", (int) $row->id);
+            $changes[$column] = $this->reencrypt((string) $value, $model->getTable().'.'.$column, $model->getKey());
         }
 
         if ($changes === []) {
             return 0;
         }
 
-        DB::table($table)->where('id', $row->id)->update($changes);
+        $model->newQueryWithoutScopes()->whereKey($model->getKey())->toBase()->update($changes);
 
         return 1;
     }
@@ -92,12 +100,16 @@ class ReencryptSecretsCommand extends Command
     /**
      * Déchiffre avec APP_KEY ou une clé de APP_PREVIOUS_KEYS, puis rechiffre avec APP_KEY.
      */
-    private function reencrypt(string $payload, string $column, int $id): string
+    private function reencrypt(string $payload, string $column, mixed $id): string
     {
         try {
             return Crypt::encryptString(Crypt::decryptString($payload));
         } catch (DecryptException) {
-            $this->components->error("Impossible de déchiffrer {$column} (ligne {$id}) : ancienne clé absente de APP_PREVIOUS_KEYS ?");
+            $this->components->error(sprintf(
+                'Impossible de déchiffrer %s (ligne %s) : ancienne clé absente de APP_PREVIOUS_KEYS ?',
+                $column,
+                is_scalar($id) ? (string) $id : '?',
+            ));
 
             throw new RuntimeException(
                 'Rechiffrement interrompu. Les lignes déjà traitées restent lisibles avec la clé actuelle : '

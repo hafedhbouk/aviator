@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Permission\Models\Role as RoleModel;
 
 /**
  * Crée un compte super admin (Q2) en demandant le nom, l'e-mail et le mot de passe
@@ -67,7 +68,7 @@ class CreateSuperAdminCommand extends Command
 
         $user = DB::transaction(function () use ($name, $email, $password, $max): ?User {
             // Contrôle refait sous verrou : deux créations simultanées ne dépassent pas la limite.
-            DB::table('roles')->where('name', Role::SuperAdmin->value)->lockForUpdate()->first();
+            RoleModel::query()->where('name', Role::SuperAdmin->value)->lockForUpdate()->first();
 
             if ($this->superAdminCount() >= $max) {
                 return null;

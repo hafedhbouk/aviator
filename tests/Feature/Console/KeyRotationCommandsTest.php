@@ -96,7 +96,7 @@ it('couvre toutes les colonnes chiffrées des modèles', function () {
         ->sort()->values()->all();
 
     $covered = collect(ReencryptSecretsCommand::ENCRYPTED_COLUMNS)
-        ->flatMap(fn (array $columns, string $table): array => array_map(fn (string $c): string => "{$table}.{$c}", $columns))
+        ->flatMap(fn (array $columns, string $class): array => array_map(fn (string $c): string => (new $class)->getTable().".{$c}", $columns))
         ->sort()->values()->all();
 
     expect(array_diff($declared, $covered))->toBe([]);
