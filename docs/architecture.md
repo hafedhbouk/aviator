@@ -433,10 +433,15 @@ Séquence de chaque action d'occupation, dans une transaction :
 
 **Test de concurrence** (scénario 1, phase 4) : deux connexions distinctes à la base (`mariadb` et `mariadb_concurrent`) sur `aviator_test`. La première prend le verrou et garde la transaction ouverte ; la seconde est lancée dans un processus PHP séparé, puis on vérifie qu'une seule réservation existe. Sous Windows, il n'y a pas de `pcntl` : le second processus est lancé avec `Symfony\Process`.
 
-### 6.2 Numérotation des factures (RG-07)
+### 6.2 Numérotation (RG-07 pour les factures)
 
-- Numéro attribué **à l'émission**, jamais au brouillon.
-- Dans la transaction d'émission : `SELECT … FROM invoice_sequences WHERE sequence_key = ? FOR UPDATE`, puis incrément et écriture. Une émission qui échoue annule aussi l'incrément : il n'y a pas de trou.
+Brique générique réalisée en phase 2 (lot 8) : `App\Support\Sequences\SequenceAllocator`, table `sequences`, une ligne par préfixe et par période. Le format se définit par `SequenceDefinition` (préfixe, période : aucune, année ou mois, longueur, séparateur), par exemple `RES-2026-00001`.
+
+- Numéro attribué **dans la transaction qui enregistre le document** ; pour une facture, **à l'émission**, jamais au brouillon.
+- La ligne du compteur est verrouillée (`SELECT … FOR UPDATE`) avant l'incrément ; si la transaction échoue, l'incrément est annulé avec elle : il n'y a pas de trou.
+- **Création du compteur** (premier numéro d'une période) : hors de la transaction du document, sur la connexion `mariadb_autocommit` (même base, validation automatique). La créer dans la transaction (`INSERT IGNORE` puis `FOR UPDATE`) provoque un interblocage MariaDB (1213) quand deux processus ouvrent la même période : le test de concurrence l'a mis en évidence. La ligne créée vaut 0 et ne consomme aucun numéro.
+- Un compteur arrivé au plus grand numéro de sa longueur lève une exception : le format n'est jamais allongé en silence.
+- Tests : `SequenceAllocatorTest` (formats, périodes, fuseau Africa/Tunis, absence de trou après échec) et `SequenceConcurrencyTest` (deux processus PHP et deux connexions MariaDB : 60 numéros sans doublon ni trou ; attente du verrou ; annulation sans trou).
 - Chronologie : l'émission refuse une date antérieure à la dernière facture émise sur la même séquence.
 - Clé et format de séquence **[Q11, Q30]** : non paramétrés tant qu'ils ne sont pas validés. `FiscalRulesGuard` refuse l'émission en production.
 
