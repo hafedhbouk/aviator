@@ -558,6 +558,38 @@ Test (scénario 13) : l'admin et l'utilisateur d'agence reçoivent un refus sur 
 
 ---
 
+### 8.5 Matrice « par agence ou commun »
+
+Portée de chaque modèle pour un **utilisateur d'agence** (le super admin et l'admin voient toutes les agences). « Filtré » = trait `BelongsToAgency` (lecture limitée à ses agences autorisées, écriture refusée ailleurs, §8.2).
+
+| Modèle (phase) | Portée | Colonne ou rattachement | Précisions |
+| --- | --- | --- | --- |
+| Réservations (4) | **Filtré** | `agency_id` = agence de départ | Lecture de la disponibilité des autres agences par `AvailabilityQuery`, sans donnée client (Q38) |
+| Contrats (5) | **Filtré** | `agency_id` = agence de départ | Agence de retour : droit limité « retour » si Q3 = oui (Q26) |
+| États des lieux, photos, dommages (5) | **Filtré par le contrat** | via `contract_id` | Accessibles uniquement depuis le contrat ; policy du contrat |
+| Avenants, prolongations (5) | **Filtré par le contrat** | via `contract_id` | Idem |
+| Factures, avoirs (6) | **Filtré** | `agency_id` | |
+| Encaissements, imputations (6) | **Filtré** | `agency_id` ; imputations via l'encaissement | |
+| Caisse du jour (6) | **Filtré** | `agency_id` | |
+| Cautions et mouvements (6) | **Filtré** | `agency_id` ; mouvements via la caution | |
+| Dépenses d'agence (8) | **Filtré** | `agency_id` | Dépenses par véhicule : admin et super admin (§8.1) |
+| Ordres de maintenance (8) | **Filtré** | `agency_id` | Saisie : admin et super admin |
+| Interactions, réclamations, rappels (7) | **Filtré** | `agency_id` | |
+| Demandes d'approbation (5) | **Filtré** | `agency_id` | L'agent suit ses demandes ; le super admin décide pour toutes |
+| Agrégats mensuels par véhicule (9) | **Filtré** | `agency_id` | Statistiques d'activité de l'agence (Q61) ; lecture explicite par `App\Domain\Statistics` |
+| Affectations de remplacement (2) | Gestion : super admin | `user_id` | L'agent ne voit que les siennes (agence active) |
+| **Clients** (7) | **Commun**, accès restreint | `origin_agency_id` sans scope | Pas de liste complète ni d'export (D13). Recherche et affichage : **à trancher** (voir Q63, question en cours) |
+| **Recommandations, liste noire** (7) | **Commun** | via `customer_id` | Alerte et blocage dans **toutes** les agences (K-10, K-11, RG-15, scénario 14) ; motif visible selon le profil |
+| Conducteurs (5) | **Commun**, accès restreint | via `customer_id` | Comme les clients |
+| Consentements, segments (7) | Super admin (segments) ; commun (consentements) | via `customer_id` | |
+| **Véhicules** (4) | **Commun**, à préciser | `agency_id` (rattachement), `current_agency_id` (localisation) | Lecture de la disponibilité : toutes agences. Modification : admin et super admin. Lecture détaillée par l'agent : véhicules **localisés** dans ses agences. À revoir avec les transferts entre agences (Q3) |
+| Documents, statuts, kilométrage des véhicules (4) | Comme le véhicule | via `vehicle_id` | |
+| Financements, échéanciers, rentabilité (4, 9) | Admin et super admin | via `vehicle_id` | Portée par **profil**, pas par agence (§3.1 du cahier) |
+| Référentiels : agences, catégories, saisons, grilles, options, taxes, fournisseurs, modes de paiement (3) | **Commun**, lecture | — | Modification : admin et super admin. Grilles : surcharge facultative par agence (Q10) |
+| Utilisateurs, rôles, journal d'audit (2) | Super admin | — | |
+
+**Lectures hors Eloquent** : interdites sur ces données en dehors de `App\Domain\Statistics`, qui applique la portée explicitement (règle de `CLAUDE.md`, test d'architecture).
+
 ## 9. Back-office Filament
 
 ### 9.1 Panneau
