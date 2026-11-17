@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Authorization\Permission;
 use App\Support\Authorization\Role;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
@@ -77,6 +78,43 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function hasProfile(Role $role): bool
     {
         return $this->hasRole($role->value);
+    }
+
+    /**
+     * Super admin et admin : action sur toutes les agences (permission agencies.all).
+     */
+    public function canActOnAllAgencies(): bool
+    {
+        return $this->checkPermissionTo(Permission::AgenciesAll->value);
+    }
+
+    /**
+     * Agences sur lesquelles l'utilisateur peut agir : agence par défaut et agences
+     * de remplacement (Q69). Vide pour un compte sans agence.
+     *
+     * @return list<int>
+     */
+    public function authorizedAgencyIds(): array
+    {
+        $ids = $this->agencies()->pluck('agencies.id')->map(fn (mixed $id): int => (int) $id)->all();
+
+        if ($this->agency_id !== null) {
+            $ids[] = $this->agency_id;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * L'utilisateur peut-il créer ou modifier un document de cette agence (RG-13) ?
+     */
+    public function canActOnAgency(?int $agencyId): bool
+    {
+        if ($this->canActOnAllAgencies()) {
+            return true;
+        }
+
+        return $agencyId !== null && in_array($agencyId, $this->authorizedAgencyIds(), true);
     }
 
     /**

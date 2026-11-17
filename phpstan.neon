@@ -8,4 +8,6 @@ parameters:
         - config
         - database
         - routes
+        # Modèles de test qui utilisent les briques du socle avant les documents métier.
+        - tests/Fixtures
     tmpDir: storage/framework/cache/phpstan

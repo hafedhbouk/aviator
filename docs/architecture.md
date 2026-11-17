@@ -518,10 +518,15 @@ Trois rôles fixes, créés par seeder : `super_admin`, `admin`, `agency_user` ;
 
 ### 8.2 Portée par agence (RG-13)
 
-- Trait `BelongsToAgency` sur les modèles marqués ✔, avec un global scope `AgencyScope` actif **uniquement** pour un `agency_user`. Il restreint les requêtes aux agences de l'utilisateur [Q69].
-- Les policies (`update`, `delete`, actions métier) vérifient `$model->agency_id ∈ agences de l'utilisateur`, même si le scope a été contourné.
-- La lecture de la disponibilité des autres agences passe par `AvailabilityQuery`, qui renvoie une projection sans donnée client, jamais par les ressources.
-- Test (scénario 12) : pour **chaque** type de document, un utilisateur de Sfax reçoit un refus (403) en lecture directe par l'adresse de la page, en modification et sur chaque action.
+Réalisé en phase 2 (lot 4), dans `app/Support/Agency` :
+
+- **Lecture** : le trait `BelongsToAgency`, posé sur les modèles marqués ✔, ajoute le global scope `AgencyScope`. Pour un utilisateur sans la permission `agencies.all` (utilisateur d'agence), les requêtes sont restreintes à ses agences autorisées : agence par défaut et agences de remplacement (Q69). Un compte sans agence ne voit rien. Le scope est sans effet pour le super admin, l'admin et les traitements sans utilisateur connecté (commandes, tâches, file).
+- **Écriture** : `BelongsToAgency` refuse, à l'enregistrement, toute création ou modification hors des agences autorisées, y compris le déplacement d'un document vers une autre agence (`AgencyAccessException`, réponse 403). Le contrôle vaut même si le scope est contourné ou si le formulaire est falsifié. Un nouveau document d'un utilisateur d'agence reçoit son **agence active** (`CurrentAgency` : agence choisie pendant la session si elle est autorisée, sinon l'agence par défaut). Le super admin et l'admin choisissent l'agence de chaque document.
+- **Policies** : le trait `ChecksAgency` (`withinAgency()`) vérifie l'agence du document, indépendamment du scope.
+- **Accès direct par l'adresse** : un document d'une autre agence est **introuvable** (404), le scope l'excluant de la liaison de route ; une action ou une écriture hors portée reçoit un **refus** (403).
+- La lecture de la disponibilité des autres agences passera par `AvailabilityQuery` (phase 4), qui renvoie une projection sans donnée client, jamais par les ressources.
+- Tests : `tests/Feature/Agency/AgencyScopeTest.php`, sur un modèle de test (`tests/Fixtures`). Le scénario 12 complet (contrat de Sousse modifié depuis Sfax) sera rejoué sur chaque type de document à mesure qu'il apparaît (phases 4 à 8).
+- **Interface de changement d'agence active** : le service est prêt ; le sélecteur dans le menu utilisateur sera ajouté avec les premiers documents d'agence (phase 4).
 
 ### 8.3 Carnet d'adresses : fuites à fermer (RG-14)
 
