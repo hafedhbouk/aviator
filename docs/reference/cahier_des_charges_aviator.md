@@ -485,7 +485,7 @@ Tout passe par « Disponible », sauf le départ d'une réservation et le passag
 | RG-04 | Kilométrage de retour ≥ kilométrage de départ | Validation de l'état des lieux |
 | RG-05 | Une période facturée d'un contrat ne l'est pas deux fois | Contrôle à la validation de la facture |
 | RG-06 | Facture validée jamais modifiée ni supprimée ; correction par avoir | Statut verrouillé, suppression interdite en base et dans l'interface |
-| RG-07 | Numérotation chronologique continue ; une facture validée n'est jamais modifiée ni supprimée | Compteur attribué dans une transaction à la validation, jamais au brouillon |
+| RG-07 | Numérotation des factures continue, chronologique, sans trou | Compteur attribué dans une transaction à la validation, jamais au brouillon |
 | RG-08 | Restitué + retenu ≤ montant de caution reçu | Verrou de ligne sur la caution et recalcul serveur |
 | RG-09 | Retards facturés au-delà de la tolérance, selon l'unité paramétrée | Service de tarification |
 | RG-10 | Remise au-delà du seuil soumise à l'approbation du super admin | Statut « en attente d'approbation » et contrôle serveur |
