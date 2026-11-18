@@ -18,19 +18,17 @@ Source : `docs/analyse_ecarts_cabinet.md`, validée le 18/11/2026 avec décision
 
 **Exports : manuels, par période** (et par agence, avec consolidation), dans le lot 1. La génération quotidienne automatique (E21) est **reportée** (décision du 18/11/2026).
 
-### Option, selon Q78
+### Dinar uniquement (D26)
 
-| Élément | Charge (j) | Contenu |
-| --- | ---: | --- |
-| E24 (a). Multidevise minimale | 0,25 | Colonnes devise, montant d'origine et taux dans les exports d'encaissements |
+La colonne « Devise » du journal des encaissements (référentiel v1.0, §9.2) est gardée, **toujours à `TND`**, pour respecter le format du cabinet. Multidevise retirée du plan.
 
 ### Déplacé en phase 9
 
-La clôture mensuelle (E26, E27 : 3,5 j) est déplacée en phase 9, si la direction la retient, pour que la phase 8 reste sous le seuil d'alerte. La clôture d'une période exportée (H-06, RG-12) reste en phase 8.
+La clôture mensuelle (E26, E27 : 3,5 j), exigée par le référentiel du cabinet, est placée en phase 9 pour que la phase 8 reste sous le seuil d'alerte. La clôture d'une période exportée (H-06, RG-12) reste en phase 8.
 
 | Phase 8 | Charge (j) |
 | --- | ---: |
 | Référence | 20 |
 | Demande d'évolution (indispensable) | +2,75 |
 | **Nouveau total** | **22,75** |
-| **Écart** | **+2,75 j (+13,75 %)**, sous le seuil d'alerte de 20 % ; 23 j (+15 %) avec l'option multidevise |
+| **Écart** | **+2,75 j (+13,75 %)**, sous le seuil d'alerte de 20 % |

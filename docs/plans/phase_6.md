@@ -21,7 +21,7 @@ Source : `docs/analyse_ecarts_cabinet.md`, validée le 18/11/2026 avec décision
 | E6. Garde-fou fiscal à l'émission | 0,5 | Refus d'émettre en production avec une règle non `CONFIRMED` ; filigrane « Règles fiscales non confirmées » sur les PDF hors production |
 | E8. Mentions | 0,5 | RNE du client entreprise, mentions adaptées au type de client, type de document et agence émettrice |
 | E11. Statuts | 0,5 | Statut du document (brouillon, validée, émise, avoir total, annulée) et statut de paiement calculé (non payée, partiellement payée, payée) ; « annulée » selon Q79 |
-| E13. Interface `ElectronicInvoicingProvider` | 0,75 | Interface, fournisseur « désactivé » par défaut, champs de suivi et table des envois (structure seulement), **aucune transmission simulée** ; le connecteur TEIF / TTN relève d'un avenant séparé |
+| E13. Interface `ElectronicInvoicingProvider` | 0,75 | Interface, fournisseur « désactivé » par défaut, champs de suivi et table des envois (structure seulement), **aucune transmission simulée** ; le connecteur TEIF / TTN relève d'un avenant séparé, pas préalable à la mise en production (situation B, Q84), à livrer dès la finalisation de l'adhésion |
 | E17. Banque sur l'encaissement | 0,25 | Banque pour les chèques et virements ; imputation selon Q81 |
 | E19. Avoirs remboursés ou imputés | 1 | Remboursement (décaissement tracé) ou imputation sur une autre facture, totale ou partielle |
 | E23. Qualification des retenues sur caution | 0,25 | Nature fiscale de la retenue (Q51) |
@@ -30,18 +30,16 @@ Source : `docs/analyse_ecarts_cabinet.md`, validée le 18/11/2026 avec décision
 | N4. Numérotation `AVI-000001` | 0 | Série unique sans remise à zéro (`SequencePeriod::None`, longueur 6) ; année et agence dans des champs distincts |
 | **Total** | **5** | |
 
-### Option, selon Q78
+### Dinar uniquement (D26)
 
-| Élément | Charge (j) | Contenu |
-| --- | ---: | --- |
-| E24 (a). Multidevise minimale | 1,5 | Factures en TND ; encaissement en devise : devise, montant d'origine, taux, contre-valeur TND figée ; caisse par devise |
+Aucune devise étrangère (réponse de la direction à Q78, 18/11/2026) : multidevise retirée du plan. Toute devise autre que `TND` est refusée sur les factures, avoirs, encaissements et cautions. Sans charge supplémentaire (contrôle de saisie et test).
 
 | Phase 6 | Charge (j) |
 | --- | ---: |
 | Référence | 31 |
 | Demande d'évolution (indispensable, référentiel v1.0) | +5 |
 | **Nouveau total** | **36** |
-| **Écart** | **+5 j (+16,1 %)** ; **37,5 j (+21 %, au-delà du seuil d'alerte)** avec l'option multidevise |
+| **Écart** | **+5 j (+16,1 %)**, sous le seuil d'alerte de 20 % |
 
 ### Tests de référence (référentiel v1.0)
 
@@ -52,3 +50,4 @@ Source : `docs/analyse_ecarts_cabinet.md`, validée le 18/11/2026 avec décision
 | Hors champ sans justificatif | `LATE_RETURN_PENALTY`, `VEHICLE_DAMAGE_COMPENSATION` ou `INSURANCE_EXCESS_COMPENSATION` sans justificatif : validation refusée |
 | Timbre d'une facture impayée | Le timbre reste dû ; aucune exonération automatique |
 | Numérotation | `AVI-000001`, puis `AVI-000002` d'une autre agence et d'une autre année ; aucune remise à zéro ; numéros uniques sous facturation simultanée |
+| **Dinar uniquement (D26)** | Une facture, un avoir, un encaissement ou une caution dans une devise autre que `TND` (par exemple `EUR`) est refusé avec un message clair ; rien n'est enregistré |

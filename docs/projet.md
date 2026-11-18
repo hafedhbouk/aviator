@@ -61,14 +61,14 @@ Dernière mise à jour : 18/11/2026
 | 3. Paramétrage et référentiels | 1 | 16 | | | | | Projeté **19 j** (+18,75 %, proche du seuil) : reports de la phase 2 (0,25 j) et demande d'évolution du cabinet, part indispensable (2,75 j) (`docs/plans/phase_3.md`) |
 | 4. Parc, leasing et réservations | 1 | 39 | | | | | Projeté 41,75 j : reports de la phase 2 (`docs/plans/phase_4.md`) |
 | 5. Contrats et états des lieux | 1 | 30 | | | | | Projeté 30 j : `drivers` avancé en phase 4 (−0,5 j) ; dossier de dommage comme justificatif fiscal (+0,5 j, référentiel du cabinet) (`docs/plans/phase_5.md`) |
-| 6. Facturation, encaissements, cautions | 1 | 31 | | | | | Projeté **36 j** (+16,1 %) : demande d'évolution du cabinet, part indispensable (5 j) (`docs/plans/phase_6.md`) ; option multidevise minimale (+1,5 j) selon Q78, qui porterait la phase à +21 % |
+| 6. Facturation, encaissements, cautions | 1 | 31 | | | | | Projeté **36 j** (+16,1 %) : demande d'évolution du cabinet, part indispensable (5 j) (`docs/plans/phase_6.md`) ; dinar uniquement (D26) |
 | 7. CRM et recommandations | 1 | 21 | | | | | Projeté 20,75 j : table des recommandations créée en phase 4 |
-| 8. Maintenance, dépenses, exports | 1 | 20 | | | | | Projeté **22,75 j** (+13,75 %) : demande d'évolution du cabinet, part indispensable (2,75 j) (`docs/plans/phase_8.md`) ; option multidevise minimale (+0,25 j) selon Q78 |
+| 8. Maintenance, dépenses, exports | 1 | 20 | | | | | Projeté **22,75 j** (+13,75 %) : demande d'évolution du cabinet, part indispensable (2,75 j) (`docs/plans/phase_8.md`) |
 | 9. Statistiques, mobile et sécurité | 1 | 38 | | | | | Projeté **42 j** (+10,5 %) : purge des journaux (Q77, 0,5 j) et clôture mensuelle, exigée par le référentiel du cabinet (3,5 j) (`docs/plans/phase_9.md`) |
 | 10. Recette et mise en production du lot 1 | 1 | 19 | | | | | |
 | 11. Espace client | 2 | 45 | | | | | |
 | **Total** | | **290** | | | | | |
-| **Écart cumulé du lot 1** (au 18/11/2026) | 1 | **245** prévus | **263,5** projetés | **+18,5 j (+7,6 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 20,25 j (D25) ; demande d'évolution du cabinet, part indispensable selon le référentiel v1.0, clôture mensuelle comprise : +14,5 j. Option multidevise minimale : +1,75 j de plus (265,25 j, +8,3 %). Facturation électronique TTN : avenant séparé. Mise à jour à chaque fin de phase |
+| **Écart cumulé du lot 1** (au 18/11/2026) | 1 | **245** prévus | **263,5** projetés | **+18,5 j (+7,6 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 20,25 j (D25) ; demande d'évolution du cabinet, part indispensable selon le référentiel v1.0, clôture mensuelle comprise : +14,5 j. Sans multidevise (D26). Facturation électronique TTN : avenant séparé, hors lot 1. Mise à jour à chaque fin de phase |
 
 Statuts : À démarrer · En cours · En attente de validation · Validée · Validée avec réserves.
 
@@ -93,6 +93,8 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 18/11/2026 | Spécifications du cabinet comptable reçues (`docs/reference/cabinet/`), **sans valeur de validation** : chaque règle fiscale porte un statut CONFIRMED, PROPOSED ou PENDING_ACCOUNTANT_VALIDATION (§8) ; seules les règles CONFIRMED servent en production (garde-fou dans `aviator:check-environment` en phase 3 et dans la liste de mise en production en phase 10). Phase 3 non bloquée sur le principe ; elle démarre après la validation du rapport de la phase 2 et de l'analyse d'écarts (`docs/analyse_ecarts_cabinet.md`) | Responsable technique |
 | 18/11/2026 | **Demande d'évolution du cabinet** (`docs/analyse_ecarts_cabinet.md`, validée avec décisions provisoires) : part indispensable (8,75 j) intégrée au lot 1, phases 3 (+2,25 j), 6 (+3,75 j) et 8 (+2,75 j) ; écart cumulé du lot 1 : +12,75 j (+5,2 %). En attente de la direction : clôture mensuelle déplacée en phase 9 (+3,5 j) ; multidevise minimale, option chiffrée à part (+1,75 j) selon Q78 ; exports quotidiens automatiques reportés (export manuel par période dans le lot 1). Facturation électronique TEIF / TTN : avenant séparé, hors lot 1 ; interface `ElectronicInvoicingProvider` (0,75 j) dans le lot 1. Synthèse pour la direction : `docs/demande_evolution_cabinet.md` | Responsable technique ; **à confirmer par la direction** |
 | 18/11/2026 | **Référentiel fiscal v1.0 du cabinet** : remplace les spécifications du 18/11 pour la conception ; statuts CONFIRMED / CONDITIONAL / PENDING_DOCUMENTATION (§8) ; 15 codes fiscaux, qualification selon la nature réelle avec justificatif pour l'exonéré et le hors champ, table `stamp_duty_rules`, numérotation `AVI-000001` sans remise à zéro, clôture mensuelle devenue exigence du cabinet. Part indispensable portée à 14,5 j ; écart cumulé du lot 1 : +18,5 j (+7,6 %). Confirmation PDF du 18/11 **non retenue** (modèle non rempli, sans nom ni signature) : aucune règle applicable en production en attendant la confirmation nominative | Responsable technique ; **à confirmer par la direction** |
+| 18/11/2026 | **D26 : dinar tunisien uniquement** (Q78) : multidevise retirée ; colonne « Devise » des exports toujours à TND ; toute autre devise refusée (test en phase 6) ; contrôle « opérations en devises » de la clôture sans objet | Direction |
+| 18/11/2026 | **TTN, situation B** (Q84) : demande d'adhésion déposée ; factures papier conformes autorisées pendant la finalisation, sous réserve de conserver la preuve du dépôt. Interface `ElectronicInvoicingProvider` dans le lot 1 ; connecteur TTN en avenant séparé, **pas préalable** à la mise en production du lot 1, à livrer dès la finalisation de l'adhésion. Écart cumulé du lot 1 sans devises : 263,5 j (+18,5 j, +7,6 %) | Direction |
 
 ## 7. Points à confirmer avec Oxahost avant commande
 
@@ -132,12 +134,12 @@ Statuts (référentiel, §14) : **CONFIRMED** (règle validée et documentée) ;
 | Méthode d'arrondi | 3 décimales ; TVA sur la base agrégée par taux, arrondie à 3 décimales ; timbre après le TTC ; exemple : 115,000 HT, 21,850 TVA, 136,850 TTC, 137,850 net à payer | §5 | CONFIRMED (applicable après la confirmation nominative) |
 | Annulation et avoirs | Aucune suppression ; avoir avec son propre numéro, lié à la facture initiale ; facture corrigée éventuelle | §6 | CONFIRMED (applicable après la confirmation nominative). **Q30 reste ouverte** : même série que les factures ou non |
 | Format des exports (Q1) | XLSX et CSV UTF-8 ; journaux §9.1 à §9.5 (dont le code fiscal) ; identifiants stables | §9 | Référentiel (logiciel du cabinet, séparateur et codes comptables non fournis) |
-| Multidevise (Q78) | Colonne devise dans les encaissements ; contrôle des opérations en devises à la clôture | §9.2, §11 | Ouverte (besoin réel à confirmer) |
+| Devise (Q78, D26) | **Dinar tunisien uniquement** ; colonne « Devise » des exports toujours à `TND` ; toute autre devise refusée | §9.2, §11 | Décision de la direction (D26, 18/11/2026) |
 | 1. Nature juridique des options d'assurance, contrats avec les assureurs | Pièces à fournir | §14 | PENDING_DOCUMENTATION |
 | 2. Clauses contractuelles relatives aux retards | Pièces à fournir | §14 | PENDING_DOCUMENTATION |
 | 3. Conditions de retenue des franchises | Pièces à fournir | §14 | PENDING_DOCUMENTATION |
 | 4. Justification des indemnités pour dégâts | Pièces à fournir | §14 | PENDING_DOCUMENTATION |
-| 5. Adhésion à TTN et date de dépôt de la demande (Q84) | Pièces à fournir | §7.3, §14 | PENDING_DOCUMENTATION |
+| 5. Situation exacte de l'adhésion TTN (Q84) | **Situation B déclarée** (demande d'adhésion déposée) ; **preuve du dépôt à fournir** (date et copie) ; factures papier conformes autorisées pendant la finalisation | §7.2, §7.3, §14 | PENDING_DOCUMENTATION |
 | 6. Identité juridique et matricule fiscal communs aux 4 agences | Pièces à fournir | §10, §14 | PENDING_DOCUMENTATION |
 | 7. Conditions d'application des exonérations de timbre (art. 118) | Pièces à fournir ; jamais d'exonération automatique d'une facture « impayée » | §3.3, §14 | PENDING_DOCUMENTATION |
 

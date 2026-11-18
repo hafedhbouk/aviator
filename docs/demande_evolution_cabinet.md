@@ -1,6 +1,6 @@
 # Demande d'évolution du cabinet comptable — synthèse pour la direction
 
-18/11/2026, mise à jour après le référentiel fiscal final du cabinet (version 1.0). Les montants en dinars sont à compléter par le responsable technique.
+18/11/2026, mise à jour après le référentiel fiscal final du cabinet (version 1.0) et les réponses de la direction (dinar uniquement ; demande d'adhésion à TTN déposée). Les montants en dinars sont à compléter par le responsable technique.
 
 ## Ce que le cabinet demande
 
@@ -14,7 +14,9 @@ Il précise ou demande en plus :
 - une **numérotation unique pour les 4 agences** (AVI-000001, AVI-000002…), sans repartir à zéro chaque année ;
 - des **exports plus détaillés** (TVA sur les dépenses, suivi des avoirs, encaissements répartis sur plusieurs factures), sans doublon ;
 - une **clôture de chaque mois**, avec 12 contrôles : c'est désormais une exigence du cabinet ;
-- la **facture électronique** (Tunisie TradeNet, TTN) : selon le cabinet, elle concerne la location de voitures depuis le 1er janvier 2026.
+- la **facture électronique** (Tunisie TradeNet, TTN) : selon le cabinet, elle concerne la location de voitures depuis le 1er janvier 2026. Aviator a déposé sa demande d'adhésion : les factures papier restent autorisées pendant la finalisation, à condition de garder la preuve du dépôt.
+
+Aviator ne reçoit que des dinars : la gestion des devises est retirée. Les exports gardent une colonne « Devise », toujours à TND.
 
 ## Ce que cela représente
 
@@ -30,31 +32,27 @@ Il précise ou demande en plus :
 | Préparation à la facture électronique (sans l'envoi à TTN) | Indispensable | 0,75 | |
 | Clôture mensuelle (12 contrôles avant de clôturer un mois) | Indispensable | 3,5 | |
 | **Total indispensable** | | **14,5** | |
-| Paiements en devises (euros, etc.) : devise, taux et montant en dinars | Recommandé, si Aviator en reçoit | 1,75 | |
 | Envoi automatique des exports chaque jour | Reporté (exports à la demande, par période) | 0,5 | |
-| Accès du cabinet aux exports ; gestion complète des devises | Non retenus | 7,5 | |
-| **Facture électronique complète (envoi à TTN, signature, rejets, archivage)** | **Hors lot 1, avenant séparé** | **18 à 27** | |
+| Accès du cabinet aux exports | Non retenu | 1,5 | |
+| **Facture électronique complète (envoi à TTN, signature, rejets, archivage)** | **Hors lot 1, avenant séparé, à livrer dès la fin de l'adhésion** | **18 à 27** | |
 
 Budget du lot 1 (245 jours prévus) :
 
 | Choix | Jours | Écart |
 | --- | ---: | ---: |
 | Indispensable seul | **263,5** | **+7,6 %** |
-| Indispensable et paiements en devises | 265,25 | +8,3 % |
 
 ## Décisions et actions attendues de la direction
 
 1. **Accord sur les 14,5 jours indispensables**, intégrés au lot 1 comme demande d'évolution.
 2. **Lettre de confirmation du cabinet à compléter.** Le document reçu le 18/11/2026 est un modèle non rempli : pas de nom de cabinet, pas de signataire, pas de signature. Tant qu'une confirmation nominative et signée n'est pas reçue, aucune règle fiscale ne peut servir en réel.
-3. **Facture électronique (TTN), priorité haute** : réunir pour le cabinet :
-   - le compte TTN d'Aviator, s'il existe ;
-   - la date de dépôt de la demande d'adhésion ;
-   - l'attestation d'adhésion ;
-   - le certificat de signature électronique (fichier ou clé USB).
+3. **Facture électronique (TTN)** : la demande d'adhésion est déposée. Il reste à fournir :
+   - la **date de dépôt** et une **copie de la preuve** (à conserver : elle justifie les factures papier pendant la finalisation) ;
+   - le **délai annoncé par TTN** pour finaliser l'adhésion ;
+   - le **type de certificat de signature** : fichier ou clé USB.
 
-   Selon ces pièces, Aviator peut être obligé d'émettre des factures électroniques **dès la mise en service** de l'application. L'avenant TTN serait alors à réaliser avant cette date. Questions à poser à TTN : date d'application pour Aviator, type de certificat, mode de transmission, possibilité de passer par un prestataire agréé.
-4. **Devises** : Aviator reçoit-il vraiment des paiements en devises ? Si oui, 1,75 jour ; sinon, rien à faire.
-5. **Pièces à fournir au cabinet**, sans lesquelles les traitements concernés restent bloqués :
+   L'avenant TTN n'empêche pas la mise en service de l'application, mais il doit être prêt dès que l'adhésion est finalisée. Le délai de TTN fixera donc la date à laquelle le lancer.
+4. **Pièces à fournir au cabinet**, sans lesquelles les traitements concernés restent bloqués :
    - contrats avec les assureurs ;
    - clauses de retard du contrat de location ;
    - conditions de retenue des franchises ;

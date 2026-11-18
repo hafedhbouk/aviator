@@ -2,7 +2,7 @@
 
 | Version | Date | Document analysé | Statut |
 | --- | --- | --- | --- |
-| **2** | 18/11/2026 | Référentiel fiscal et comptable v1.0 (`docs/reference/cabinet/referentiel_fiscal_aviator_v1.0_2026-11.md`), qui **remplace** les spécifications du 18/11 pour la conception | En vigueur ; à valider par le responsable technique |
+| **2** | 18/11/2026 | Référentiel fiscal et comptable v1.0 (`docs/reference/cabinet/referentiel_fiscal_aviator_v1.0_2026-11.md`), qui **remplace** les spécifications du 18/11 pour la conception | En vigueur ; révisée le 18/11/2026 après les réponses de la direction (D26 : dinar uniquement ; Q84 : situation B pour TTN), voir V2.6 |
 | 1 | 18/11/2026 | Spécifications du 18/11 (`docs/reference/cabinet/specifications_facturation_2026-11-18.md`) | Remplacée par la version 2 ; conservée plus bas pour l'historique |
 
 ---
@@ -29,10 +29,11 @@ Pas de code : documentation et plans seulement. La §13 du référentiel (plan d
 | N6 | 11 | **Clôture mensuelle** avec ses 12 contrôles : devient une **exigence du cabinet** | E26, E27 : recommandée, en phase 9, en attente de la direction | Reclassée **indispensable** ; reste en phase 9 pour protéger la phase 8 | 9 | 3,5 (déjà chiffrée) | Mois clôturé incomplet | Indispensable |
 | N7 | 5 | Méthode d'arrondi retenue et **exemple chiffré** (115,000 HT ; 21,850 TVA ; 136,850 TTC ; 1,000 timbre ; 137,850 net à payer) | E12 : méthode à valider | Aucun sur le calcul (`Money`, base par taux). L'exemple devient un **test de référence** (phases 3 et 6) | 3, 6 | 0 | — | Indispensable |
 | N8 | 9.1 | Colonne « Code fiscal » dans le journal des ventes | E16 | Précision, incluse dans E16 | 8 | 0 | — | Indispensable |
-| N9 | 7 | TEIF / TTN : selon le cabinet, l'extension aux services s'applique depuis le **1er janvier 2026** (loi n° 2025-17, art. 53 ; note commune n° 2/2026). Trois situations : adhésion finalisée (A), demande déposée (B : papier toléré avec preuve du dépôt), aucune demande (C) | E13, E14 ; Q16 | Précision. **Risque de calendrier** : en situation A, les factures papier de l'application ne suffiraient pas dès la mise en service ; en situation C, Aviator doit déposer sa demande sans attendre. Question Q84 à la direction, priorité haute | Avenant | 18 à 27 (inchangé) | Factures non conformes dès la mise en service | Avenant séparé ; **Q84 urgente** |
+| N9 | 7 | TEIF / TTN : selon le cabinet, l'extension aux services s'applique depuis le **1er janvier 2026** (loi n° 2025-17, art. 53 ; note commune n° 2/2026). Trois situations : adhésion finalisée (A), demande déposée (B : papier toléré avec preuve du dépôt), aucune demande (C) | E13, E14 ; Q16 | Précision. **Q84 répondue : situation B déclarée** (demande d'adhésion déposée), preuve du dépôt à fournir. Factures papier conformes de l'application autorisées pendant la finalisation, sous réserve de conserver cette preuve. L'avenant TTN **n'est pas un préalable** à la mise en production du lot 1, mais doit être prêt dès la finalisation de l'adhésion | Avenant | 18 à 27 (inchangé) | Adhésion finalisée avant que le connecteur soit prêt | Avenant séparé, à engager à temps (Q16) |
 | N10 | 2.2 A | Prime d'assurance véritable : « application éventuelle de la taxe spécifique sur les assurances » | Non prévu | Précision : si cette taxe s'applique, c'est une taxe de plus dans la table fiscale (type montant ou taux), sans développement spécifique. Dépend du point 1 de la §14 (PENDING_DOCUMENTATION) | 3 | 0 | Taxe oubliée sur la prime | À documenter |
+| N11 | 9.2, 11 | Devise : colonne « Devise » des encaissements ; contrôle « opérations en devises » de la clôture | E24 (multidevise, 1,75 j en option) | **D26 : dinar uniquement.** Multidevise retirée. Colonne « Devise » gardée dans les exports, toujours à `TND` ; toute autre devise refusée, avec un test (phase 6) ; contrôle « opérations en devises » de la clôture sans objet | 6, 8, 9 | 0 (−1,75 j d'option) | — | Indispensable (sans coût) |
 
-Inchangés par rapport à la version 1 : E1, E5, E6, E8, E10, E11 (statuts du document et de paiement séparés), E13 (interface `ElectronicInvoicingProvider`), E15 à E20, E23 (qualification des retenues, désormais avec justificatif, N2), E25, E28.
+Inchangés par rapport à la version 1 : E1, E5, E6, E8, E10, E11 (statuts du document et de paiement séparés), E13 (interface `ElectronicInvoicingProvider`), E15 à E20, E23 (qualification des retenues, désormais avec justificatif, N2), E25, E28. **Retirés** : E24 (multidevise, D26) et E22 (accès du cabinet, non retenu).
 
 ## V2.3 Les 15 codes fiscaux et leur paramétrage initial
 
@@ -67,6 +68,7 @@ Les sept vérifications documentaires de la §14 (contrats d'assurance, clauses 
 | Timbre et facture impayée | 6 | Une facture impayée garde son timbre ; une exonération ne s'applique qu'à la main, par une règle active, avec motif et justificatif |
 | Numérotation | 6 | `AVI-000001`, puis `AVI-000002` en changeant d'année et d'agence ; aucune remise à zéro au 1er janvier |
 | Règle PENDING_DOCUMENTATION en production | 3, 6 | Contrôle de l'environnement en ERREUR ; émission refusée |
+| Dinar uniquement (D26) | 6 | Une facture, un avoir, un encaissement ou une caution dans une autre devise que `TND` est refusé ; les exports portent `TND` dans la colonne « Devise » |
 
 ## V2.5 Charges et écart cumulé du lot 1
 
@@ -75,8 +77,9 @@ Les sept vérifications documentaires de la §14 (contrats d'assurance, clauses 
 | Classement | Points | Charge (j) |
 | --- | --- | ---: |
 | **Indispensable** | Version 1 (8,75 j) + N1 (0,25) + N2 (1,5) + N3 (0,5) + clôture mensuelle reclassée (N6, 3,5) | **14,5** |
-| **Recommandé** | Multidevise minimale selon Q78 (1,75) ; exports quotidiens automatiques, reportés par décision du 18/11 (0,5) | **2,25** |
-| **Optionnel** | Accès du cabinet aux exports (1,5) ; multidevise complète (6) | **7,5** |
+| **Recommandé** | Exports quotidiens automatiques, reportés par décision du 18/11 (0,5) | **0,5** |
+| **Optionnel** | Accès du cabinet aux exports, non retenu (1,5) | **1,5** |
+| Retiré (D26) | Multidevise minimale (1,75) et complète (6) | 0 |
 | Facturation électronique complète | Avenant séparé, hors lot 1 | 18 à 27 |
 
 ### Par phase (indispensable)
@@ -85,8 +88,8 @@ Les sept vérifications documentaires de la §14 (contrats d'assurance, clauses 
 | --- | ---: | ---: | ---: | ---: | --- |
 | 3. Paramétrage | 16 | 18,5 | +0,5 (N1, N3) | **19** | **+18,75 %**, proche du seuil de 20 % |
 | 5. Contrats | 30 | 29,5 | +0,5 (N2) | **30** | 0 % |
-| 6. Facturation | 31 | 34,75 | +1,25 (N2, N3) | **36** | +16,1 % ; **37,5 j (+21 %, au-delà du seuil)** avec la multidevise minimale |
-| 8. Exports | 20 | 22,75 | 0 | **22,75** | +13,75 % ; 23 j (+15 %) avec la multidevise minimale |
+| 6. Facturation | 31 | 34,75 | +1,25 (N2, N3) | **36** | +16,1 % |
+| 8. Exports | 20 | 22,75 | 0 | **22,75** | +13,75 % |
 | 9. Statistiques, mobile, sécurité | 38 | 38,5 | +3,5 (clôture, désormais indispensable) | **42** | +10,5 % |
 
 ### Lot 1 (référence 245 j)
@@ -95,15 +98,23 @@ Les sept vérifications documentaires de la §14 (contrats d'assurance, clauses 
 | --- | ---: | ---: |
 | Avant le référentiel (indispensable v1 seul) | 257,75 | +12,75 j (+5,2 %) |
 | **Indispensable v2** (clôture comprise) | **263,5** | **+18,5 j (+7,6 %)** |
-| Indispensable + multidevise minimale | 265,25 | +20,25 j (+8,3 %) |
-| Indispensable + recommandé | 265,75 | +20,75 j (+8,5 %) |
-| Indispensable + recommandé + optionnel | 273,25 | +28,25 j (+11,5 %) |
+| Indispensable + recommandé | 264 | +19 j (+7,8 %) |
+| Indispensable + recommandé + optionnel | 265,5 | +20,5 j (+8,4 %) |
 
 ### Alertes
 
 1. **Phase 3 à +18,75 %** : sous le seuil, sans marge.
-2. **Phase 6 au-delà du seuil si la multidevise minimale est retenue** (+21 %). Si Q78 répond oui, placer la multidevise en phase 8 (qui passerait à 24,5 j, +22,5 %) ne règle rien. Deux solutions : accepter le dépassement, ou reporter la multidevise après la mise en production.
-3. **TTN (Q84)** : selon la situation d'Aviator, l'avenant TTN pourrait devoir être livré **avant** la mise en production du lot 1.
+2. **Phase 6 à +16,1 %** : sous le seuil. L'alerte liée à la multidevise disparaît (D26).
+3. **TTN** : situation B déclarée (Q84). L'avenant n'est pas un préalable à la mise en production, mais il doit être prêt dès la finalisation de l'adhésion : son calendrier dépend du délai annoncé par TTN (Q16).
+
+## V2.6 Réponses de la direction du 18/11/2026
+
+| Question | Réponse | Effet |
+| --- | --- | --- |
+| Q78 (et Q35) : devises | Aucune devise, uniquement le dinar tunisien | **D26**. Multidevise retirée (−1,75 j d'option). Colonne « Devise » des exports toujours à `TND` ; toute autre devise refusée, avec un test en phase 6 ; contrôle « opérations en devises » de la clôture sans objet |
+| Q84 : situation TTN | Demande d'adhésion déposée : **situation B** (référentiel §7.2) | Factures papier conformes autorisées pendant la finalisation, sous réserve de conserver la preuve du dépôt (PENDING_DOCUMENTATION). Interface `ElectronicInvoicingProvider` gardée dans le lot 1 (0,75 j). Connecteur TTN : avenant séparé, **pas un préalable** à la mise en production du lot 1, à livrer **dès la finalisation de l'adhésion**. Restent attendus (Q16) : date de dépôt et copie de la preuve, délai annoncé par TTN, type de certificat de signature |
+
+**Résultat** : lot 1 projeté à **263,5 j (+18,5 j, +7,6 %)**, indispensable seul ; aucune phase au-delà du seuil d'alerte.
 
 ---
 

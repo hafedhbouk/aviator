@@ -26,6 +26,8 @@ Le plan complet sera établi au démarrage de la phase et soumis à validation.
 | E27. Réouverture exceptionnelle d'une période close | 0,5 | Super admin, motif obligatoire, journalisée, nouvelle version des exports (selon Q83) |
 | **Total** | **3,5** | |
 
+Le contrôle « opérations en devises » est **sans objet** (D26 : dinar uniquement) ; il est affiché comme tel, sans calcul.
+
 | Phase 9 | Charge (j) |
 | --- | ---: |
 | Référence | 38 |

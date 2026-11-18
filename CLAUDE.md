@@ -45,6 +45,7 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 - Toute donnée copiée hors de Tunisie (sauvegardes ou services étrangers).
 - Désactiver une validation, une policy ou un test pour faire passer une fonctionnalité.
 - SQL avec valeurs concaténées ; secrets dans le code, les seeders ou Git.
+- `git add` sur un dossier entier (`git add docs`, `git add .`, `git add -A`) : ajoute les fichiers un par un, après les avoir lus.
 - Paquet payant sans accord écrit ; paquet non compatible PHP 8.3.
 
 ## Commandes
