@@ -303,3 +303,17 @@ Rééquilibrage **validé** (L7 −1 j, L9 −0,25 j, L10 −0,5 j). Reports chi
 | **Projection de la phase** | | **19** |
 
 Les aléas sont épuisés ; la phase tient dans les 19 j de référence, sous le plafond accepté de 19,5 j.
+
+## Avenant 2 — D25, déploiement par archive (18/11/2026)
+
+Réponse définitive d'Oxahost (Q8, Q71) : ligne de commande **uniquement** par le terminal web de cPanel, `exec` et `proc_open` désactivées. `scripts/deploy.sh` (SSH depuis le poste, `composer install` sur le serveur) est inutilisable : il est supprimé, avec la variante manuelle D22. Le lot 10 est repris sous D25 (`docs/decisions.md`).
+
+| Lot ou travail | Prévu (j) | Réalisé (j) |
+| --- | ---: | ---: |
+| Total réalisé au point précédent | — | 18,5 |
+| L10 repris (D25) : `build-release.sh`, `install-release.sh`, `rollback-release.sh`, tests de l'archive et des scripts, `aviator:check-environment`, réécriture des guides d'installation, du prompt maître et de la skill | 1,25 | 1,25 |
+| **Total réalisé** | | **19,75** |
+| L11. Rapport (après l'installation de la recette par le responsable technique) | 0,5 | — |
+| **Projection de la phase** | | **20,25** |
+
+**Plafond relevé à 20,25 j** par le responsable technique le 18/11/2026 pour D25, contrainte de l'hébergeur. La projection l'atteint exactement : il ne reste aucune marge pour L11. Dépassement de la référence (19 j) : +1,25 j, soit +6,6 %, sous le seuil d'alerte de 20 %.

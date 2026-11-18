@@ -6,191 +6,111 @@ Un seul compte Oxahost Ultimate (Tunis) héberge la **recette** et la **producti
 | --- | --- | --- |
 | Sous-domaine | `recette.<domaine>` | `gestion.<domaine>` (espace client au lot 2 : à définir) |
 | Dossier | `~/apps/recette` | `~/apps/prod` |
-| Racine web (document root) | `~/apps/recette/public` | `~/apps/prod/public` |
+| Racine web (document root) | `~/apps/recette/current/public` | `~/apps/prod/current/public` |
 | Base MariaDB (10.11.19) | `<cpaneluser>_recette` | `<cpaneluser>_prod` |
 | Accès | Protégé par mot de passe, non indexé | Public (connexion obligatoire) |
 
+## Ce que permet l'hébergement (réponse d'Oxahost du 18/11/2026)
+
+| Point | Réponse | Conséquence |
+| --- | --- | --- |
+| Accès en ligne de commande | **Uniquement le terminal web de cPanel**, sans connexion SSH depuis le poste ni clé | Déploiement par archive (D25) |
+| `exec`, `proc_open`, `shell_exec`, `system`, `passthru` | **Désactivées** | Confirme D14 et D15 ; **aucun `composer install` sur le serveur** (Composer utilise `proc_open`) |
+| `symlink` | Activé | D21 maintenue par choix de sécurité (pas de `storage:link`) |
+| Cron | Toutes les minutes autorisé | D20 (toutes les 5 minutes) reste en secours |
+| Extensions PHP | Toutes disponibles | Contrôlées par `aviator:check-environment` |
+
+## Déploiement par archive (D25)
+
+```text
+Poste (Git Bash)                         Serveur (terminal web de cPanel)
+scripts/build-release.sh <réf>           bash install-release.sh <env> <archive>
+  composer check (contrôles de la CI)      empreinte SHA-256, sauvegarde de la base,
+  composer install --no-dev (PHP 8.3)      maintenance, releases/<version>,
+  npm run build                            liens .env et storage/ vers shared/,
+  dist/aviator-<version>.tar.gz            migrate --force, sync-permissions, optimize,
+  + .sha256                                bascule de current, remise en ligne,
+        │                                  check-environment, 3 versions conservées
+        └── FTPS ou gestionnaire de fichiers ──┘
+```
+
+- L'archive contient les dépendances PHP (`vendor/`) et les assets compilés : le serveur n'utilise que `bash`, `tar`, `php` et `mysqldump`. Ni Composer, ni npm, ni Git.
+- L'archive ne contient ni `.env`, ni tests, ni `node_modules`, ni `.git`, et seulement la structure vide de `storage/` (vérifié par `build-release.sh` et par les tests).
+- La configuration (`shared/.env`) et les fichiers (`shared/storage/`) sont communs à toutes les versions.
+
 ---
 
-## 0. Avant de commander
+## 1. Réglages cPanel (une fois)
 
-Faites confirmer par écrit par Oxahost (voir `docs/projet.md`, section 7) :
-- calendrier de PHP 8.4 ;
-- cron toutes les minutes et Composer utilisable en SSH ;
-- sauvegardes stockées en Tunisie ;
-- prix annuel exact.
+1. **Double authentification** du compte cPanel (*Sécurité → Two-Factor Authentication*) : obligatoire, le terminal web donne un accès complet au compte.
+2. **Sélection de la version de PHP** : PHP **8.3** ; extensions et options : `docs/installation_recette.md`, étape 1.
+3. **Bases de données MySQL** (nom du menu cPanel ; le serveur est en MariaDB 10.11.19) : créez `recette` et `prod`, un utilisateur par base avec un mot de passe fort, tous privilèges sur sa seule base. Interclassement des bases : `utf8mb4_unicode_ci`.
+4. **Compte FTP** limité à `~/deploiement` si l'archive est envoyée par FTPS : « FTP explicite sur TLS » obligatoire, transfert binaire ; jamais de FTP non chiffré.
+5. **Sous-domaines** : créés **après** la première installation de chaque environnement, avec les racines web du tableau ci-dessus.
+6. **SSL/TLS** : certificat AutoSSL ou Let's Encrypt sur les deux sous-domaines.
+7. **Confidentialité des répertoires** : protégez `apps/recette` par mot de passe (dossier parent, conservé d'une version à l'autre).
 
-La garantie de 30 jours permet de vérifier le reste en installant le socle (phase 2).
+## 2. Première installation d'un environnement
 
-## 1. Réglages cPanel
+Suivre **pas à pas** `docs/installation_recette.md` (recette). Pour la production, mêmes étapes avec `prod` à la place de `recette`, le sous-domaine `gestion.<domaine>`, la base `<cpaneluser>_prod`, sans protection par mot de passe, et une **étiquette** `vX.Y.Z` (seule version acceptée par `install-release.sh prod`, après confirmation « OUI vX.Y.Z »).
 
-1. **Sélection de la version de PHP** : PHP **8.3** ; extensions : `bcmath`, `ctype`, `curl`, `dom`, `fileinfo`, `gd`, `gmp`, `intl`, `mbstring`, `openssl`, `pdo_mysql`, `tokenizer`, `xml`, `zip`. Options : `memory_limit` 256M, `max_execution_time` 120, `upload_max_filesize` 16M.
-2. **Bases de données MySQL** (nom du menu cPanel ; le serveur est en MariaDB 10.11.19) : créez `recette` et `prod`, un utilisateur par base avec un mot de passe fort, tous privilèges sur sa seule base. Interclassement des bases : `utf8mb4_unicode_ci`.
-3. **Sous-domaines** : créez `recette` et `gestion` avec les racines web du tableau ci-dessus.
-4. **SSL/TLS** : certificat AutoSSL ou Let's Encrypt sur les deux sous-domaines.
-5. **Confidentialité des répertoires** : protégez `~/apps/recette/public` par mot de passe.
-6. **Accès SSH** : importez votre clé publique et autorisez-la.
+Les clés suivent `docs/gestion_des_cles.md` (D23) : générées **une seule fois** par environnement, avec `php -r` (étape 5 de la procédure), puis copiées chez Aviator. `php artisan key:generate` n'est jamais lancé sur le serveur.
 
-## 2. Connexion SSH et outils
+Les clés VAPID des notifications push seront générées en phase 9 (commande fournie par Claude Code) et ajoutées à `shared/.env`.
 
-```bash
-ssh <cpaneluser>@<serveur>
-php -v            # doit afficher 8.3 ; sinon noter le chemin, par ex. /opt/alt/php83/usr/bin/php
-which php
-composer -V       # si absent :
-mkdir -p ~/bin && cd ~/bin && php -r "copy('https://getcomposer.org/installer','i.php');" && php i.php && mv composer.phar composer && rm i.php
-```
-
-Notez le chemin exact de PHP 8.3 : il sert au cron et au script de déploiement (`AVIATOR_PHP`).
-
-## 3. Accès au dépôt Git (lecture seule)
-
-```bash
-ssh-keygen -t ed25519 -f ~/.ssh/aviator_deploy -C "deploy-aviator" -N ""
-cat ~/.ssh/aviator_deploy.pub
-```
-
-Ajoutez cette clé dans le dépôt (GitHub : *Settings → Deploy keys*, sans écriture), puis :
-
-```bash
-cat >> ~/.ssh/config <<'EOF'
-Host github-aviator
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/aviator_deploy
-EOF
-mkdir -p ~/apps
-git clone git@github-aviator:<organisation>/aviator.git ~/apps/recette
-git clone git@github-aviator:<organisation>/aviator.git ~/apps/prod
-```
-
-## 4. Configuration de l'application (pour chaque environnement)
-
-**Première installation : suivre la procédure pas à pas `docs/installation_recette.md`** (ordre exact des étapes, deux variantes SSH ou terminal cPanel, contrôle final). Cette section en résume les principes.
-
-Les clés suivent `docs/gestion_des_cles.md` (D23). **`php artisan key:generate` ne se lance qu'ici, une seule fois par environnement.** Ensuite, il est interdit en recette et en production.
-
-```bash
-cd ~/apps/recette                      # puis ~/apps/prod
-composer install --no-dev --optimize-autoloader
-cp .env.example .env
-php artisan key:generate               # UNE SEULE FOIS, à l'installation
-php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"   # valeur de AVIATOR_BLIND_INDEX_KEY, à coller dans .env
-```
-
-Reportez aussitôt `APP_KEY` et `AVIATOR_BLIND_INDEX_KEY` dans le gestionnaire de mots de passe d'Aviator et sur la copie papier (environnement, date).
-
-Dans `.env` :
-
-```ini
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://recette.<domaine>
-DB_CONNECTION=mariadb
-DB_DATABASE=<cpaneluser>_recette
-DB_USERNAME=<utilisateur>
-DB_PASSWORD=<mot de passe>
-QUEUE_CONNECTION=database
-CACHE_STORE=database
-SESSION_DRIVER=database
-MAIL_MAILER=smtp            # compte e-mail cPanel : sécurité des comptes uniquement
-AVIATOR_BLIND_INDEX_KEY=<64 caractères hexadécimaux, générés ci-dessus>
-```
-
-Puis :
-
-```bash
-php artisan aviator:check-environment  # aucune clé absente ou vide, extensions, base, droits d'écriture
-php artisan migrate --force
-# Pas de « storage:link » : l'application ne dépend pas des liens symboliques (D21).
-php artisan optimize
-```
-
-Les clés VAPID des notifications push seront générées en phase 9 (commande fournie par Claude Code) et ajoutées au `.env`.
-
-## 5. Tâche planifiée (cron cPanel)
+## 3. Tâche planifiée (cron cPanel)
 
 Une ligne par environnement, toutes les minutes :
 
 ```text
-* * * * * cd /home/<cpaneluser>/apps/prod && <chemin_php_8.3> artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/<cpaneluser>/apps/prod/current && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-Le planificateur de l'application traite aussi la file d'attente (`queue:work --stop-when-empty`) : aucun processus permanent n'est nécessaire.
+Le planificateur de l'application traite aussi la file d'attente (`queue:work --stop-when-empty`, dans le processus, D15) : aucun processus permanent n'est nécessaire. Le chemin passe par `current` : il suit chaque nouvelle version.
 
-## 6. Déployer une version
+## 4. Sauvegardes
 
-Depuis **Git Bash** sur votre poste Windows, à la racine du projet (`C:\laragon\www\aviator`) :
-
-```bash
-export AVIATOR_SSH_HOST=<cpaneluser>@<serveur>
-export AVIATOR_PHP=<chemin_php_8.3>          # facultatif si "php" est déjà la 8.3
-export AVIATOR_COMPOSER='$HOME/bin/composer'  # guillemets simples : chemin du serveur ; facultatif si "composer" est dans le PATH
-scripts/deploy.sh recette phase/04-parc-leasing-reservations
-scripts/deploy.sh prod v1.0.0                 # production : uniquement une version étiquetée
-```
-
-Le script lance les tests, compile les assets, sauvegarde la base, met l'application en maintenance, récupère la version, installe les dépendances, envoie les assets compilés (archive `tar` par SSH), applique les migrations et remet l'application en ligne.
-
-**Production** : jamais sans tests verts, sauvegarde vérifiée et accord explicite.
-
-## 7. Sauvegardes
-
-- Oxahost : sauvegardes quotidiennes JetBackup conservées jusqu'à 30 jours, restauration depuis cPanel. **N'activez pas l'option Acronis Cloud Europe** (données hors de Tunisie).
-- Avant chaque déploiement : sauvegarde de la base par le script, dans `~/backups/`.
-- Chaque mois : téléchargez une copie de la base et du dossier `storage/app` sur un support d'Aviator, en Tunisie.
+- Oxahost : sauvegardes quotidiennes JetBackup conservées jusqu'à 30 jours, en Tunisie, restauration depuis cPanel. **N'activez pas l'option Acronis Cloud Europe** (données hors de Tunisie).
+- Avant chaque installation : sauvegarde de la base par `install-release.sh`, dans `~/backups/<env>_<date>_avant_<version>.sql.tar.gz`. Identifiants : `~/.my.<env>.cnf` (droits 600, `docs/installation_recette.md`, étape 6).
+- Chaque mois : téléchargez une copie de la base et du dossier `shared/storage/app` sur un support d'Aviator, en Tunisie.
 - Chaque trimestre : restaurez la sauvegarde de production sur la recette et vérifiez l'application.
-
-## 8. Mot de passe MySQL pour les sauvegardes du script
-
-Pour que `mysqldump` ne demande pas de mot de passe, créez un fichier par environnement (lisible par vous seul) :
-
-```bash
-cat > ~/.my.recette.cnf <<'EOF'
-[client]
-user=<utilisateur_recette>
-password=<mot_de_passe>
-EOF
-chmod 600 ~/.my.recette.cnf          # idem ~/.my.prod.cnf
-```
 
 ---
 
-## Annexe A — Déployer une mise à jour par le terminal cPanel (D22)
+## Annexe A — Installer une mise à jour (D25)
 
-À utiliser si Oxahost ne permet pas le SSH depuis le poste (Q8) : `scripts/deploy.sh` ne peut alors pas être lancé. Les commandes sont collées dans *cPanel → Avancé → Terminal*. Remplacez `<env>` par `recette` ou `prod`, `<ref>` par une branche (recette) ou une étiquette `vX.Y.Z` (production, **uniquement** une étiquette et après accord explicite), et `<php83>` par le chemin de PHP 8.3.
+Remplacez `<env>` par `recette` ou `prod`. **Production** : uniquement une étiquette `vX.Y.Z`, après accord explicite, avec une CI verte.
 
 **1. Sur le poste (Git Bash)** :
 
 ```bash
 cd /d/aviator
-git checkout <ref> && git pull
-npm ci
-composer check                                   # tout doit être au vert
-tar -czf /d/aviator-build.tar.gz -C public build
+scripts/build-release.sh <branche>      # recette, par exemple phase/04-parc-leasing-reservations
+scripts/build-release.sh vX.Y.Z         # production : étiquette existante uniquement
 ```
 
-**2. Dans le gestionnaire de fichiers cPanel** : envoyer `/d/aviator-build.tar.gz` dans `apps/<env>/`.
+Le script s'arrête si `composer check` échoue : aucune archive n'est alors produite.
 
-**3. Dans le terminal cPanel**, en collant les commandes **une par une** et en vérifiant le résultat de chacune avant de passer à la suivante (pas de `set -e` : dans un terminal interactif, il fermerait la session au premier incident) :
+**2. Envoyer l'archive** : `dist/aviator-<version>.tar.gz` **et** `dist/aviator-<version>.tar.gz.sha256` dans `~/deploiement/`, par FTPS (binaire) ou par le gestionnaire de fichiers de cPanel.
+
+**3. Dans le terminal web de cPanel** :
 
 ```bash
-cd ~/apps/<env>
-mkdir -p ~/backups
-DB_NAME=$(grep -E '^DB_DATABASE=' .env | cut -d= -f2-)
-mysqldump --defaults-extra-file="$HOME/.my.<env>.cnf" --single-transaction --no-tablespaces "$DB_NAME" \
-  | gzip > ~/backups/<env>_$(date +%Y%m%d_%H%M%S).sql.gz
-ls -lh ~/backups | tail -1                       # vérifier que la sauvegarde n'est pas vide
-<php83> artisan down --retry=60
-git fetch origin --tags --force --prune
-git checkout --force <ref>                       # branche : git checkout --force -B <ref> origin/<ref>
-composer install --no-dev --optimize-autoloader --no-interaction
-rm -rf public/build && tar -xzf aviator-build.tar.gz -C public && rm aviator-build.tar.gz
-<php83> artisan migrate --force
-<php83> artisan aviator:sync-permissions
-<php83> artisan optimize
-<php83> artisan up
-<php83> artisan aviator:check-environment
+cd ~/deploiement
+tar -xzf aviator-<version>.tar.gz ./scripts/install-release.sh ./scripts/rollback-release.sh
+bash scripts/install-release.sh <env> ~/deploiement/aviator-<version>.tar.gz
 ```
 
-**En cas d'échec** avant `artisan up` : l'application reste en maintenance. Corriger, ou revenir à la version précédente (`git checkout --force <ref précédente>`, puis `composer install`, `migrate` si besoin, `optimize`, `up`) ; la base se restaure depuis `~/backups` ou JetBackup. Ne jamais lancer `key:generate`.
+Les scripts sont extraits de l'archive à chaque fois : la version du script est toujours celle de l'archive installée. Le script vérifie l'empreinte, sauvegarde la base, met en maintenance, installe, migre, synchronise les permissions, optimise, bascule `current`, remet en ligne, affiche `aviator:check-environment` et ne garde que les 3 dernières versions. En production, il demande de taper « OUI vX.Y.Z ».
+
+**En cas d'échec**, le script affiche la cause, l'action conseillée et l'état de l'application : la version en service reste inchangée (éventuellement en maintenance, avec la commande pour la remettre en ligne) et la version non mise en service est retirée. Si les migrations ont échoué en cours de route, restaurer la base depuis la sauvegarde indiquée avant la remise en ligne.
+
+**4. Retour à la version précédente** :
+
+```bash
+bash ~/apps/<env>/current/scripts/rollback-release.sh <env>
+```
+
+Il demande une confirmation (`OUI`, ou `OUI vX.Y.Z` en production), rebascule `current` vers la version précédente encore présente, optimise et remet en ligne. **Les migrations ne sont pas annulées** : si la version annulée a modifié la base d'une façon que la précédente ne comprend pas, restaurer aussi la sauvegarde `~/backups/<env>_*_avant_<version annulée>.sql.tar.gz`.
+
+**5. Ménage** : supprimer l'archive de `~/deploiement/` après une installation réussie. Ne jamais lancer `key:generate`.

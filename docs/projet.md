@@ -3,7 +3,7 @@
 > Lue par Claude Code au début de chaque session. Mettez-la à jour à chaque validation de phase.
 > Les valeurs `[À COMPLÉTER]` sont demandées au moment de la phase qui en a besoin.
 
-Dernière mise à jour : 17/11/2026
+Dernière mise à jour : 18/11/2026
 
 ## 1. Projet
 
@@ -57,7 +57,7 @@ Dernière mise à jour : 17/11/2026
 | Phase | Lot | Charge prévue (j) | Charge réelle (j) | Statut | Validée par | Date | Réserves |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1. Analyse et maquettes | 1 | 12 | | Validée avec réserves | [À COMPLÉTER] | 17/11/2026 | 1) Ateliers avec les 4 agences, à tenir pendant la phase 2 et avant la phase 4 ; 2) Q27 (carnet d'adresses) appliquée par défaut, à confirmer par la direction ; 3) Q70 : bascule du poste et des tests en MariaDB 10.11, à vérifier en phase 2. Rapport : `docs/rapports/phase_1.md` |
-| 2. Architecture et socle | 1 | 19 | | En cours | | | Projeté 18,5 j après rééquilibrage ; plafond accepté 19,5 j (`docs/plans/phase_2.md`) |
+| 2. Architecture et socle | 1 | 19 | | En cours | | | Projeté **20,25 j** : 18,5 j après rééquilibrage, plus 1,25 j pour D25 (déploiement par archive, contrainte de l'hébergeur), rapport compris ; **plafond relevé de 19,5 à 20,25 j** le 18/11/2026 (`docs/plans/phase_2.md`, avenant 2) |
 | 3. Paramétrage et référentiels | 1 | 16 | | | | | Projeté 16,25 j : reports de la phase 2 (`docs/plans/phase_3.md`) |
 | 4. Parc, leasing et réservations | 1 | 39 | | | | | Projeté 41,75 j : reports de la phase 2 (`docs/plans/phase_4.md`) |
 | 5. Contrats et états des lieux | 1 | 30 | | | | | Projeté 29,5 j : `drivers` avancé en phase 4 (`docs/plans/phase_5.md`) |
@@ -68,7 +68,7 @@ Dernière mise à jour : 17/11/2026
 | 10. Recette et mise en production du lot 1 | 1 | 19 | | | | | |
 | 11. Espace client | 2 | 45 | | | | | |
 | **Total** | | **290** | | | | | |
-| **Écart cumulé du lot 1** (au 17/11/2026) | 1 | **245** prévus | **247,25** projetés | **+2,25 j (+0,9 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 18,5 j. Mise à jour à chaque fin de phase |
+| **Écart cumulé du lot 1** (au 18/11/2026) | 1 | **245** prévus | **249** projetés | **+4 j (+1,6 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 20,25 j (D25). Mise à jour à chaque fin de phase |
 
 Statuts : À démarrer · En cours · En attente de validation · Validée · Validée avec réserves.
 
@@ -88,6 +88,8 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 17/11/2026 | Dépôt dans `D:\aviator`, jonction `C:\laragon\www\aviator` pour Laragon | Responsable technique |
 | 17/11/2026 | Q11, Q30 et Q16 envoyées à l'expert-comptable ; la phase 3 reste bloquée sur les taxes, mentions et numérotation | Responsable technique |
 | 17/11/2026 | Ateliers avec les agences pendant la phase 2, avant la phase 4 ; maquettes publiées sur une page privée pour ces ateliers | Responsable technique |
+| 18/11/2026 | D25 : déploiement par archive construite sur le poste (`build-release.sh`), envoyée par FTPS ou par le gestionnaire de fichiers et installée dans le terminal web de cPanel (`install-release.sh`, `rollback-release.sh`) ; racine web `~/apps/<env>/current/public` ; 2FA sur le compte cPanel ; remplace `scripts/deploy.sh` et D22. Écart avec le cahier des charges §6.5 (déploiement depuis Git par SSH) signalé dans `docs/decisions.md` | Responsable technique |
+| 18/11/2026 | Plafond de la phase 2 relevé de 19,5 à 20,25 j pour D25 (contrainte de l'hébergeur) ; écart cumulé du lot 1 projeté à +4 j (+1,6 %) | Responsable technique |
 
 ## 7. Points à confirmer avec Oxahost avant commande
 
@@ -95,17 +97,17 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | --- | --- |
 | Version de PHP | Confirmé (17/11/2026) : PHP 8.3 avec PHP Selector (CloudLinux) ; certaines extensions peuvent être restreintes |
 | Calendrier de disponibilité de PHP 8.4 | « Prochainement », sans date : le projet reste en PHP 8.3 |
-| SSH : Git, Composer, mysqldump, tar | Confirmé (17/11/2026) |
-| SSH depuis l'extérieur avec une clé, ou seulement le terminal cPanel | **Ouvert** (relance envoyée) ; variante manuelle du déploiement prévue (D22) |
-| Cron toutes les minutes | **Ouvert** (relance envoyée) ; l'application supporte un cron toutes les 5 minutes (D20) |
-| Fonctions `exec`, `proc_open`, `symlink` | **Ouvert** (relance envoyée) ; l'application n'en dépend pas (D14, D21) |
-| Liste des extensions PHP restreintes | **Ouvert** (relance envoyée) ; contrôlée par `aviator:check-environment` |
+| Ligne de commande | Confirmé (18/11/2026) : **uniquement le terminal web de cPanel**, sans SSH depuis le poste ni clé ; `mysqldump` et `tar` disponibles. Déploiement par archive (D25), `scripts/deploy.sh` et D22 supprimés (Q8) |
+| Cron toutes les minutes | Confirmé (18/11/2026) : autorisé ; D20 (toutes les 5 minutes) reste en mode de secours |
+| Fonctions `exec`, `proc_open`, `shell_exec`, `system`, `passthru` | Confirmé (18/11/2026) : **désactivées** ; D14 et D15 confirmées ; aucun `composer install` sur le serveur (Q71) |
+| Fonction `symlink` | Confirmé (18/11/2026) : activée ; D21 maintenue par choix de sécurité (pas de `storage:link`) |
+| Extensions PHP | Confirmé (18/11/2026) : toutes disponibles ; contrôlées par `aviator:check-environment` |
 | Lieu de stockage des sauvegardes (Tunisie) | Confirmé (17/11/2026) : JetBackup stocké en Tunisie |
 | Sous-domaines avec racine web hors de `public_html`, SSL gratuit | Confirmé (17/11/2026) |
 | Prix annuel exact (358,80 ou 418,68 DT HT) | À confirmer |
 | Version exacte de la base de données | Confirmé : MariaDB 10.11.19 |
 
-Les points encore ouverts seront vérifiés par le responsable technique pendant la garantie de 30 jours, notamment avec `php artisan aviator:check-environment`.
+Seul le prix annuel reste à confirmer. Les réponses d'Oxahost sont vérifiées sur le serveur par le responsable technique pendant la garantie de 30 jours, avec les premiers essais du terminal web et `aviator:check-environment` (`docs/installation_recette.md`, étapes 2 et 12).
 
 ## 8. Règles fiscales validées
 

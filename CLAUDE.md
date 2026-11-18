@@ -29,6 +29,7 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 ## Contraintes techniques
 
 - **PHP 8.3 maximum**, **MariaDB 10.11**, hébergement **mutualisé** : pas de Redis, pas de Supervisor, pas de processus permanent ; files en `database` traitées par le planificateur (cron chaque minute) ; assets compilés avant déploiement.
+- **Déploiement par archive (D25)** : `scripts/build-release.sh` sur le poste, `install-release.sh` dans le terminal web de cPanel ; aucune connexion SSH depuis le poste ; ni Composer, ni npm, ni Git sur le serveur (`exec` et `proc_open` y sont désactivées).
 - Montants en `DECIMAL(15,3)`, calculs avec `brick/math`, jamais de `float`.
 - Règles métier dans `app/Domain/*`, appelées par Filament et par l'espace client ; jamais dans les ressources ou les vues.
 - Droits contrôlés côté serveur (policies) ; `AgencyScope` pour les utilisateurs d'agence.

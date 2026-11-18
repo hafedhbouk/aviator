@@ -5,9 +5,9 @@ Version du 18/11/2026. Ce document s'adresse au responsable technique et à la d
 ## 1. Règles communes
 
 1. **Une clé par environnement** : le poste, la recette et la production ont chacun leurs propres clés. Elles sont générées **une seule fois**, à l'installation de l'environnement.
-2. **Jamais dans Git ni dans la CI** : les clés ne figurent que dans le fichier `.env` du serveur, qui n'est pas versionné. La CI génère des clés jetables à chaque exécution.
+2. **Jamais dans Git ni dans la CI** : les clés ne figurent que dans le fichier `shared/.env` du serveur (`~/apps/<env>/shared/.env`), qui n'est ni versionné ni présent dans l'archive de version (D25). La CI génère des clés jetables à chaque exécution.
 3. **Copie hors du serveur, en Tunisie** : la valeur de chaque clé de production et de recette est conservée par Aviator dans un **gestionnaire de mots de passe**, plus une **copie papier** sous enveloppe scellée, rangée au siège à Djerba. Aucune copie à l'étranger : pas de service en nuage étranger, pas d'e-mail (loi 2004-63, art. 52).
-4. **`php artisan key:generate` est interdit en recette et en production une fois l'installation faite** : il remplacerait `APP_KEY` sans procédure et rendrait illisibles toutes les données chiffrées.
+4. **`php artisan key:generate` n'est jamais lancé en recette ni en production** : les clés y sont générées avec `php -r` à la première installation (§5, D25), et `key:generate` remplacerait ensuite `APP_KEY` sans procédure, rendant illisibles toutes les données chiffrées.
 5. **`aviator:check-environment`** signale toute clé absente, vide ou mal formée (ÉCHEC), **sans jamais afficher sa valeur**.
 6. Tout changement de clé suit la procédure du §3, application en maintenance et après une sauvegarde vérifiée. Il est noté dans `docs/projet.md` §6 (date, raison, auteur), sans la valeur de la clé.
 
@@ -15,7 +15,7 @@ Version du 18/11/2026. Ce document s'adresse au responsable technique et à la d
 
 | Clé | Rôle | Si elle disparaît | Génération (une seule fois) |
 | --- | --- | --- | --- |
-| `APP_KEY` | Chiffre les données sensibles en base : numéros de pièce d'identité et de permis, secrets et codes de récupération de la 2FA. Signe aussi les sessions, les cookies et les liens signés | **Perte définitive** des numéros de pièce et de permis chiffrés, et des secrets 2FA : chaque utilisateur doit réactiver sa 2FA, et les pièces doivent être ressaisies. Toutes les sessions sont fermées | `php artisan key:generate` **à l'installation seulement** |
+| `APP_KEY` | Chiffre les données sensibles en base : numéros de pièce d'identité et de permis, secrets et codes de récupération de la 2FA. Signe aussi les sessions, les cookies et les liens signés | **Perte définitive** des numéros de pièce et de permis chiffrés, et des secrets 2FA : chaque utilisateur doit réactiver sa 2FA, et les pièces doivent être ressaisies. Toutes les sessions sont fermées | `php -r 'echo "base64:", base64_encode(random_bytes(32)), PHP_EOL;'` **à l'installation seulement** (§5) |
 | `AVIATOR_BLIND_INDEX_KEY` | Clé HMAC des empreintes de recherche exacte (D8) : recherche par pièce ou permis, doublons (K-05), **contrôle de la liste noire** (RG-15) | Les empreintes ne correspondent plus : la recherche exacte et les contrôles de liste noire ne retrouvent plus les clients. **Réparable** : nouvelle clé, puis recalcul (§3.2), tant que `APP_KEY` est intacte | `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"` (64 caractères hexadécimaux) |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (phase 9) | Signent les notifications push envoyées aux navigateurs | Les abonnements existants deviennent invalides : chaque appareil doit se réabonner (nouvelle autorisation de notification) | Commande fournie en phase 9 |
 
@@ -28,11 +28,12 @@ Les autres secrets du `.env` (mot de passe de la base, du compte e-mail) sont de
 ### 3.1 `APP_KEY`
 
 ```bash
+cd ~/apps/<env>/current
 php artisan down
-# 1. Sauvegarde de la base (deploy.sh ou mysqldump) et de .env.
+# 1. Sauvegarde de la base (mysqldump avec ~/.my.<env>.cnf) et de ~/apps/<env>/shared/.env.
 # 2. Dans .env :
 #    APP_PREVIOUS_KEYS=<ancienne APP_KEY>     (permet de lire les données encore chiffrées avec l'ancienne)
-#    APP_KEY=<nouvelle clé>                    (générée sur le poste : php artisan key:generate --show)
+#    APP_KEY=<nouvelle clé>                    (générée par : php -r 'echo "base64:", base64_encode(random_bytes(32)), PHP_EOL;')
 php artisan config:clear
 php artisan aviator:reencrypt-secrets --force   # rechiffre toutes les colonnes chiffrées avec la nouvelle clé
 php artisan aviator:check-environment
@@ -48,8 +49,9 @@ php artisan up
 ### 3.2 `AVIATOR_BLIND_INDEX_KEY`
 
 ```bash
+cd ~/apps/<env>/current
 php artisan down
-# 1. Sauvegarde de la base et de .env.
+# 1. Sauvegarde de la base (mysqldump avec ~/.my.<env>.cnf) et de ~/apps/<env>/shared/.env.
 # 2. Dans .env : AVIATOR_BLIND_INDEX_KEY=<nouvelle clé de 64 caractères hexadécimaux>
 php artisan config:clear
 php artisan aviator:rehash-blind-index --force   # recalcule toutes les empreintes avec la nouvelle clé
@@ -77,14 +79,15 @@ Le cahier des charges (§6.5) prévoit de restaurer chaque trimestre la sauvegar
 
 ## 5. Première installation d'un environnement
 
-Ces étapes s'ajoutent à `docs/installation_hebergement_oxahost.md` §4 :
+Ces étapes font partie de `docs/installation_recette.md` (étapes 4 à 7), valables aussi pour la production :
 
-1. `cp .env.example .env`, puis compléter la base, l'URL et l'e-mail.
-2. `php artisan key:generate` : **une seule fois**, à cette étape.
-3. Générer `AVIATOR_BLIND_INDEX_KEY` (64 caractères hexadécimaux) et la placer dans `.env`.
-4. Reporter les deux clés dans le gestionnaire de mots de passe d'Aviator et sur la copie papier, avec le nom de l'environnement et la date.
-5. `php artisan aviator:check-environment` : aucune clé absente ou vide.
-6. Seulement ensuite : `php artisan migrate --force`, puis la suite de la procédure.
+1. Premier lancement de `install-release.sh` : il crée `~/apps/<env>/shared/.env` à partir du modèle, puis s'arrête.
+2. Générer les deux clés dans le terminal web de cPanel, **une seule fois** :
+   `php -r 'echo "APP_KEY=base64:", base64_encode(random_bytes(32)), PHP_EOL;'`
+   `php -r 'echo "AVIATOR_BLIND_INDEX_KEY=", bin2hex(random_bytes(32)), PHP_EOL;'`
+3. Reporter les deux clés dans le gestionnaire de mots de passe d'Aviator et sur la copie papier, avec le nom de l'environnement et la date.
+4. Les placer dans `shared/.env`, avec la base, l'URL et l'e-mail.
+5. Deuxième lancement de `install-release.sh` : migrations, puis `aviator:check-environment`, qui ne doit signaler aucune clé absente ou vide.
 
 ## 6. Accès de secours
 
