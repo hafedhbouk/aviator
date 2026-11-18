@@ -96,21 +96,21 @@ L'application est un monolithe Laravel 13 sur PHP 8.3, avec une base MariaDB 10.
 
 ### 2.2 Conditions pour l'hébergement mutualisé
 
-L'offre Ultimate convient à Aviator. La page des fonctionnalités d'Oxahost confirme l'essentiel ; trois points restent à faire confirmer par écrit avant la commande.
+L'offre Ultimate convient à Aviator. Oxahost a répondu par écrit les 17 et 18/11/2026 : seul le prix annuel exact reste à relever sur le bon de commande.
 
 | Point | Statut | Détail |
 | --- | --- | --- |
 | Espace disque | Confirmé | NVMe illimité ; 4 Go correspondent à la mémoire vive. Limite de 1 000 000 de fichiers (inodes), largement suffisante |
 | Puissance | Confirmé | 4 vCores, 4 Go de RAM, 70 requêtes PHP simultanées, débit disque de 8 Mo/s |
-| Accès en ligne de commande | Confirmé | Limité au terminal web de cPanel, sans connexion SSH depuis le poste ; fonctions `exec` et `proc_open` désactivées (confirmé par Oxahost le 18/11/2026) |
+| Accès en ligne de commande | Confirmé | Terminal web de cPanel uniquement, sans connexion SSH depuis l'extérieur ; exec, proc_open, shell_exec, system et passthru désactivées (confirmé le 18/11/2026). D'où le déploiement par archive (6.5) |
 | Base de données | Confirmé | MariaDB 10.11.19 (confirmé par Oxahost le 17/11/2026) |
 | Sites | Confirmé | Sites illimités : production et recette en sous-domaine sur le même compte |
 | Sauvegardes | Confirmé | Quotidiennes et à la demande (JetBackup), chiffrées, conservées jusqu'à 30 jours |
 | Disponibilité | Confirmé | Engagement de 99,9 %, avec compensation ; support prioritaire |
-| **Version de PHP** | **À confirmer** | La page indique PHP 5.6 à 8.3. PHP 8.3 suffit pour Laravel 13, mais il faut savoir quand PHP 8.4 sera proposé : les correctifs de sécurité de PHP 8.3 s'arrêtent fin 2027 |
-| Cron | Confirmé | Tâche planifiée toutes les minutes autorisée (confirmé par Oxahost le 18/11/2026) ; Composer n'est pas utilisé sur le serveur (§6.5) |
-| **Lieu des sauvegardes** | **À confirmer** | Stockées « sur des serveurs distants » : vérifier qu'ils sont en Tunisie ; ne pas activer l'option Acronis Cloud Europe |
-| **Prix** | **À confirmer** | 29,90 DT HT par mois sur la page, soit 358,80 DT par an, mais 418,68 DT HT au récapitulatif de commande. Le chiffrage retient 418,68 DT |
+| Version de PHP | Confirmé | PHP 8.3 avec le sélecteur PHP de CloudLinux, toutes les extensions nécessaires activables. PHP 8.4 est annoncé « prochainement », sans date ; les correctifs de sécurité de PHP 8.3 s'arrêtent fin 2027 |
+| Tâche planifiée (cron) | Confirmé | Exécution toutes les minutes autorisée (confirmé le 18/11/2026), dans la limite des quotas de processeur et de mémoire |
+| Lieu des sauvegardes | Confirmé | Sauvegardes JetBackup stockées en Tunisie (confirmé le 17/11/2026) ; ne pas activer l'option Acronis Cloud Europe |
+| **Prix** | **À confirmer** | 29,90 DT HT par mois sur la page, soit 358,80 DT par an, mais 418,68 DT HT au récapitulatif de commande. Oxahost renvoie à son site : montant à relever sur le bon de commande. Le chiffrage retient 418,68 DT |
 | Envoi d'e-mails | Sans objet pour les notifications | 150 e-mails par heure : suffisant, les notifications passant par le push |
 
 La garantie « satisfait ou remboursé » de 30 jours permet de vérifier ces points en installant le socle de l'application (phase 2) avant de s'engager pour l'année.
@@ -589,7 +589,7 @@ Pour l'espace client, ouvert sur Internet :
 | Production | Compte Oxahost Ultimate, Tunis : back-office et espace client | Exploitation |
 
 - Le système (serveur web, PHP, base de données, sécurité du serveur) est administré par Oxahost : il n'y a plus d'administration système à la charge d'Aviator, seulement un suivi (version de PHP, sauvegardes, espace disque).
-- Déploiement par archive versionnée préparée sur le poste, installée par script dans le terminal cPanel, sans Composer ni Git sur le serveur ; avec mise en maintenance et migrations de base.
+- Déploiement par archive versionnée, préparée et contrôlée sur le poste du développeur (code, dépendances et assets compilés, empreinte SHA-256), puis installée par un script lancé dans le terminal cPanel : sauvegarde de la base, mise en maintenance, migrations, bascule de version et retour arrière possible. Ni Composer ni Git ne sont utilisés sur le serveur, l'accès SSH chez Oxahost se limitant au terminal web de cPanel.
 - Sauvegardes : celles d'Oxahost, plus une copie mensuelle de la base et des fichiers conservée par Aviator en Tunisie ; restauration testée sur la recette chaque trimestre.
 - Alerte quand l'espace disque dépasse 80 % ; photos compressées à l'envoi.
 - Aucun déploiement en production sans sauvegarde vérifiée, tests réussis et autorisation explicite ; procédure de retour arrière documentée.
@@ -603,7 +603,7 @@ Le projet avance en onze phases : dix pour le lot 1 (245 jours), puis une pour l
 | Phase | Lot | Contenu | Charge (j) | Critère d'acceptation principal | Validation |
 | --- | --- | --- | --- | --- | --- |
 | 1. Analyse et maquettes | 1 | Ateliers avec les 4 agences, parcours, maquettes du comptoir, du planning, du CRM et des statistiques sur smartphone | 12 | Maquettes et questions ouvertes validées | Super admin |
-| 2. Architecture et socle | 1 | Modèle de données, authentification, profils, portée par agence, audit, déploiement sur le mutualisé | 19 | Socle déployé en recette ; points « à confirmer » de la section 2.2 vérifiés dans les 30 jours de garantie | Responsable technique |
+| 2. Architecture et socle | 1 | Modèle de données, authentification, profils, portée par agence, audit, déploiement sur le mutualisé | 19 | Socle déployé en recette ; résultat de la vérification de l'environnement (aviator:check-environment) joint au rapport, dans les 30 jours de garantie | Responsable technique |
 | 3. Paramétrage et référentiels | 1 | Module A (4 agences), conducteurs, fournisseurs | 16 | Paramétrage complet saisi en recette | Admin siège |
 | 4. Parc, leasing et réservations | 1 | Modules B et C, planning, alertes | 39 | Aucune double réservation possible ; échéanciers de leasing justes | Admin siège, agences |
 | 5. Contrats et états des lieux | 1 | Module D, impressions, tablette | 30 | Cycle réservation → départ → retour complet | Agences |
