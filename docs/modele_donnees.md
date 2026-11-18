@@ -156,7 +156,7 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 
 ### `taxes`
 
-`id` ; `code` VARCHAR(32) NN ; `kind` VARCHAR(32) NN (`rate`, `fixed_amount`) ; `rate` DECIMAL(7,4) N ; `amount` DECIMAL(15,3) N ; `applies_to` VARCHAR(32) NN (nature : location, option, frais…) ; `valid_from` DATE NN ; `valid_to` DATE N ; `source_document` VARCHAR(255) NN (fichier de `regles_fiscales_validees/`) ; `validated_by` VARCHAR(255) NN ; `validated_at` DATE NN ; horodatages ; I (`code`, `valid_from`). **Table vide tant qu'aucune règle n'est déposée** (Q11).
+`id` ; `code` VARCHAR(32) NN ; `kind` VARCHAR(32) NN (`rate`, `fixed_amount`) ; `rate` DECIMAL(7,4) N ; `amount` DECIMAL(15,3) N ; `applies_to` VARCHAR(32) NN (nature : location, option, frais…) ; `valid_from` DATE NN ; `valid_to` DATE N ; `source_document` VARCHAR(255) NN (fichier de `regles_fiscales_validees/`) ; `validated_by` VARCHAR(255) NN ; `validated_at` DATE NN ; horodatages ; I (`code`, `valid_from`). ~~Table vide tant qu'aucune règle n'est déposée~~ **Révisée le 18/11/2026** : les valeurs du cabinet y sont saisies en `PROPOSED` ou `PENDING_ACCOUNTANT_VALIDATION`, avec nature fiscale, versions et statut de validation ; seules les règles `CONFIRMED` servent en production. Conception à arrêter dans le plan de la phase 3 (`docs/plans/phase_3.md`, « Paramètres fiscaux »).
 
 ### `payment_methods`
 

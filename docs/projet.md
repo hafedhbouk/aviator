@@ -90,6 +90,7 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 17/11/2026 | Ateliers avec les agences pendant la phase 2, avant la phase 4 ; maquettes publiées sur une page privée pour ces ateliers | Responsable technique |
 | 18/11/2026 | D25 : déploiement par archive construite sur le poste (`build-release.sh`), envoyée par FTPS ou par le gestionnaire de fichiers et installée dans le terminal web de cPanel (`install-release.sh`, `rollback-release.sh`) ; racine web `~/apps/<env>/current/public` ; 2FA sur le compte cPanel ; remplace `scripts/deploy.sh` et D22. Cahier des charges §6.5 et §2.2 mis à jour en conséquence le 18/11/2026 | Responsable technique |
 | 18/11/2026 | Plafond de la phase 2 relevé de 19,5 à 20,25 j pour D25 (contrainte de l'hébergeur), **confirmé** ; écart cumulé du lot 1 projeté à +4 j (+1,6 %). Lot 10 validé | Responsable technique |
+| 18/11/2026 | Spécifications du cabinet comptable reçues (`docs/reference/cabinet/`), **sans valeur de validation** : chaque règle fiscale porte un statut CONFIRMED, PROPOSED ou PENDING_ACCOUNTANT_VALIDATION (§8) ; seules les règles CONFIRMED servent en production (garde-fou dans `aviator:check-environment` en phase 3 et dans la liste de mise en production en phase 10). Phase 3 non bloquée sur le principe ; elle démarre après la validation du rapport de la phase 2 et de l'analyse d'écarts (`docs/analyse_ecarts_cabinet.md`) | Responsable technique |
 
 ## 7. Points à confirmer avec Oxahost avant commande
 
@@ -109,12 +110,32 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 
 Seul le prix annuel reste à confirmer. Les réponses d'Oxahost sont vérifiées sur le serveur par le responsable technique pendant la garantie de 30 jours, avec les premiers essais du terminal web et `aviator:check-environment` (`docs/installation_recette.md`, étapes 2 et 12).
 
-## 8. Règles fiscales validées
+## 8. Règles fiscales
 
-| Règle | Document | Date d'effet | Statut |
+Statuts (spécifications du cabinet, §16) : **CONFIRMED** (validée par écrit, document déposé dans `docs/reference/regles_fiscales_validees/` avec valideur, date et exemple chiffré) ; **PROPOSED** (valeur proposée par le cabinet comme paramétrage initial) ; **PENDING_ACCOUNTANT_VALIDATION** (le cabinet a indiqué qu'elle exige sa validation). Seule une règle CONFIRMED peut servir en production.
+
+Source des valeurs : spécifications du cabinet du 18/11/2026 (`docs/reference/cabinet/specifications_facturation_2026-11-18.md`), qui ne valent **pas** validation. Analyse : `docs/analyse_ecarts_cabinet.md`.
+
+| Règle | Valeur ou traitement | Source | Statut |
 | --- | --- | --- | --- |
-| Taux de TVA sur la location, les options et les frais | — | — | Non fournie ; demandée le 17/11/2026 (Q11) |
-| Timbre fiscal | — | — | Non fournie ; demandée le 17/11/2026 (Q11) |
-| Mentions obligatoires et numérotation des factures et des avoirs | — | — | Non fournie ; demandée le 17/11/2026 (Q11, Q30) |
-| Format des exports pour l'expert-comptable | — | — | Non fourni |
-| Facturation électronique (TEIF / TTN) | — | — | Demandée le 17/11/2026 (Q16) |
+| TVA sur la location de véhicules | 19 % | §2 | PROPOSED |
+| TVA sur le siège enfant, le GPS, le conducteur supplémentaire | 19 % | §2 | PROPOSED |
+| TVA sur l'assurance complémentaire | Selon la nature juridique et contractuelle | §2 | PENDING_ACCOUNTANT_VALIDATION |
+| TVA sur le carburant refacturé | 19 % « en principe » | §2 | PENDING_ACCOUNTANT_VALIDATION |
+| TVA sur le retard de restitution | Selon la nature de la somme facturée | §2 | PENDING_ACCOUNTANT_VALIDATION |
+| Dégâts sur véhicule | Hors champ possible en cas d'indemnisation réelle | §2 | PENDING_ACCOUNTANT_VALIDATION |
+| Franchise d'assurance | Selon la nature de la retenue | §2 | PENDING_ACCOUNTANT_VALIDATION |
+| Timbre fiscal : montant | 1,000 DT par facture concernée, ligne distincte, inclus dans le net à payer | §3 | PROPOSED |
+| Timbre fiscal : conditions et exonérations | À préciser (« sous réserve de confirmation des dispositions applicables ») | §3 | PENDING_ACCOUNTANT_VALIDATION |
+| Mentions obligatoires des factures et des avoirs | Liste du §4 (société, document, client particulier ou professionnel, lignes, récapitulatif) | §4, §6 | PROPOSED |
+| Numérotation des factures | Séquence centralisée pour les 4 agences, format `AVI-AAAA-NNNNNN`, agence dans un champ distinct | §5 | PROPOSED |
+| Remise à zéro annuelle de la numérotation | Non tranchée (« doit être confirmée par le cabinet ») | §5 | PENDING_ACCOUNTANT_VALIDATION |
+| Numérotation des avoirs et des factures complémentaires (Q30) | Numéro propre ; séquence commune ou distincte non précisée | §5, §6 | PENDING_ACCOUNTANT_VALIDATION |
+| Statuts de facture | `DRAFT`, `VALIDATED`, `ISSUED`, `PARTIALLY_PAID`, `PAID`, `CREDITED`, `CANCELLED` | §6 | PROPOSED |
+| Arrondis | 3 décimales ; TVA calculée sur la base groupée par taux puis arrondie ; timbre ajouté séparément | §7 | PENDING_ACCOUNTANT_VALIDATION (« la méthode définitive doit être validée ») |
+| Qualification fiscale des retenues sur caution (Q51) | À qualifier selon la nature de la retenue | §9.3, §10 | PENDING_ACCOUNTANT_VALIDATION |
+| Format des exports pour le cabinet (Q1) | XLSX et CSV UTF-8 ; colonnes des journaux §9.1 à §9.5 ; fréquences §9.6 ; identifiants stables | §9 | PROPOSED (logiciel, séparateur et codes comptables non fournis) |
+| Multidevise | Devise de référence TND ; devise d'origine, taux et contre-valeur conservés | §11 | PROPOSED (besoin réel à confirmer, Q78) |
+| Facturation électronique (TEIF / TTN, Q16) | Obligation étendue aux services selon le cabinet ; situation d'Aviator à confirmer | §8 | PENDING_ACCOUNTANT_VALIDATION |
+
+**Aucune règle n'est CONFIRMED au 18/11/2026.** Aucun document n'a été versé dans `docs/reference/regles_fiscales_validees/`.
