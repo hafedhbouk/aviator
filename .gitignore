@@ -32,3 +32,6 @@ Thumbs.db
 # Aviator : fichiers d environnement locaux (secrets)
 /.env.testing
 /.env.*.local
+
+# Archives de version (scripts/build-release.sh)
+/dist

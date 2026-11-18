@@ -134,6 +134,25 @@ it('liste disable_functions et indique que exec, proc_open et symlink ne sont pa
         ->and(checkResult('Fonction symlink')->advice)->toContain('D21');
 });
 
+it('confirme que les fonctions désactivées chez Oxahost sont attendues (D14, D25)', function () {
+    $this->probe->disabled = ['exec', 'proc_open', 'shell_exec', 'system', 'passthru'];
+
+    foreach (['exec', 'proc_open', 'shell_exec', 'system', 'passthru'] as $function) {
+        expect(checkResult("Fonction {$function}")->status)->toBe(CheckStatus::Ok)
+            ->and(checkResult("Fonction {$function}")->finding)->toBe('Désactivée')
+            ->and(checkResult("Fonction {$function}")->advice)->toContain('Attendu chez Oxahost', 'D14');
+    }
+
+    expect(checkResult('Fonction symlink')->finding)->toBe('Disponible');
+});
+
+it('conseille le terminal web de cPanel et install-release.sh si mysqldump manque (D25)', function () {
+    $this->probe->mysqldump = null;
+
+    expect(checkResult('mysqldump dans le PATH')->advice)->toContain('terminal web de cPanel', 'install-release.sh')
+        ->not->toContain('SSH');
+});
+
 it('avertit si mysqldump est introuvable', function () {
     $this->probe->mysqldump = null;
 

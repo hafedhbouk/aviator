@@ -24,6 +24,9 @@ final class EnvironmentChecker
 
     public const RECOMMENDED_EXTENSIONS = ['exif', 'gmp', 'sodium'];
 
+    /** Fonctions de lancement de processus, désactivées chez Oxahost et inutiles à l'application (D14). */
+    public const PROCESS_FUNCTIONS = ['exec', 'proc_open', 'shell_exec', 'system', 'passthru'];
+
     /** Connexions MariaDB en dessous desquelles on avertit (une connexion de plus pour les séquences). */
     public const MIN_RECOMMENDED_CONNECTIONS = 10;
 
@@ -90,18 +93,24 @@ final class EnvironmentChecker
         $disabled = $this->probe->disabledFunctions();
         $results[] = CheckResult::ok('Fonctions désactivées (disable_functions)', $disabled === [] ? 'Aucune' : implode(', ', $disabled));
 
-        foreach (['exec' => 'D14', 'proc_open' => 'D14', 'symlink' => 'D21'] as $function => $decision) {
-            $results[] = CheckResult::ok(
-                "Fonction {$function}",
-                $this->probe->functionAvailable($function) ? 'Disponible' : 'Désactivée',
-                "Aucune action : l'application n'en dépend pas ({$decision}).",
-            );
+        // Oxahost désactive les fonctions de lancement de processus (réponse du 18/11/2026) :
+        // c'est attendu, l'application n'en dépend pas (D14, test d'architecture).
+        foreach (self::PROCESS_FUNCTIONS as $function) {
+            $results[] = $this->probe->functionAvailable($function)
+                ? CheckResult::ok("Fonction {$function}", 'Disponible', "Aucune action : l'application ne l'utilise pas (D14).")
+                : CheckResult::ok("Fonction {$function}", 'Désactivée', "Attendu chez Oxahost : l'application n'en dépend pas (D14).");
         }
+
+        $results[] = CheckResult::ok(
+            'Fonction symlink',
+            $this->probe->functionAvailable('symlink') ? 'Disponible' : 'Désactivée',
+            "Aucune action : l'application ne crée aucun lien (D21) ; les liens de install-release.sh sont faits par le terminal (ln).",
+        );
 
         $dump = $this->probe->executableInPath('mysqldump') ?? $this->probe->executableInPath('mariadb-dump');
         $results[] = $dump !== null
             ? CheckResult::ok('mysqldump dans le PATH', 'Trouvé : '.basename($dump))
-            : CheckResult::warning('mysqldump dans le PATH', 'Introuvable dans le PATH de PHP', 'Vérifier dans le terminal SSH (« which mysqldump ») : deploy.sh l\'utilise pour la sauvegarde avant déploiement.');
+            : CheckResult::warning('mysqldump dans le PATH', 'Introuvable dans le PATH de PHP', 'Vérifier dans le terminal web de cPanel (« command -v mysqldump ») : install-release.sh l\'utilise pour la sauvegarde avant chaque mise à jour (D25).');
 
         return $results;
     }
@@ -161,7 +170,7 @@ final class EnvironmentChecker
      */
     private function scheduler(): array
     {
-        $cron = '* * * * * cd ~/apps/<env> && <php 8.3> artisan schedule:run >> /dev/null 2>&1';
+        $cron = '* * * * * cd ~/apps/<env>/current && <php 8.3> artisan schedule:run >> /dev/null 2>&1';
 
         // Le battement est lu dans le cache : un cache mal configuré ne doit pas faire
         // échouer le diagnostic, il doit être signalé.

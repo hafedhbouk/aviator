@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Contraintes de l'hébergement mutualisé (D14, D21) : exec, proc_open et symlink
- * peuvent être désactivés chez Oxahost ; l'application n'en dépend pas.
+ * Contraintes de l'hébergement mutualisé (D14, D21, D25) : exec, proc_open, shell_exec,
+ * system et passthru sont désactivés chez Oxahost ; l'application n'en dépend pas.
  */
 
 arch('aucune fonction de lancement de processus dans l\'application (D14)')
@@ -20,7 +20,10 @@ arch('aucun lien symbolique créé par l\'application (D21)')
 it('ne lance jamais storage:link : ni dans le code, ni dans Composer, ni au déploiement (D21)', function () {
     $files = [
         base_path('composer.json'),
-        base_path('scripts/deploy.sh'),
+        base_path('scripts/build-release.sh'),
+        base_path('scripts/install-release.sh'),
+        base_path('scripts/rollback-release.sh'),
+        base_path('scripts/lib/release-files.sh'),
         base_path('routes/console.php'),
         base_path('routes/web.php'),
         base_path('bootstrap/app.php'),
