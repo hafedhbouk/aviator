@@ -14,6 +14,7 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 
 1. **Plan avant code**, validé quand la phase le demande.
 2. **Rien n'est « fait » sans test exécuté** : cite la commande et son résultat.
+   **Aucune affirmation « appliqué » ou « testé » dans la documentation** sans un test qui prouve le comportement réel. Un test qui déclenche lui-même l'événement attendu ne compte pas.
 3. **Aucune règle fiscale inventée** (TVA, timbre, mentions, numérotation) : seuls les documents de `docs/reference/regles_fiscales_validees/` font foi. Une règle fiscale est validée si elle y figure avec une **confirmation écrite du cabinet** ou une **attestation écrite de la direction d'Aviator**.
    **Référentiel fiscal versionné** : la version validée dans `regles_fiscales_validees/` ne se modifie jamais. Toute nouvelle version du référentiel exige une nouvelle confirmation signée du cabinet ; elle s'ajoute à côté de l'ancienne, avec sa propre confirmation.
 4. **Signaler plutôt que deviner** : question dans `docs/questions_ouvertes.md` + valeur par défaut paramétrable.

@@ -58,20 +58,24 @@ Conséquences, appliquées par défaut :
 
 ## Règles de mot de passe (D19)
 
-Appliquées à tous les comptes du back-office : création par `aviator:create-super-admin` ou par le super admin, réinitialisation, changement.
+Un mot de passe est choisi à trois endroits, tous contrôlés :
 
-| Règle | Valeur |
-| --- | --- |
-| Longueur minimale | **12 caractères** |
-| Longueur maximale | 128 caractères |
-| Composition | Au moins une majuscule, une minuscule, un chiffre et un symbole |
-| Contenu interdit | Le mot de passe ne doit contenir ni l'adresse e-mail ni le nom de l'utilisateur |
-| Vérification en ligne des mots de passe compromis | **Aucune** (pas d'appel à un service extérieur) |
-| Stockage | Hachage bcrypt de Laravel (coût par défaut), jamais en clair ni dans les journaux |
-| Tentatives de connexion | Limitées par Filament : 5 essais par minute |
-| 2FA | Obligatoire pour `super_admin` et `admin` (D9), activée à la première connexion |
+- **création d'un super admin** : commande `aviator:create-super-admin` ;
+- **réinitialisation par lien** : page Filament `App\Filament\Auth\ResetPassword`. C'est aussi par ce lien que chaque compte créé par le super admin choisit son premier mot de passe : `SaveUser` lui attribue un mot de passe aléatoire que personne ne connaît ;
+- **changement depuis le profil** : page Filament `App\Filament\Auth\EditProfile`.
 
-Ces règles sont définies à un seul endroit (`Password::defaults()`, dans `AppServiceProvider`) et couvertes par des tests.
+Les règles de composition sont définies une seule fois, dans `Password::defaults()` (`AppServiceProvider`). La règle de contenu est `App\Rules\PasswordDoesNotContainIdentity`. Chacune est ajoutée explicitement aux trois endroits ci-dessus.
+
+| Règle | Valeur | Preuve (tests) |
+| --- | --- | --- |
+| Longueur minimale | **12 caractères** | `tests/Unit/Auth/PasswordRulesTest.php` ; par le lien : `AuthenticationFlowsTest` (« applique aussi les règles de composition ») |
+| Longueur maximale | 128 caractères | `PasswordRulesTest` |
+| Composition | Au moins une majuscule, une minuscule, un chiffre et un symbole | `PasswordRulesTest` |
+| Contenu interdit | Ni l'identifiant de l'adresse e-mail (la partie avant « @ »), ni un mot du nom de 4 caractères ou plus, sans tenir compte des majuscules, des accents ni des espaces | `PasswordRulesTest` (règle seule) ; `CreateSuperAdminCommandTest` (commande) ; `AuthenticationFlowsTest` : réinitialisation par lien et changement depuis le profil, pour un admin et un utilisateur d'agence, y compris un nouveau nom saisi dans le même formulaire |
+| Vérification en ligne des mots de passe compromis | **Aucune** (pas d'appel à un service extérieur) | `PasswordRulesTest` (« ne fait aucun appel en ligne ») |
+| Stockage | Haché par Laravel (attribut `hashed` du modèle `User`), jamais copié dans les journaux | `AuthenticationFlowsTest` (le mot de passe enregistré se vérifie par `Hash::check`) ; `AuditTrailTest` (seul `sensitive_changed` est noté, sans la valeur) |
+| Tentatives de connexion | Limite de Filament : **5 tentatives par minute et par adresse IP, réussies ou non**. Chaque tentative refusée est journalisée (`login_lockout` au début du blocage, `login_throttled` ensuite), avec l'adresse e-mail saisie, jamais le mot de passe | `AuthenticationFlowsTest` : 6 puis 7 vraies tentatives par le formulaire de connexion |
+| 2FA | Obligatoire pour `super_admin` et `admin` (D9), activée à la première connexion | `PanelAccessTest` |
 
 ## Recherche de clients (D24)
 

@@ -62,7 +62,7 @@ Abréviations des tableaux : **NN** = non nul ; **N** = nullable ; **U** = uniqu
 | `remember_token` | VARCHAR(100) | N | |
 | `created_at`, `updated_at` | TIMESTAMP | N | |
 
-### `agency_assignments` — P2 (remplace `agency_user`, lot 5)
+### `agency_assignments` — P2 (lot 5 ; remplace `agency_user`, dont la migration a été fusionnée avant tout déploiement)
 
 | Colonne | Type | Contraintes | Remarque |
 | --- | --- | --- | --- |
@@ -152,11 +152,16 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 
 ### `options`
 
-`id` ; `code` VARCHAR(32) NN U ; `name` VARCHAR(100) NN ; `pricing_unit` VARCHAR(32) NN (`per_day`, `per_rental`) ; `amount` DECIMAL(15,3) NN (HT) ; `max_amount_per_rental` DECIMAL(15,3) N ; `tax_nature` VARCHAR(32) N (nature fiscale, rattachée à une règle validée) ; `is_active` BOOLEAN NN ; horodatages.
+`id` ; `code` VARCHAR(32) NN U ; `name` VARCHAR(100) NN ; `pricing_unit` VARCHAR(32) NN (`per_day`, `per_rental`) ; `amount` DECIMAL(15,3) NN (HT) ; `max_amount_per_rental` DECIMAL(15,3) N ; `tax_code_id` FK `tax_codes` N (code fiscal ; une option sans code ne peut pas être activée) ; `is_active` BOOLEAN NN ; horodatages.
 
-### `taxes`
+### Paramètres fiscaux (référentiel fiscal v1.0 validé ; conception : `docs/plans/phase_3.md` §3)
 
-`id` ; `code` VARCHAR(32) NN ; `kind` VARCHAR(32) NN (`rate`, `fixed_amount`) ; `rate` DECIMAL(7,4) N ; `amount` DECIMAL(15,3) N ; `applies_to` VARCHAR(32) NN (nature : location, option, frais…) ; `valid_from` DATE NN ; `valid_to` DATE N ; `source_document` VARCHAR(255) NN (fichier de `regles_fiscales_validees/`) ; `validated_by` VARCHAR(255) NN ; `validated_at` DATE NN ; horodatages ; I (`code`, `valid_from`). ~~Table vide tant qu'aucune règle n'est déposée~~ **Révisée le 18/11/2026** : les valeurs du cabinet y sont saisies en `PROPOSED` ou `PENDING_ACCOUNTANT_VALIDATION`, avec nature fiscale, versions et statut de validation ; seules les règles `CONFIRMED` servent en production. Conception à arrêter dans le plan de la phase 3 (`docs/plans/phase_3.md`, « Paramètres fiscaux »).
+Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (référentiel, §14) : **`CONFIRMED`** (règle validée et documentée), **`CONDITIONAL`** (applicable selon la nature réelle de l'opération, avec ses justificatifs), **`PENDING_DOCUMENTATION`** (pièce ou confirmation nécessaire avant activation ; jamais applicable en production).
+
+- `fiscal_references` : `id` ; `version` VARCHAR(16) NN U ; `title` VARCHAR(255) NN ; `file_name` VARCHAR(255) NN ; `sha256` CHAR(64) NN ; `validation_source` VARCHAR(255) NN ; `validated_at` DATE NN ; `attestation_file_name` VARCHAR(255) N ; horodatages. Une ligne par version validée, jamais modifiée.
+- `tax_codes` : `id` ; `code` VARCHAR(48) NN U (les 15 codes du référentiel) ; `label` VARCHAR(100) NN ; `nature` VARCHAR(16) NN (`taxable`, `exempt`, `out_of_scope`) ; `requires_justification` BOOLEAN NN ; `legal_reference` VARCHAR(255) N ; `description` TEXT N ; horodatages. Liste fermée, créée par un seeder.
+- `tax_rules` : `id` ; `tax_code_id` FK RESTRICT ; `rate` DECIMAL(7,4) N (nul si non taxable) ; `valid_from` DATE NN ; `valid_to` DATE N ; `validation_status` VARCHAR(32) NN ; `fiscal_reference_id` FK N ; `is_active` BOOLEAN NN ; `created_by` FK N ; horodatages ; I (`tax_code_id`, `valid_from`). Jamais modifiée sur place : un changement crée une nouvelle version ; aucun chevauchement pour un même code.
+- `stamp_duty_rules` : `id` ; `rule_code` VARCHAR(48) NN ; `description` VARCHAR(255) NN ; `amount` DECIMAL(15,3) NN ; `applicability` VARCHAR(255) NN ; `exemption_condition` VARCHAR(255) N ; `legal_reference` VARCHAR(255) N ; `effective_from` DATE NN ; `effective_to` DATE N ; `validation_status` VARCHAR(32) NN ; `fiscal_reference_id` FK N ; `is_active` BOOLEAN NN ; horodatages. Règle de base : 1,000 DT par facture (CONFIRMED) ; exonérations de l'article 118 en `PENDING_DOCUMENTATION`, inactives.
 
 ### `payment_methods`
 
@@ -294,7 +299,7 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 | Table | Colonnes principales | Contraintes clés |
 | --- | --- | --- |
 | `invoice_lines` | `invoice_id` FK CASCADE, `nature` VARCHAR(32), `label`, `quantity` DECIMAL(10,3), `unit_amount_excl_tax`, `discount_amount`, `total_excl_tax_amount` | Verrouillées à l'émission (RG-06) |
-| `invoice_taxes` | `invoice_id` FK CASCADE, `tax_id` FK, `code`, `kind`, `rate`, `base_amount`, `tax_amount` (copie figée) | |
+| `invoice_taxes` | `invoice_id` FK CASCADE, `tax_rule_id` FK (`tax_rules`), `code`, `kind`, `rate`, `base_amount`, `tax_amount` (copie figée) | |
 | `payments` | `agency_id` FK, `customer_id` FK, `reservation_id` FK N (acompte), `payment_method_id` FK, `reference` N, `amount` DECIMAL(15,3), `received_at` DATETIME I, `cash_session_id` FK N, `status` (`recorded`, `cancelled`), `created_by` FK | Jamais supprimé (RG-11) |
 | `payment_allocations` | `payment_id` FK, `invoice_id` FK, `amount` DECIMAL(15,3) | Σ imputations ≤ montant encaissé et ≤ reste dû (contrôle sous verrou) |
 | `payment_reminders` | `invoice_id` FK, `channel` VARCHAR(32) (Q53), `reminded_at` DATETIME, `outcome` TEXT N, `created_by` FK | |

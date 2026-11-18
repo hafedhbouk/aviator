@@ -200,6 +200,34 @@ it('refuse une arborescence ou une archive qui contient .env, tests, node_module
         ->and($archive->getErrorOutput())->toContain('.env', 'storage/');
 });
 
+it('refuse une arborescence qui contient une dépendance de développement', function (string $package) {
+    $root = tempDir('release-dev');
+    releaseFixture($root.'/stage');
+    makeTree($root.'/stage', ["vendor/{$package}/composer.json" => '{}']);
+
+    $lib = escapeshellarg(bashPath(base_path('scripts/lib/release-files.sh')));
+    $dir = escapeshellarg(bashPath($root));
+
+    // Arborescence par ailleurs conforme : seule la dépendance de développement est en cause.
+    $tree = runBash("source {$lib} && prune_release_tree {$dir}/stage && verify_release_tree {$dir}/stage");
+
+    expect($tree->isSuccessful())->toBeFalse()
+        // Le contrôle porte sur le dossier de l'éditeur (vendor/phpunit) ou du paquet (vendor/laravel/pint).
+        ->and($tree->getErrorOutput())->toContain("Dépendance de développement dans l'archive : vendor/".strtok($package, '/'));
+})->with(['phpunit/phpunit', 'pestphp/pest', 'larastan/larastan', 'laravel/pint', 'laravel/pail', 'laravel/pao', 'fakerphp/faker', 'mockery/mockery', 'nunomaduro/collision']);
+
+it('couvre dans le contrôle de l\'archive chaque paquet de développement de composer.json', function () {
+    $composer = json_decode((string) file_get_contents(base_path('composer.json')), true, flags: JSON_THROW_ON_ERROR);
+    $script = (string) file_get_contents(base_path('scripts/lib/release-files.sh'));
+
+    foreach (array_keys($composer['require-dev']) as $package) {
+        $vendor = strtok($package, '/');
+        $covered = str_contains($script, "vendor/{$package}") || str_contains($script, "vendor/{$vendor} ");
+
+        expect($covered)->toBeTrue("Paquet de développement non contrôlé dans l'archive : {$package}");
+    }
+});
+
 // --- Installation et retour arrière (essai complet, Linux) ---------------------------
 
 it('installe, conserve 3 versions et revient en arrière dans un dossier personnel simulé', function () {

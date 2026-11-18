@@ -3,7 +3,7 @@
 | Élément | Valeur |
 | --- | --- |
 | Phase | 2. Architecture et socle (lot 1) |
-| Branche | `phase/02-architecture-socle` (créée depuis `main` après la fusion de `phase/01-analyse`) ; 31 commits, dernier commit `8cd8872` |
+| Branche | `phase/02-architecture-socle` (créée depuis `main` après la fusion de `phase/01-analyse`) ; 34 commits, dernier commit `468a147`, fusionnés dans `main` par la pull request n° 1 (commit de fusion `c533978`) |
 | Dates | 17 au 18/11/2026 |
 | Statut | **Validée avec réserves** le 18/11/2026 par Hafedh — réserve n° 1 : installation en recette (§8, §10) |
 | Critère d'acceptation (cahier §7.1) | Socle déployé en recette ; résultat de `aviator:check-environment` joint au rapport, dans les 30 jours de garantie |
@@ -54,7 +54,7 @@ Hors lots, à la demande du responsable technique : **analyse des exigences du c
 | Commande | Résultat |
 | --- | --- |
 | `composer check` (poste, avant chaque commit) | Pint : passé ; Larastan : 0 erreur ; Pest : **355 tests, 353 réussis, 2 ignorés** ; `composer audit` : aucune vulnérabilité ; `npm run build` : OK |
-| CI GitHub (`composer check`, Ubuntu, MariaDB 10.11) | **355 tests réussis, 0 ignoré** (1 016 assertions) ; dernier run vert sur `d050794`, puis sur `8cd8872` |
+| CI GitHub (`composer check`, Ubuntu, MariaDB 10.11) | **355 tests réussis, 0 ignoré** (1 016 assertions) ; dernier run vert sur `468a147` (push et pull request n° 1) |
 
 **Tests ignorés sur le poste** (exécutés et réussis en CI) :
 
@@ -105,7 +105,8 @@ Décisions D14 à D27 dans `docs/decisions.md` :
 | Plafond accepté (avenant 2, D25) | 20,25 |
 | Réalisé, lots 1 à 10 (dont D25) | 19,75 |
 | L11, rapport | 0,5 |
-| **Total de la phase 2** | **20,25** (+6,6 % sur la référence ; plafond atteint, sans marge) |
+| **Total de la phase 2, lots 1 à 11** | **20,25** (+6,6 % sur la référence ; plafond atteint, sans marge) |
+| Dette corrigée après revue (§11), imputée à la phase 2 | 1,5 : **total réalisé 21,75 j** (+14,5 % sur la référence, au-delà du plafond, sous le seuil d'alerte de 22,8 j) |
 | Levée de la réserve n° 1 : analyse du résultat de `check-environment`, mise à jour du rapport | 0,25 (prévu) : **léger dépassement du plafond**, signalé |
 | Hors lots : analyse des exigences du cabinet, D26, D27, synthèse pour la direction | **environ 1,25** : **imputation à décider** |
 
@@ -206,3 +207,28 @@ Puis la suite de `docs/installation_recette.md`.
 | Plan de la phase 3 | Validé |
 | Lot 1 | 267 j projetés (+22 j, +9,0 %) |
 | Suite | Pull request `phase/02-architecture-socle` → `main` (branche protégée, fusion sur GitHub une fois la CI verte), puis `phase/03-parametrage` depuis `main` à jour |
+
+## 11. Dette corrigée après revue (19/11/2026)
+
+La revue de la pull request n° 1 (GO, aucune anomalie bloquante) a relevé trois anomalies importantes et quatre améliorations. Elles sont corrigées dans la branche `fix/02-dette`, créée depuis `main` (`c533978`), et **imputées à la phase 2** comme une dette de la phase (décision du 19/11/2026).
+
+| N° | Constat de la revue | Correction | Preuve (tests) |
+| --- | --- | --- | --- |
+| 1 | D19 : la règle « ni le nom ni l'e-mail » n'était appliquée que par `aviator:create-super-admin`, alors que `docs/decisions.md` la disait appliquée et testée partout | Pages Filament `App\Filament\Auth\ResetPassword` (réinitialisation par lien, par laquelle chaque nouveau compte choisit son premier mot de passe) et `App\Filament\Auth\EditProfile` (changement depuis le profil, y compris avec un nouveau nom saisi dans le même formulaire). `docs/decisions.md` (D19) indique pour chaque règle le test qui la prouve | `tests/Feature/Auth/AuthenticationFlowsTest.php` : réinitialisation et profil, admin et utilisateur d'agence |
+| 2 | Le blocage des connexions par Filament ne déclenchait aucun événement : `login_lockout` n'était jamais écrit, et le test déclenchait lui-même l'événement | `App\Filament\Auth\Login` journalise chaque tentative refusée : `login_lockout` au début du blocage, `login_throttled` ensuite (adresse e-mail saisie, délai restant, jamais le mot de passe). Les tests qui déclenchaient eux-mêmes leurs événements sont retirés | `AuthenticationFlowsTest` : 6 vraies tentatives par le formulaire (5 `login_failed`, puis `login_lockout`), une 7e (`login_throttled`), connexion et déconnexion réelles |
+| 3 | `build-release.sh` n'avait jamais été exécuté de bout en bout | Exécuté sur le poste depuis `fix/02-dette` (`5fbe5eb`) : code de sortie 0. Archive de 15 Mo, empreinte vérifiée (`sha256sum -c` : OK) ; ni `.env`, ni `tests/`, ni `node_modules/`, ni `.git/`, ni `docs/` ; `storage/` vide (fichiers `.gitignore` seulement) ; scripts du serveur seuls ; `public/build/manifest.json` présent ; aucun des 10 paquets de `require-dev` dans `vendor/` ; `bootstrap/cache/packages.php` sans paquet de développement. Copie de travail temporaire supprimée, archive supprimée. Seul défaut, de contrôle : la liste des paquets de développement refusés ne couvrait que 4 des 10 paquets ; elle les couvre tous | `ReleaseScriptsTest` : refus de chaque paquet de développement ; chaque paquet de `require-dev` couvert par le contrôle |
+| 4 | Test d'architecture du SQL brut contournable | Détection de `DB::connection(…)->select*()`, `DB::statement`, `DB::unprepared`, `selectRaw`, `whereRaw`, `orderByRaw`, `havingRaw` (et variantes) ; exceptions déclarées avec leur raison (`App\Domain\Statistics`, `EnvironmentProbe`) ; `AgencyScope` n'utilise plus `whereRaw` | `tests/Arch/DatabaseAccessTest.php` : contrôle du détecteur, absence de SQL brut, exceptions réelles et nécessaires |
+| 5 | Page d'accueil de Laravel servie sur `/` | Redirection vers `/admin` ; vue supprimée | `HttpSecurityTest` |
+| 6 | Migrations `agency_user` créée puis supprimée | Fusionnées en une migration `2026_11_18_000003_create_agency_assignments_table` (rien n'est déployé) | `MigrationsReversibleTest` (`migrate:fresh`, annulation complète, réapplication) |
+| 7 | Documentation | `docs/projet.md` (dépôt, responsable, validations, charge), ce rapport, `docs/modele_donnees.md` (paramètres fiscaux et statuts du référentiel), `docs/architecture.md` (sauvegardes sans `laravel-backup`) | — |
+
+**Règle ajoutée à `CLAUDE.md`** : aucune affirmation « appliqué » ou « testé » dans la documentation sans un test qui prouve le comportement réel ; un test qui déclenche lui-même l'événement attendu ne compte pas.
+
+**Contrôle de mutation** : avec les pages d'origine de Filament à la place de celles d'Aviator, les 8 tests qui prouvent les corrections 1 et 2 échouent.
+
+**À noter** :
+
+- La construction de l'archive a duré **39 minutes** sur le poste, dont environ 3 minutes de tests. L'essentiel tient probablement à l'installation des dépendances dans un dossier temporaire de Windows, hors de l'exclusion de l'antivirus prévue pour `D:\aviator`. C'est une hypothèse, non mesurée.
+- **Base de développement à recréer** : la migration `agency_assignments` a changé de nom. Sur le poste, lancer `php artisan migrate:fresh --seed` sur `aviator_dev` (données de développement seulement). La base de test est recréée par les tests.
+
+**Charge** : 1,5 j, imputé à la phase 2 (§5).

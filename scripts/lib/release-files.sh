@@ -78,8 +78,10 @@ verify_release_tree() {
       fi
     done
 
-    # Aucune dépendance de développement (composer install --no-dev).
-    for path in vendor/phpunit vendor/pestphp vendor/larastan vendor/laravel/pint; do
+    # Aucune dépendance de développement (composer install --no-dev) : tous les
+    # paquets de « require-dev » de composer.json, à tenir à jour avec lui.
+    for path in vendor/phpunit vendor/pestphp vendor/larastan vendor/laravel/pint vendor/laravel/pail \
+      vendor/laravel/pao vendor/fakerphp vendor/mockery vendor/nunomaduro/collision; do
       if [ -e "$path" ]; then
         echo "Dépendance de développement dans l'archive : $path" >&2
         problems=1
