@@ -287,3 +287,19 @@ Oxahost a confirmé PHP 8.3 (PHP Selector, CloudLinux), SSH avec Git, Composer, 
 Rééquilibrage **validé** (L7 −1 j, L9 −0,25 j, L10 −0,5 j). Reports chiffrés dans `docs/plans/phase_3.md`, `docs/plans/phase_4.md` et `docs/plans/phase_5.md` ; écart cumulé du lot 1 dans `docs/projet.md` §5.
 
 **Règle pour la suite de la phase** : les aléas sont épuisés. Si un lot dépasse sa charge, aucun test n'est supprimé et aucun niveau de contrôle n'est abaissé : le dépassement est signalé. Plafond accepté par le responsable technique : **19,5 j**.
+
+## Avancement au 18/11/2026, après le lot 10
+
+| Lot ou travail | Prévu (j) | Réalisé (j) |
+| --- | ---: | ---: |
+| Réalisé jusqu'au lot 7 (point précédent) | — | 14,75 |
+| `composer check` (contrôles identiques poste et CI) | — | 0,25 |
+| L8. Money, séquences, concurrence (interblocage corrigé) | 1,5 | 1,5 |
+| Règle des documents numérotés (demande du 18/11) | — | 0,25 |
+| L9. `aviator:check-environment` | 1 | 1 |
+| L10. Première installation de la recette (`docs/installation_recette.md`, annexe A, propositions pour `deploy.sh`) | 0,75 | 0,75 |
+| **Total réalisé** | | **18,5** |
+| L11. Rapport (après l'installation de la recette par le responsable technique) | 0,5 | — |
+| **Projection de la phase** | | **19** |
+
+Les aléas sont épuisés ; la phase tient dans les 19 j de référence, sous le plafond accepté de 19,5 j.

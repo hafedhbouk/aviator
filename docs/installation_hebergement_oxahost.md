@@ -66,6 +66,8 @@ git clone git@github-aviator:<organisation>/aviator.git ~/apps/prod
 
 ## 4. Configuration de l'application (pour chaque environnement)
 
+**Première installation : suivre la procédure pas à pas `docs/installation_recette.md`** (ordre exact des étapes, deux variantes SSH ou terminal cPanel, contrôle final). Cette section en résume les principes.
+
 Les clés suivent `docs/gestion_des_cles.md` (D23). **`php artisan key:generate` ne se lance qu'ici, une seule fois par environnement.** Ensuite, il est interdit en recette et en production.
 
 ```bash
@@ -151,3 +153,44 @@ password=<mot_de_passe>
 EOF
 chmod 600 ~/.my.recette.cnf          # idem ~/.my.prod.cnf
 ```
+
+---
+
+## Annexe A — Déployer une mise à jour par le terminal cPanel (D22)
+
+À utiliser si Oxahost ne permet pas le SSH depuis le poste (Q8) : `scripts/deploy.sh` ne peut alors pas être lancé. Les commandes sont collées dans *cPanel → Avancé → Terminal*. Remplacez `<env>` par `recette` ou `prod`, `<ref>` par une branche (recette) ou une étiquette `vX.Y.Z` (production, **uniquement** une étiquette et après accord explicite), et `<php83>` par le chemin de PHP 8.3.
+
+**1. Sur le poste (Git Bash)** :
+
+```bash
+cd /d/aviator
+git checkout <ref> && git pull
+npm ci
+composer check                                   # tout doit être au vert
+tar -czf /d/aviator-build.tar.gz -C public build
+```
+
+**2. Dans le gestionnaire de fichiers cPanel** : envoyer `/d/aviator-build.tar.gz` dans `apps/<env>/`.
+
+**3. Dans le terminal cPanel**, en collant les commandes **une par une** et en vérifiant le résultat de chacune avant de passer à la suivante (pas de `set -e` : dans un terminal interactif, il fermerait la session au premier incident) :
+
+```bash
+cd ~/apps/<env>
+mkdir -p ~/backups
+DB_NAME=$(grep -E '^DB_DATABASE=' .env | cut -d= -f2-)
+mysqldump --defaults-extra-file="$HOME/.my.<env>.cnf" --single-transaction --no-tablespaces "$DB_NAME" \
+  | gzip > ~/backups/<env>_$(date +%Y%m%d_%H%M%S).sql.gz
+ls -lh ~/backups | tail -1                       # vérifier que la sauvegarde n'est pas vide
+<php83> artisan down --retry=60
+git fetch origin --tags --force --prune
+git checkout --force <ref>                       # branche : git checkout --force -B <ref> origin/<ref>
+composer install --no-dev --optimize-autoloader --no-interaction
+rm -rf public/build && tar -xzf aviator-build.tar.gz -C public && rm aviator-build.tar.gz
+<php83> artisan migrate --force
+<php83> artisan aviator:sync-permissions
+<php83> artisan optimize
+<php83> artisan up
+<php83> artisan aviator:check-environment
+```
+
+**En cas d'échec** avant `artisan up` : l'application reste en maintenance. Corriger, ou revenir à la version précédente (`git checkout --force <ref précédente>`, puis `composer install`, `migrate` si besoin, `optimize`, `up`) ; la base se restaure depuis `~/backups` ou JetBackup. Ne jamais lancer `key:generate`.
