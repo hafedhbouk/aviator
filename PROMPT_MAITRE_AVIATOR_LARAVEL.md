@@ -194,7 +194,8 @@ Chacune a au moins un test dédié.
 - Planificateur : un seul cron `* * * * * php artisan schedule:run`. La file `database` est traitée par le planificateur : `queue:work --stop-when-empty --max-time=50` chaque minute, `withoutOverlapping()`.
 - Cache et sessions : driver `database` ou `file`.
 - Les assets (Vite) sont compilés **avant** le déploiement ; le serveur n'exécute pas `npm`.
-- Le document root du domaine pointe sur `public/` ; le reste du code n'est jamais exposé.
+- **Déploiement par archive (D25)** : aucune connexion SSH depuis le poste (seul le terminal web de cPanel est disponible) ; `exec`, `proc_open`, `shell_exec`, `system` et `passthru` sont désactivées. L'archive est construite sur le poste par `scripts/build-release.sh` (`composer check`, `composer install --no-dev`, `npm run build`), envoyée par FTPS ou par le gestionnaire de fichiers, puis installée par `install-release.sh` dans le terminal web. Ni Composer, ni npm, ni Git sur le serveur.
+- Le document root du domaine pointe sur `~/apps/<env>/current/public` ; le reste du code n'est jamais exposé.
 - Photos compressées à l'envoi ; alerte quand l'espace utilisé dépasse un seuil paramétré.
 - Tu n'as **aucun accès** aux serveurs de recette et de production : tu prépares les commandes de déploiement, le responsable technique les exécute.
 
@@ -294,7 +295,7 @@ Branche phase/02-socle.
 1. Installe Laravel 13 (PHP 8.3) dans C:\laragon\www\aviator sans écraser le kit (CLAUDE.md, docs/, scripts/), puis Filament v5, spatie/laravel-permission, spatie/laravel-activitylog, Pest, Pint, Larastan ; configure MariaDB de dev (aviator_dev) et de test (aviator_test, fichier .env.testing) avec DB_CONNECTION=mariadb (connexion mariadb de config/database.php : charset utf8mb4, collation utf8mb4_unicode_ci), et retire de phpunit.xml les variables DB_CONNECTION et DB_DATABASE de SQLite ; ajoute un .gitattributes forçant les fins de ligne LF.
 2. Crée les agences, les 3 profils, AgencyScope, les policies de base, la 2FA du super admin et de l'admin, le journal d'audit.
 3. Configure files et cache en driver database, le planificateur compatible mutualisé (section 10), le disque privé.
-4. Mets en place l'intégration continue (tests, Pint, Larastan, composer audit) et un script de déploiement (scripts/deploy.sh) que j'exécuterai.
+4. Mets en place l'intégration continue (tests, Pint, Larastan, composer audit) et le déploiement par archive (D25) : scripts/build-release.sh sur le poste, scripts/install-release.sh et scripts/rollback-release.sh que j'exécuterai dans le terminal web de cPanel.
 5. Tests de portée par agence et de droits. Rapport, puis attends ma validation.
 ```
 

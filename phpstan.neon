@@ -1,0 +1,13 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - app
+        - config
+        - database
+        - routes
+        # Modèles de test qui utilisent les briques du socle avant les documents métier.
+        - tests/Fixtures
+    tmpDir: storage/framework/cache/phpstan

@@ -148,7 +148,7 @@ Colonne « Agence » : ✔ = la table porte `agency_id` et est soumise à `Agenc
 | Table | Modèle | Rôle | Agence | Points clés |
 | --- | --- | --- | --- | --- |
 | `users` | `User` | Les 6 comptes (J-01) | — | `agency_id` (agence par défaut), `is_active`, champs 2FA de Filament |
-| `agency_user` **[Ajout]** | — | Rattachement à plusieurs agences [Q69] | — | Pivot |
+| `agency_assignments` **[Ajout]** | `AgencyAssignment` | Remplacements à durée limitée dans une autre agence [Q69] | — | Dates de début et de fin incluses (Africa/Tunis) ; créées par le super admin, journalisées |
 | `roles`, `permissions`, `model_has_*` | (Spatie) | 3 rôles fixes (J-02) | — | Créés par seeder ; pas d'éditeur de rôles dans l'interface (§9.3) |
 | `activity_log` | (Spatie) | Audit et historique avant/après (J-04, J-05), consultations du carnet (RG-14) | — | Journaux nommés : `audit`, `customer_access`, `security` |
 | `approval_requests` **[Ajout]** | `ApprovalRequest` | Demandes au super admin : remise (RG-10), retenue (F-05), liste noire (K-11), dérogation (RG-15) | ✔ | `type`, sujet polymorphe, demandeur, `status` (`pending`, `approved`, `rejected`, `cancelled`), décideur, décision le, commentaire ; données de la demande figées |
@@ -174,7 +174,8 @@ erDiagram
     agencies ||--o{ agency_locations : "propose"
     agencies ||--o{ vehicles : "rattache"
     agencies ||--o{ users : "agence par défaut"
-    users }o--o{ agencies : "agency_user (Q69)"
+    users ||--o{ agency_assignments : "remplacements (Q69)"
+    agencies ||--o{ agency_assignments : "agence remplacée"
     vehicle_categories ||--o{ vehicles : "classe"
     vehicle_categories ||--o{ rate_plans : "tarife"
     seasons ||--o{ rate_plans : "période"
@@ -432,10 +433,15 @@ Séquence de chaque action d'occupation, dans une transaction :
 
 **Test de concurrence** (scénario 1, phase 4) : deux connexions distinctes à la base (`mariadb` et `mariadb_concurrent`) sur `aviator_test`. La première prend le verrou et garde la transaction ouverte ; la seconde est lancée dans un processus PHP séparé, puis on vérifie qu'une seule réservation existe. Sous Windows, il n'y a pas de `pcntl` : le second processus est lancé avec `Symfony\Process`.
 
-### 6.2 Numérotation des factures (RG-07)
+### 6.2 Numérotation (RG-07 pour les factures)
 
-- Numéro attribué **à l'émission**, jamais au brouillon.
-- Dans la transaction d'émission : `SELECT … FROM invoice_sequences WHERE sequence_key = ? FOR UPDATE`, puis incrément et écriture. Une émission qui échoue annule aussi l'incrément : il n'y a pas de trou.
+Brique générique réalisée en phase 2 (lot 8) : `App\Support\Sequences\SequenceAllocator`, table `sequences`, une ligne par préfixe et par période. Le format se définit par `SequenceDefinition` (préfixe, période : aucune, année ou mois, longueur, séparateur), par exemple `RES-2026-00001`.
+
+- Numéro attribué **dans la transaction qui enregistre le document** ; pour une facture, **à l'émission**, jamais au brouillon.
+- La ligne du compteur est verrouillée (`SELECT … FOR UPDATE`) avant l'incrément ; si la transaction échoue, l'incrément est annulé avec elle : il n'y a pas de trou.
+- **Création du compteur** (premier numéro d'une période) : hors de la transaction du document, sur la connexion `mariadb_autocommit` (même base, validation automatique). La créer dans la transaction (`INSERT IGNORE` puis `FOR UPDATE`) provoque un interblocage MariaDB (1213) quand deux processus ouvrent la même période : le test de concurrence l'a mis en évidence. La ligne créée vaut 0 et ne consomme aucun numéro.
+- Un compteur arrivé au plus grand numéro de sa longueur lève une exception : le format n'est jamais allongé en silence.
+- Tests : `SequenceAllocatorTest` (formats, périodes, fuseau Africa/Tunis, absence de trou après échec) et `SequenceConcurrencyTest` (deux processus PHP et deux connexions MariaDB : 60 numéros sans doublon ni trou ; attente du verrou ; annulation sans trou).
 - Chronologie : l'émission refuse une date antérieure à la dernière facture émise sur la même séquence.
 - Clé et format de séquence **[Q11, Q30]** : non paramétrés tant qu'ils ne sont pas validés. `FiscalRulesGuard` refuse l'émission en production.
 
@@ -518,10 +524,15 @@ Trois rôles fixes, créés par seeder : `super_admin`, `admin`, `agency_user` ;
 
 ### 8.2 Portée par agence (RG-13)
 
-- Trait `BelongsToAgency` sur les modèles marqués ✔, avec un global scope `AgencyScope` actif **uniquement** pour un `agency_user`. Il restreint les requêtes aux agences de l'utilisateur [Q69].
-- Les policies (`update`, `delete`, actions métier) vérifient `$model->agency_id ∈ agences de l'utilisateur`, même si le scope a été contourné.
-- La lecture de la disponibilité des autres agences passe par `AvailabilityQuery`, qui renvoie une projection sans donnée client, jamais par les ressources.
-- Test (scénario 12) : pour **chaque** type de document, un utilisateur de Sfax reçoit un refus (403) en lecture directe par l'adresse de la page, en modification et sur chaque action.
+Réalisé en phase 2 (lot 4), dans `app/Support/Agency` :
+
+- **Lecture** : le trait `BelongsToAgency`, posé sur les modèles marqués ✔, ajoute le global scope `AgencyScope`. Pour un utilisateur sans la permission `agencies.all` (utilisateur d'agence), les requêtes sont restreintes à ses agences autorisées : agence par défaut et agences de remplacement (Q69). Un compte sans agence ne voit rien. Le scope est sans effet pour le super admin, l'admin et les traitements sans utilisateur connecté (commandes, tâches, file).
+- **Écriture** : `BelongsToAgency` refuse, à l'enregistrement, toute création ou modification hors des agences autorisées, y compris le déplacement d'un document vers une autre agence (`AgencyAccessException`, réponse 403). Le contrôle vaut même si le scope est contourné ou si le formulaire est falsifié. Un nouveau document d'un utilisateur d'agence reçoit son **agence active** (`CurrentAgency` : agence choisie pendant la session si elle est autorisée, sinon l'agence par défaut). Le super admin et l'admin choisissent l'agence de chaque document.
+- **Policies** : le trait `ChecksAgency` (`withinAgency()`) vérifie l'agence du document, indépendamment du scope.
+- **Accès direct par l'adresse** : un document d'une autre agence est **introuvable** (404), le scope l'excluant de la liaison de route ; une action ou une écriture hors portée reçoit un **refus** (403).
+- La lecture de la disponibilité des autres agences passera par `AvailabilityQuery` (phase 4), qui renvoie une projection sans donnée client, jamais par les ressources.
+- Tests : `tests/Feature/Agency/AgencyScopeTest.php`, sur un modèle de test (`tests/Fixtures`). Le scénario 12 complet (contrat de Sousse modifié depuis Sfax) sera rejoué sur chaque type de document à mesure qu'il apparaît (phases 4 à 8).
+- **Interface de changement d'agence active** : le service est prêt ; le sélecteur dans le menu utilisateur sera ajouté avec les premiers documents d'agence (phase 4).
 
 ### 8.3 Carnet d'adresses : fuites à fermer (RG-14)
 
@@ -551,6 +562,38 @@ Test (scénario 13) : l'admin et l'utilisateur d'agence reçoivent un refus sur 
 - Limitation des tentatives de connexion, sessions en base, HTTPS forcé, en-têtes de sécurité (middleware).
 
 ---
+
+### 8.5 Matrice « par agence ou commun »
+
+Portée de chaque modèle pour un **utilisateur d'agence** (le super admin et l'admin voient toutes les agences). « Filtré » = trait `BelongsToAgency` (lecture limitée à ses agences autorisées, écriture refusée ailleurs, §8.2).
+
+| Modèle (phase) | Portée | Colonne ou rattachement | Précisions |
+| --- | --- | --- | --- |
+| Réservations (4) | **Filtré** | `agency_id` = agence de départ | Lecture de la disponibilité des autres agences par `AvailabilityQuery`, sans donnée client (Q38) |
+| Contrats (5) | **Filtré** | `agency_id` = agence de départ | Agence de retour : droit limité « retour » si Q3 = oui (Q26) |
+| États des lieux, photos, dommages (5) | **Filtré par le contrat** | via `contract_id` | Accessibles uniquement depuis le contrat ; policy du contrat |
+| Avenants, prolongations (5) | **Filtré par le contrat** | via `contract_id` | Idem |
+| Factures, avoirs (6) | **Filtré** | `agency_id` | |
+| Encaissements, imputations (6) | **Filtré** | `agency_id` ; imputations via l'encaissement | |
+| Caisse du jour (6) | **Filtré** | `agency_id` | |
+| Cautions et mouvements (6) | **Filtré** | `agency_id` ; mouvements via la caution | |
+| Dépenses d'agence (8) | **Filtré** | `agency_id` | Dépenses par véhicule : admin et super admin (§8.1) |
+| Ordres de maintenance (8) | **Filtré** | `agency_id` | Saisie : admin et super admin |
+| Interactions, réclamations, rappels (7) | **Filtré** | `agency_id` | |
+| Demandes d'approbation (5) | **Filtré** | `agency_id` | L'agent suit ses demandes ; le super admin décide pour toutes |
+| Agrégats mensuels par véhicule (9) | **Filtré** | `agency_id` | Statistiques d'activité de l'agence (Q61) ; lecture explicite par `App\Domain\Statistics` |
+| Affectations de remplacement (2) | Gestion : super admin | `user_id` | L'agent ne voit que les siennes (agence active) |
+| **Clients** (4, 7) | **Commun**, accès restreint | `origin_agency_id` sans scope | Pas de liste complète ni d'export (D13). Recherche et affichage : **décidé (D24)**, codé en phase 4 avec la réservation. Nom exact (prénom et nom complets, dans n'importe quel ordre), ou pièce, permis ou téléphone (+216XXXXXXXX) ; 10 résultats au plus ; affichage du nom, du statut sur la liste noire et du nombre de locations ; recherche journalisée sans la valeur recherchée ; 30 par heure au plus |
+| **Recommandations, liste noire** (7) | **Commun** | via `customer_id` | Alerte et blocage dans **toutes** les agences (K-10, K-11, RG-15, scénario 14) ; motif visible selon le profil |
+| Conducteurs (5) | **Commun**, accès restreint | via `customer_id` | Comme les clients |
+| Consentements, segments (7) | Super admin (segments) ; commun (consentements) | via `customer_id` | |
+| **Véhicules** (4) | **Commun**, à préciser | `agency_id` (rattachement), `current_agency_id` (localisation) | Lecture de la disponibilité : toutes agences. Modification : admin et super admin. Lecture détaillée par l'agent : véhicules **localisés** dans ses agences. À revoir avec les transferts entre agences (Q3) |
+| Documents, statuts, kilométrage des véhicules (4) | Comme le véhicule | via `vehicle_id` | |
+| Financements, échéanciers, rentabilité (4, 9) | Admin et super admin | via `vehicle_id` | Portée par **profil**, pas par agence (§3.1 du cahier) |
+| Référentiels : agences, catégories, saisons, grilles, options, taxes, fournisseurs, modes de paiement (3) | **Commun**, lecture | — | Modification : admin et super admin. Grilles : surcharge facultative par agence (Q10) |
+| Utilisateurs, rôles, journal d'audit (2) | Super admin | — | |
+
+**Lectures hors Eloquent** : interdites sur ces données en dehors de `App\Domain\Statistics`, qui applique la portée explicitement (règle de `CLAUDE.md`, test d'architecture).
 
 ## 9. Back-office Filament
 

@@ -90,7 +90,7 @@ Si la version de Node fournie par Laragon est plus ancienne : Menu Laragon → *
 
 ## 4. Git pour Windows
 
-Installez **Git for Windows** (git-scm.com), même si Laragon contient déjà Git : Claude Code utilise **Git Bash** (`C:\Program Files\Git\bin\bash.exe`) pour exécuter les commandes, et le script `scripts/deploy.sh` s'exécute dans Git Bash.
+Installez **Git for Windows** (git-scm.com), même si Laragon contient déjà Git : Claude Code utilise **Git Bash** (`C:\Program Files\Git\bin\bash.exe`) pour exécuter les commandes, et le script `scripts/build-release.sh` (construction de l'archive de version, D25) s'exécute dans Git Bash.
 
 Réglages recommandés, une seule fois :
 
@@ -101,7 +101,7 @@ git config --global user.name  "Votre nom"
 git config --global user.email "vous@exemple.tn"
 ```
 
-Générez une clé SSH (pour GitHub et pour l'hébergement Oxahost) :
+Générez une clé SSH pour GitHub (l'hébergement Oxahost n'accepte aucune connexion SSH depuis le poste : les versions y sont envoyées en archive, D25) :
 
 ```bash
 ssh-keygen -t ed25519 -C "aviator"
@@ -182,7 +182,7 @@ L'ancienne skill `tunisia-car-rental-erpnext` (dans `C:\Users\<vous>\.claude\ski
 | Tests | `php artisan test` (ou `--parallel` si ParaTest fonctionne sur le poste) |
 | Qualité | `vendor/bin/pint --test && vendor/bin/phpstan analyse && composer audit` |
 | Base de dev à zéro | `php artisan migrate:fresh --seed` (jamais en recette ni en production) |
-| Déployer | `scripts/deploy.sh recette <branche>` dans Git Bash |
+| Construire l'archive de version | `scripts/build-release.sh <branche ou vX.Y.Z>` dans Git Bash, puis `docs/installation_hebergement_oxahost.md`, annexe A |
 
 ## 8. Problèmes fréquents
 
