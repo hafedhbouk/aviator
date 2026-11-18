@@ -20,7 +20,7 @@ Statuts : **Ouverte** · **Répondue** (réponse à reporter dans `docs/decision
 7. [CRM et données personnelles (Q63 à Q68)](#7-crm-et-données-personnelles-q63-à-q68)
 8. [Organisation, hébergement et technique (Q69 à Q77)](#8-organisation-hébergement-et-technique-q69-à-q77)
 9. [Récapitulatif par échéance](#9-récapitulatif-par-échéance)
-10. [Spécifications du cabinet comptable (Q78 à Q84)](#10-spécifications-du-cabinet-comptable-q78-à-q84)
+10. [Spécifications du cabinet comptable (Q78 à Q86)](#10-spécifications-du-cabinet-comptable-q78-à-q86)
 
 ---
 
@@ -178,7 +178,7 @@ Reprises de la section 9 du cahier des charges, complétées d'une valeur par d�
 | --- | --- | --- |
 | Validation de la phase 1 (validée avec réserves le 17/11/2026) | Restent ouvertes : Q1 (logiciel), Q5 (documents), Q6, Q24 ; Q74 close | — |
 | 2 — Socle | Q2, Q3, Q4, Q7, Q8, Q26, Q27, Q37, Q69, Q71 (Q70 close) | **Q2, Q6 (domaine), Q27 (confirmation)** ; Q8 et Q71 répondues le 18/11/2026 (D25) |
-| 3 — Paramétrage | Q10, Q11, Q30, Q32, Q33, Q34, Q35, Q41, Q42 | Q11 répondue par le référentiel v1.0, validé (attestation de la direction du 18/11/2026), Q30 répondue (D27, points à arbitrer), Q35 répondue (D26) : phase 3 **non bloquée sur le principe**, règles saisies en CONFIRMED, CONDITIONAL ou PENDING_DOCUMENTATION |
+| 3 — Paramétrage | Q10, Q11, Q30, Q32, Q33, Q34, Q35, Q41, Q42, Q85, Q86 | Q11 répondue par le référentiel v1.0, validé (attestation de la direction du 18/11/2026), Q30 répondue (D27, points à arbitrer), Q35 répondue (D26) : phase 3 **non bloquée sur le principe**, règles saisies en CONFIRMED, CONDITIONAL ou PENDING_DOCUMENTATION |
 | 4 — Parc, réservations | Q12, Q13, Q28, Q29, Q31, Q36, Q38, Q39, Q40 (saisie), Q49 | — |
 | 5 — Contrats | Q14, Q15, Q43, Q44, Q45, Q46, Q47, Q48, Q52, Q72, Q73, Q75 | — |
 | 6 — Facturation | Q16, Q25, Q40 (document), Q50, Q51, Q53, Q54, Q55, Q56 | **Q16** (périmètre, partiellement répondue le 18/11/2026), **Q40** (document fiscal) ; Q79 à Q83 (spécifications du cabinet) ; Q78 et Q84 répondues le 18/11/2026 |
@@ -190,7 +190,7 @@ Reprises de la section 9 du cahier des charges, complétées d'une valeur par d�
 
 ---
 
-## 10. Spécifications du cabinet comptable (Q78 à Q84)
+## 10. Spécifications du cabinet comptable (Q78 à Q86)
 
 Ouvertes le 18/11/2026 par l'analyse d'écarts (`docs/analyse_ecarts_cabinet.md`) des exigences du cabinet : spécifications du 18/11, puis référentiel fiscal v1.0 (Q84).
 
@@ -203,3 +203,5 @@ Ouvertes le 18/11/2026 par l'analyse d'écarts (`docs/analyse_ecarts_cabinet.md`
 | Q82 | — | Journal des ventes : une ligne par facture ou une ligne par facture et par taux de TVA ? Séparateur CSV et format des dates ? | Spécifications §9.1 ; analyse E16 ; Q1 | Expert-comptable | 8 | Une ligne par facture et par taux ; CSV UTF-8, séparateur `;`, dates `JJ/MM/AAAA` | Ouverte |
 | Q83 | — | Une période close peut-elle être rouverte pour une correction, ou toute correction passe-t-elle par un avoir dans la période ouverte ? | Spécifications §13 ; analyse E27 ; H-06 | Expert-comptable | 8 | Correction par avoir dans la période ouverte ; réouverture exceptionnelle par le super admin, motif obligatoire, journalisée, nouvelle version des exports | Ouverte |
 | Q84 | **Mise en production du lot 1 (priorité haute)** | Situation d'Aviator vis-à-vis de Tunisie TradeNet (TTN) : Aviator a-t-il un **compte TTN** ? Une **demande d'adhésion** a-t-elle été déposée, et à quelle **date** ? Dispose-t-il d'une **attestation d'adhésion** ? D'un **certificat de signature électronique** (fichier ou clé USB) ? Fournir les justificatifs. Question indépendante de l'application, mais elle conditionne l'avenant TTN et son calendrier | Référentiel v1.0, §7.2, §7.3 et §14 (point 5) ; Q16 | Direction | Avant l'avenant TTN, et au plus tard avant la phase 10 | Aucune : ne rien supposer (« ne pas inventer une date d'adhésion », référentiel §7.3). Sans réponse, l'application ne présente pas ses factures comme électroniques | **Répondue (18/11/2026)** : demande d'adhésion déposée, **situation B** du référentiel (§7.2). Factures papier conformes autorisées pendant la finalisation, sous réserve de conserver la preuve du dépôt. Restent attendus (Q16) : date de dépôt et copie de la preuve, délai annoncé par TTN, type de certificat de signature |
+| Q85 | — | Le référentiel fiscal v1.0 ne prévoit **aucun code fiscal** pour l'option « livraison » (A-05) ni pour les **kilomètres supplémentaires** (E-05). Quel code et quel traitement de TVA ? | Référentiel v1.0 §2 ; A-05, E-05 ; plan de la phase 3 | Expert-comptable | 3 (livraison), 5 (kilomètres) | Option « livraison » créée **inactive** ; kilomètres supplémentaires sans code ; aucune facturation de ces éléments avant la réponse | Ouverte |
+| Q86 | — | Mode d'arrondi de la TVA à 3 décimales : demi supérieur (0,0285 → 0,029) ou autre (demi pair : 0,028) ? Le référentiel (§5) fixe la méthode mais pas le mode | Référentiel v1.0 §5 ; plan de la phase 3 | Expert-comptable | 3 | Demi supérieur, réglage `billing.vat_rounding_mode`, **à confirmer** | Ouverte |
