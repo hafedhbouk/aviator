@@ -96,19 +96,19 @@ L'application est un monolithe Laravel 13 sur PHP 8.3, avec une base MariaDB 10.
 
 ### 2.2 Conditions pour l'hébergement mutualisé
 
-L'offre Ultimate convient à Aviator. La page des fonctionnalités d'Oxahost confirme l'essentiel ; quatre points restent à faire confirmer par écrit avant la commande.
+L'offre Ultimate convient à Aviator. La page des fonctionnalités d'Oxahost confirme l'essentiel ; trois points restent à faire confirmer par écrit avant la commande.
 
 | Point | Statut | Détail |
 | --- | --- | --- |
 | Espace disque | Confirmé | NVMe illimité ; 4 Go correspondent à la mémoire vive. Limite de 1 000 000 de fichiers (inodes), largement suffisante |
 | Puissance | Confirmé | 4 vCores, 4 Go de RAM, 70 requêtes PHP simultanées, débit disque de 8 Mo/s |
-| Accès SSH | Confirmé | Inclus dans l'offre Ultimate (absent des offres inférieures) |
+| Accès en ligne de commande | Confirmé | Limité au terminal web de cPanel, sans connexion SSH depuis le poste ; fonctions `exec` et `proc_open` désactivées (confirmé par Oxahost le 18/11/2026) |
 | Base de données | Confirmé | MariaDB 10.11.19 (confirmé par Oxahost le 17/11/2026) |
 | Sites | Confirmé | Sites illimités : production et recette en sous-domaine sur le même compte |
 | Sauvegardes | Confirmé | Quotidiennes et à la demande (JetBackup), chiffrées, conservées jusqu'à 30 jours |
 | Disponibilité | Confirmé | Engagement de 99,9 %, avec compensation ; support prioritaire |
 | **Version de PHP** | **À confirmer** | La page indique PHP 5.6 à 8.3. PHP 8.3 suffit pour Laravel 13, mais il faut savoir quand PHP 8.4 sera proposé : les correctifs de sécurité de PHP 8.3 s'arrêtent fin 2027 |
-| **Cron et Composer** | **À confirmer** | Tâche planifiée toutes les minutes et Composer utilisable en SSH |
+| Cron | Confirmé | Tâche planifiée toutes les minutes autorisée (confirmé par Oxahost le 18/11/2026) ; Composer n'est pas utilisé sur le serveur (§6.5) |
 | **Lieu des sauvegardes** | **À confirmer** | Stockées « sur des serveurs distants » : vérifier qu'ils sont en Tunisie ; ne pas activer l'option Acronis Cloud Europe |
 | **Prix** | **À confirmer** | 29,90 DT HT par mois sur la page, soit 358,80 DT par an, mais 418,68 DT HT au récapitulatif de commande. Le chiffrage retient 418,68 DT |
 | Envoi d'e-mails | Sans objet pour les notifications | 150 e-mails par heure : suffisant, les notifications passant par le push |
@@ -589,7 +589,7 @@ Pour l'espace client, ouvert sur Internet :
 | Production | Compte Oxahost Ultimate, Tunis : back-office et espace client | Exploitation |
 
 - Le système (serveur web, PHP, base de données, sécurité du serveur) est administré par Oxahost : il n'y a plus d'administration système à la charge d'Aviator, seulement un suivi (version de PHP, sauvegardes, espace disque).
-- Déploiement automatisé depuis Git par SSH, avec mise en maintenance et migrations de base ; jamais de copie manuelle des fichiers.
+- Déploiement par archive versionnée préparée sur le poste, installée par script dans le terminal cPanel, sans Composer ni Git sur le serveur ; avec mise en maintenance et migrations de base.
 - Sauvegardes : celles d'Oxahost, plus une copie mensuelle de la base et des fichiers conservée par Aviator en Tunisie ; restauration testée sur la recette chaque trimestre.
 - Alerte quand l'espace disque dépasse 80 % ; photos compressées à l'envoi.
 - Aucun déploiement en production sans sauvegarde vérifiée, tests réussis et autorisation explicite ; procédure de retour arrière documentée.

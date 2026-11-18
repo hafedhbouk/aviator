@@ -88,8 +88,8 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 17/11/2026 | Dépôt dans `D:\aviator`, jonction `C:\laragon\www\aviator` pour Laragon | Responsable technique |
 | 17/11/2026 | Q11, Q30 et Q16 envoyées à l'expert-comptable ; la phase 3 reste bloquée sur les taxes, mentions et numérotation | Responsable technique |
 | 17/11/2026 | Ateliers avec les agences pendant la phase 2, avant la phase 4 ; maquettes publiées sur une page privée pour ces ateliers | Responsable technique |
-| 18/11/2026 | D25 : déploiement par archive construite sur le poste (`build-release.sh`), envoyée par FTPS ou par le gestionnaire de fichiers et installée dans le terminal web de cPanel (`install-release.sh`, `rollback-release.sh`) ; racine web `~/apps/<env>/current/public` ; 2FA sur le compte cPanel ; remplace `scripts/deploy.sh` et D22. Écart avec le cahier des charges §6.5 (déploiement depuis Git par SSH) signalé dans `docs/decisions.md` | Responsable technique |
-| 18/11/2026 | Plafond de la phase 2 relevé de 19,5 à 20,25 j pour D25 (contrainte de l'hébergeur) ; écart cumulé du lot 1 projeté à +4 j (+1,6 %) | Responsable technique |
+| 18/11/2026 | D25 : déploiement par archive construite sur le poste (`build-release.sh`), envoyée par FTPS ou par le gestionnaire de fichiers et installée dans le terminal web de cPanel (`install-release.sh`, `rollback-release.sh`) ; racine web `~/apps/<env>/current/public` ; 2FA sur le compte cPanel ; remplace `scripts/deploy.sh` et D22. Cahier des charges §6.5 et §2.2 mis à jour en conséquence le 18/11/2026 | Responsable technique |
+| 18/11/2026 | Plafond de la phase 2 relevé de 19,5 à 20,25 j pour D25 (contrainte de l'hébergeur), **confirmé** ; écart cumulé du lot 1 projeté à +4 j (+1,6 %). Lot 10 validé | Responsable technique |
 
 ## 7. Points à confirmer avec Oxahost avant commande
 
