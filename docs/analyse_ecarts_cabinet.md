@@ -1,4 +1,113 @@
-# Analyse d'écarts — spécifications du cabinet comptable du 18/11/2026
+# Analyse d'écarts — exigences du cabinet comptable
+
+| Version | Date | Document analysé | Statut |
+| --- | --- | --- | --- |
+| **2** | 18/11/2026 | Référentiel fiscal et comptable v1.0 (`docs/reference/cabinet/referentiel_fiscal_aviator_v1.0_2026-11.md`), qui **remplace** les spécifications du 18/11 pour la conception | En vigueur ; à valider par le responsable technique |
+| 1 | 18/11/2026 | Spécifications du 18/11 (`docs/reference/cabinet/specifications_facturation_2026-11-18.md`) | Remplacée par la version 2 ; conservée plus bas pour l'historique |
+
+---
+
+# Version 2 — référentiel fiscal v1.0
+
+Pas de code : documentation et plans seulement. La §13 du référentiel (plan d'exécution demandé à Claude Code) n'est pas exécutée : la méthode par phases du projet s'applique.
+
+## V2.1 Statut documentaire
+
+- Les statuts du référentiel (§14) remplacent ceux de la version 1 : **CONFIRMED** (règle validée et documentée), **CONDITIONAL** (applicable selon la nature réelle de l'opération et ses justificatifs), **PENDING_DOCUMENTATION** (pièce ou confirmation nécessaire avant activation).
+- Les règles notées CONFIRMED ne deviennent applicables qu'une fois versée dans `docs/reference/regles_fiscales_validees/` la **confirmation nominative** du cabinet, avec une copie du référentiel.
+- **Confirmation reçue le 18/11/2026 : non recevable en l'état.** Le PDF déposé (`confirmation_cabinet_2026-11-18.pdf`) est un modèle non rempli. Le signataire et le cabinet y figurent sous la forme « Nom et prénom de l'expert-comptable » et « Nom du cabinet d'expertise comptable », sans signature, cachet ni en-tête. Le titre cité (« Référentiel comptable et fiscal – Projet Aviator – Version 1.0 – Novembre 2026 ») diffère aussi légèrement de celui du fichier (« Référentiel fiscal et comptable final »). Elle n'est pas versée et aucune règle ne passe en CONFIRMED applicable (`docs/projet.md` §8).
+
+## V2.2 Écarts nouveaux ou modifiés par rapport à la version 1
+
+| N° | § du référentiel | Exigence | Version 1 | Écart | Phase | Charge (j) | Risque | Classement |
+| --- | --- | --- | --- | --- | --- | ---: | --- | --- |
+| N1 | 2.1 à 2.7 | **15 codes fiscaux**, chacun avec : code, nature, taux, statut fiscal (taxable, exonérée, hors champ), référence réglementaire, justificatif éventuel, dates de validité, statut de validation | E2, E3 (natures, versions) : 1 j | Précision : liste fermée de codes, référence réglementaire et « justificatif requis » par code | 3 | +0,25 (E2 passe de 0,5 à 0,75) | Code mal choisi faute de liste | Indispensable |
+| N2 | 2.2, 2.4 à 2.6, 2.7, 8, 15 | **Qualification selon la nature réelle**, jamais selon le libellé ; **justificatif obligatoire pour le hors champ et l'exonéré** ; jamais d'exonération automatique d'une ligne dont le libellé contient « assurance » | Non prévu | Ajout. Phase 6 : l'utilisateur choisit le code fiscal de chaque ligne (aucune déduction depuis le libellé) ; une ligne exonérée ou hors champ exige un justificatif rattaché (contrat d'assurance, clause, constat, photos, devis) ; sinon la facture ne peut pas être validée (1 j). Phase 5 : dossier de dommage qui rassemble les états des lieux de départ et de retour, les photos, le constat, le devis ou la facture de réparation et la référence du contrat, pour servir de justificatif (0,5 j) | 5, 6 | +1,5 | Indemnité déclarée hors champ sans preuve : redressement | Indispensable |
+| N3 | 3.3, 3.4 | Table **`stamp_duty_rules`** (code, description, montant, applicabilité, condition d'exonération, référence légale, validité) ; exonérations limitées à l'article 118 ; **aucune exonération automatique d'une facture « impayée »** ; tarif « grandes surfaces » 2026 jamais appliqué | E7 : 0,5 j (conditions du timbre) | Précision : table dédiée (phase 3, 0,75 j au lieu de 0,5) ; exonération appliquée **à la main** sur une facture, avec motif et justificatif, et seulement par une règle d'exonération active (phase 6, 0,25 j). Les exonérations restent PENDING_DOCUMENTATION (point 7 de la §14) : aucune n'est utilisable tant qu'elles ne sont pas documentées | 3, 6 | +0,5 | Timbre retiré à tort sur une facture impayée | Indispensable |
+| N4 | 4 | Numérotation **`AVI-000001`**, continue, **sans remise à zéro annuelle** ; année et agence dans des champs distincts | E9 : format à confirmer | Aucun sur le mécanisme : `SequenceDefinition` avec `SequencePeriod::None` et une longueur de 6 le permet déjà (phase 2, lot 8). Ajout d'une colonne d'année sur la facture, sans coût. Au-delà de `AVI-999999`, refus explicite (`SequenceOverflowException`) : capacité de plusieurs siècles au rythme d'Aviator | 6 | 0 | — | Indispensable (déjà couvert) |
+| N5 | 14 | **Trois statuts** : CONFIRMED, CONDITIONAL, PENDING_DOCUMENTATION | E4 : CONFIRMED, PROPOSED, PENDING_ACCOUNTANT_VALIDATION | Précision. Garde-fou révisé : en production, une règle CONFIRMED s'applique ; une règle CONDITIONAL seulement avec son justificatif sur la ligne (N2) ; une règle PENDING_DOCUMENTATION **jamais**. `aviator:check-environment` : ERREUR en production si une règle active est PENDING_DOCUMENTATION ou si la confirmation du référentiel n'est pas enregistrée | 3, 6 | 0 (inclus dans E6 et N2) | — | Indispensable |
+| N6 | 11 | **Clôture mensuelle** avec ses 12 contrôles : devient une **exigence du cabinet** | E26, E27 : recommandée, en phase 9, en attente de la direction | Reclassée **indispensable** ; reste en phase 9 pour protéger la phase 8 | 9 | 3,5 (déjà chiffrée) | Mois clôturé incomplet | Indispensable |
+| N7 | 5 | Méthode d'arrondi retenue et **exemple chiffré** (115,000 HT ; 21,850 TVA ; 136,850 TTC ; 1,000 timbre ; 137,850 net à payer) | E12 : méthode à valider | Aucun sur le calcul (`Money`, base par taux). L'exemple devient un **test de référence** (phases 3 et 6) | 3, 6 | 0 | — | Indispensable |
+| N8 | 9.1 | Colonne « Code fiscal » dans le journal des ventes | E16 | Précision, incluse dans E16 | 8 | 0 | — | Indispensable |
+| N9 | 7 | TEIF / TTN : selon le cabinet, l'extension aux services s'applique depuis le **1er janvier 2026** (loi n° 2025-17, art. 53 ; note commune n° 2/2026). Trois situations : adhésion finalisée (A), demande déposée (B : papier toléré avec preuve du dépôt), aucune demande (C) | E13, E14 ; Q16 | Précision. **Risque de calendrier** : en situation A, les factures papier de l'application ne suffiraient pas dès la mise en service ; en situation C, Aviator doit déposer sa demande sans attendre. Question Q84 à la direction, priorité haute | Avenant | 18 à 27 (inchangé) | Factures non conformes dès la mise en service | Avenant séparé ; **Q84 urgente** |
+| N10 | 2.2 A | Prime d'assurance véritable : « application éventuelle de la taxe spécifique sur les assurances » | Non prévu | Précision : si cette taxe s'applique, c'est une taxe de plus dans la table fiscale (type montant ou taux), sans développement spécifique. Dépend du point 1 de la §14 (PENDING_DOCUMENTATION) | 3 | 0 | Taxe oubliée sur la prime | À documenter |
+
+Inchangés par rapport à la version 1 : E1, E5, E6, E8, E10, E11 (statuts du document et de paiement séparés), E13 (interface `ElectronicInvoicingProvider`), E15 à E20, E23 (qualification des retenues, désormais avec justificatif, N2), E25, E28.
+
+## V2.3 Les 15 codes fiscaux et leur paramétrage initial
+
+Statuts selon la décision du 18/11/2026 (`docs/projet.md` §8). « CONFIRMED* » : confirmé par le référentiel, **applicable seulement après la confirmation nominative** du cabinet.
+
+| Code | Désignation | Traitement fiscal | Justificatif obligatoire | Statut |
+| --- | --- | --- | --- | --- |
+| `RENTAL` | Location de véhicule | Taxable, TVA 19 % | Non | CONFIRMED* |
+| `CHILD_SEAT` | Siège enfant | Taxable, TVA 19 % | Non | CONFIRMED* |
+| `GPS` | GPS | Taxable, TVA 19 % | Non | CONFIRMED* |
+| `EXTRA_DRIVER` | Conducteur supplémentaire | Taxable, TVA 19 % | Non | CONFIRMED* |
+| `EXTRA_RENTAL_PERIOD` | Prolongation de location (y compris retard rémunérant une durée supplémentaire) | Taxable, TVA 19 % | Non | CONFIRMED* |
+| `FUEL_RECHARGE` | Carburant refacturé | Taxable, TVA 19 % « en principe », dans la base imposable | Non | CONFIRMED* |
+| `INSURANCE_PREMIUM` | Prime d'assurance véritable | Exonérée de TVA ; taxe spécifique sur les assurances éventuelle | **Oui** : contrat et justificatif de l'assureur | CONDITIONAL |
+| `ADDITIONAL_PROTECTION_SERVICE` | Protection commerciale proposée par Aviator | Taxable, TVA 19 % « en principe » | Non | CONDITIONAL |
+| `EXCESS_REDUCTION_OPTION` | Option de réduction de franchise | Taxable, TVA 19 % « en principe » | Non | CONDITIONAL |
+| `LATE_RETURN_PENALTY` | Indemnité de retard véritable | Hors champ « si sa nature indemnitaire est démontrée » | **Oui** : clause contractuelle et justificatifs | CONDITIONAL |
+| `VEHICLE_DAMAGE_COMPENSATION` | Indemnisation d'un dommage réel | Hors champ « si indemnitaire » | **Oui** : états des lieux, photos, constat, devis ou facture, contrat | CONDITIONAL |
+| `REPAIR_SERVICE` | Réparation facturée | Taxable « selon régime applicable, normalement 19 % » | Non | CONDITIONAL |
+| `DAMAGE_ADMIN_FEE` | Frais administratifs de gestion d'un dommage | Taxable, TVA 19 % « en principe » | Non | CONDITIONAL |
+| `INSURANCE_EXCESS_COMPENSATION` | Franchise indemnitaire | Hors champ « si indemnitaire » | **Oui** : justificatifs du sinistre | CONDITIONAL |
+| `CLAIM_ADMIN_FEE` | Frais de gestion du sinistre | Taxable, TVA 19 % « en principe » | Non | CONDITIONAL |
+
+Les sept vérifications documentaires de la §14 (contrats d'assurance, clauses de retard, franchises, indemnités, adhésion TTN, matricule fiscal commun, exonérations de timbre) restent **PENDING_DOCUMENTATION** : tant qu'une pièce manque, la règle qui en dépend ne peut pas être activée en production.
+
+## V2.4 Tests de référence (plans des phases 3 et 6)
+
+| Test | Phase | Attendu |
+| --- | --- | --- |
+| Exemple chiffré de la §5 | 3 (service de calcul), 6 (facture complète, PDF et export) | Location 100,000 + GPS 10,000 + siège enfant 5,000 : total HT **115,000** ; TVA 19 % **21,850** ; TTC **136,850** ; timbre **1,000** ; net à payer **137,850** |
+| Libellé « assurance » | 3 (aucune correspondance par libellé), 6 (ligne de facture) | Une ligne dont le libellé contient « assurance » (toutes casses, avec ou sans accent) n'est **jamais** exonérée automatiquement : sans code fiscal choisi, la validation est refusée ; avec `INSURANCE_PREMIUM` sans justificatif, la validation est refusée |
+| Timbre et facture impayée | 6 | Une facture impayée garde son timbre ; une exonération ne s'applique qu'à la main, par une règle active, avec motif et justificatif |
+| Numérotation | 6 | `AVI-000001`, puis `AVI-000002` en changeant d'année et d'agence ; aucune remise à zéro au 1er janvier |
+| Règle PENDING_DOCUMENTATION en production | 3, 6 | Contrôle de l'environnement en ERREUR ; émission refusée |
+
+## V2.5 Charges et écart cumulé du lot 1
+
+### Par classement
+
+| Classement | Points | Charge (j) |
+| --- | --- | ---: |
+| **Indispensable** | Version 1 (8,75 j) + N1 (0,25) + N2 (1,5) + N3 (0,5) + clôture mensuelle reclassée (N6, 3,5) | **14,5** |
+| **Recommandé** | Multidevise minimale selon Q78 (1,75) ; exports quotidiens automatiques, reportés par décision du 18/11 (0,5) | **2,25** |
+| **Optionnel** | Accès du cabinet aux exports (1,5) ; multidevise complète (6) | **7,5** |
+| Facturation électronique complète | Avenant séparé, hors lot 1 | 18 à 27 |
+
+### Par phase (indispensable)
+
+| Phase | Référence (j) | Avant la v2 (j) | Ajout v2 (j) | Projection (j) | Écart |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 3. Paramétrage | 16 | 18,5 | +0,5 (N1, N3) | **19** | **+18,75 %**, proche du seuil de 20 % |
+| 5. Contrats | 30 | 29,5 | +0,5 (N2) | **30** | 0 % |
+| 6. Facturation | 31 | 34,75 | +1,25 (N2, N3) | **36** | +16,1 % ; **37,5 j (+21 %, au-delà du seuil)** avec la multidevise minimale |
+| 8. Exports | 20 | 22,75 | 0 | **22,75** | +13,75 % ; 23 j (+15 %) avec la multidevise minimale |
+| 9. Statistiques, mobile, sécurité | 38 | 38,5 | +3,5 (clôture, désormais indispensable) | **42** | +10,5 % |
+
+### Lot 1 (référence 245 j)
+
+| Scénario | Lot 1 projeté (j) | Écart |
+| --- | ---: | ---: |
+| Avant le référentiel (indispensable v1 seul) | 257,75 | +12,75 j (+5,2 %) |
+| **Indispensable v2** (clôture comprise) | **263,5** | **+18,5 j (+7,6 %)** |
+| Indispensable + multidevise minimale | 265,25 | +20,25 j (+8,3 %) |
+| Indispensable + recommandé | 265,75 | +20,75 j (+8,5 %) |
+| Indispensable + recommandé + optionnel | 273,25 | +28,25 j (+11,5 %) |
+
+### Alertes
+
+1. **Phase 3 à +18,75 %** : sous le seuil, sans marge.
+2. **Phase 6 au-delà du seuil si la multidevise minimale est retenue** (+21 %). Si Q78 répond oui, placer la multidevise en phase 8 (qui passerait à 24,5 j, +22,5 %) ne règle rien. Deux solutions : accepter le dépassement, ou reporter la multidevise après la mise en production.
+3. **TTN (Q84)** : selon la situation d'Aviator, l'avenant TTN pourrait devoir être livré **avant** la mise en production du lot 1.
+
+---
+
+# Version 1 — spécifications du 18/11/2026 (remplacée, conservée pour l'historique)
 
 Version du 18/11/2026. Document analysé : `docs/reference/cabinet/specifications_facturation_2026-11-18.md` (désigné ci-dessous « le document »). Référence : cahier des charges (`docs/reference/cahier_des_charges_aviator.md`), modèle de données (`docs/modele_donnees.md`), décisions (`docs/decisions.md`).
 

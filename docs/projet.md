@@ -58,17 +58,17 @@ Dernière mise à jour : 18/11/2026
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1. Analyse et maquettes | 1 | 12 | | Validée avec réserves | [À COMPLÉTER] | 17/11/2026 | 1) Ateliers avec les 4 agences, à tenir pendant la phase 2 et avant la phase 4 ; 2) Q27 (carnet d'adresses) appliquée par défaut, à confirmer par la direction ; 3) Q70 : bascule du poste et des tests en MariaDB 10.11, à vérifier en phase 2. Rapport : `docs/rapports/phase_1.md` |
 | 2. Architecture et socle | 1 | 19 | | En cours | | | Projeté **20,25 j** : 18,5 j après rééquilibrage, plus 1,25 j pour D25 (déploiement par archive, contrainte de l'hébergeur), rapport compris ; **plafond relevé de 19,5 à 20,25 j** le 18/11/2026 (`docs/plans/phase_2.md`, avenant 2) |
-| 3. Paramétrage et référentiels | 1 | 16 | | | | | Projeté **18,5 j** : reports de la phase 2 (0,25 j) et demande d'évolution du cabinet, part indispensable (2,25 j) (`docs/plans/phase_3.md`) |
+| 3. Paramétrage et référentiels | 1 | 16 | | | | | Projeté **19 j** (+18,75 %, proche du seuil) : reports de la phase 2 (0,25 j) et demande d'évolution du cabinet, part indispensable (2,75 j) (`docs/plans/phase_3.md`) |
 | 4. Parc, leasing et réservations | 1 | 39 | | | | | Projeté 41,75 j : reports de la phase 2 (`docs/plans/phase_4.md`) |
-| 5. Contrats et états des lieux | 1 | 30 | | | | | Projeté 29,5 j : `drivers` avancé en phase 4 (`docs/plans/phase_5.md`) |
-| 6. Facturation, encaissements, cautions | 1 | 31 | | | | | Projeté **34,75 j** : demande d'évolution du cabinet, part indispensable (3,75 j) (`docs/plans/phase_6.md`) ; option multidevise minimale (+1,5 j) selon Q78 |
+| 5. Contrats et états des lieux | 1 | 30 | | | | | Projeté 30 j : `drivers` avancé en phase 4 (−0,5 j) ; dossier de dommage comme justificatif fiscal (+0,5 j, référentiel du cabinet) (`docs/plans/phase_5.md`) |
+| 6. Facturation, encaissements, cautions | 1 | 31 | | | | | Projeté **36 j** (+16,1 %) : demande d'évolution du cabinet, part indispensable (5 j) (`docs/plans/phase_6.md`) ; option multidevise minimale (+1,5 j) selon Q78, qui porterait la phase à +21 % |
 | 7. CRM et recommandations | 1 | 21 | | | | | Projeté 20,75 j : table des recommandations créée en phase 4 |
 | 8. Maintenance, dépenses, exports | 1 | 20 | | | | | Projeté **22,75 j** (+13,75 %) : demande d'évolution du cabinet, part indispensable (2,75 j) (`docs/plans/phase_8.md`) ; option multidevise minimale (+0,25 j) selon Q78 |
-| 9. Statistiques, mobile et sécurité | 1 | 38 | | | | | Projeté 38,5 j : purge des journaux (Q77, `docs/plans/phase_9.md`) ; **42 j** (+10,5 %) si la direction retient la clôture mensuelle (+3,5 j) |
+| 9. Statistiques, mobile et sécurité | 1 | 38 | | | | | Projeté **42 j** (+10,5 %) : purge des journaux (Q77, 0,5 j) et clôture mensuelle, exigée par le référentiel du cabinet (3,5 j) (`docs/plans/phase_9.md`) |
 | 10. Recette et mise en production du lot 1 | 1 | 19 | | | | | |
 | 11. Espace client | 2 | 45 | | | | | |
 | **Total** | | **290** | | | | | |
-| **Écart cumulé du lot 1** (au 18/11/2026) | 1 | **245** prévus | **257,75** projetés | **+12,75 j (+5,2 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 20,25 j (D25) ; demande d'évolution du cabinet, part indispensable : +8,75 j. **Avec la clôture mensuelle : 261,25 j (+16,25 j, +6,6 %)**. Option multidevise minimale : +1,75 j de plus. Mise à jour à chaque fin de phase |
+| **Écart cumulé du lot 1** (au 18/11/2026) | 1 | **245** prévus | **263,5** projetés | **+18,5 j (+7,6 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 20,25 j (D25) ; demande d'évolution du cabinet, part indispensable selon le référentiel v1.0, clôture mensuelle comprise : +14,5 j. Option multidevise minimale : +1,75 j de plus (265,25 j, +8,3 %). Facturation électronique TTN : avenant séparé. Mise à jour à chaque fin de phase |
 
 Statuts : À démarrer · En cours · En attente de validation · Validée · Validée avec réserves.
 
@@ -92,6 +92,7 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 18/11/2026 | Plafond de la phase 2 relevé de 19,5 à 20,25 j pour D25 (contrainte de l'hébergeur), **confirmé** ; écart cumulé du lot 1 projeté à +4 j (+1,6 %). Lot 10 validé | Responsable technique |
 | 18/11/2026 | Spécifications du cabinet comptable reçues (`docs/reference/cabinet/`), **sans valeur de validation** : chaque règle fiscale porte un statut CONFIRMED, PROPOSED ou PENDING_ACCOUNTANT_VALIDATION (§8) ; seules les règles CONFIRMED servent en production (garde-fou dans `aviator:check-environment` en phase 3 et dans la liste de mise en production en phase 10). Phase 3 non bloquée sur le principe ; elle démarre après la validation du rapport de la phase 2 et de l'analyse d'écarts (`docs/analyse_ecarts_cabinet.md`) | Responsable technique |
 | 18/11/2026 | **Demande d'évolution du cabinet** (`docs/analyse_ecarts_cabinet.md`, validée avec décisions provisoires) : part indispensable (8,75 j) intégrée au lot 1, phases 3 (+2,25 j), 6 (+3,75 j) et 8 (+2,75 j) ; écart cumulé du lot 1 : +12,75 j (+5,2 %). En attente de la direction : clôture mensuelle déplacée en phase 9 (+3,5 j) ; multidevise minimale, option chiffrée à part (+1,75 j) selon Q78 ; exports quotidiens automatiques reportés (export manuel par période dans le lot 1). Facturation électronique TEIF / TTN : avenant séparé, hors lot 1 ; interface `ElectronicInvoicingProvider` (0,75 j) dans le lot 1. Synthèse pour la direction : `docs/demande_evolution_cabinet.md` | Responsable technique ; **à confirmer par la direction** |
+| 18/11/2026 | **Référentiel fiscal v1.0 du cabinet** : remplace les spécifications du 18/11 pour la conception ; statuts CONFIRMED / CONDITIONAL / PENDING_DOCUMENTATION (§8) ; 15 codes fiscaux, qualification selon la nature réelle avec justificatif pour l'exonéré et le hors champ, table `stamp_duty_rules`, numérotation `AVI-000001` sans remise à zéro, clôture mensuelle devenue exigence du cabinet. Part indispensable portée à 14,5 j ; écart cumulé du lot 1 : +18,5 j (+7,6 %). Confirmation PDF du 18/11 **non retenue** (modèle non rempli, sans nom ni signature) : aucune règle applicable en production en attendant la confirmation nominative | Responsable technique ; **à confirmer par la direction** |
 
 ## 7. Points à confirmer avec Oxahost avant commande
 
@@ -113,30 +114,31 @@ Seul le prix annuel reste à confirmer. Les réponses d'Oxahost sont vérifiées
 
 ## 8. Règles fiscales
 
-Statuts (spécifications du cabinet, §16) : **CONFIRMED** (validée par écrit, document déposé dans `docs/reference/regles_fiscales_validees/` avec valideur, date et exemple chiffré) ; **PROPOSED** (valeur proposée par le cabinet comme paramétrage initial) ; **PENDING_ACCOUNTANT_VALIDATION** (le cabinet a indiqué qu'elle exige sa validation). Seule une règle CONFIRMED peut servir en production.
+**Référentiel en vigueur pour la conception** : référentiel fiscal et comptable v1.0 du cabinet (`docs/reference/cabinet/referentiel_fiscal_aviator_v1.0_2026-11.md`, SHA-256 `43b2de817cb6590f2e90875afbff9c29c795f50599073fe3ecd7cbb98158e887`). Il remplace les spécifications du 18/11 (`docs/reference/cabinet/specifications_facturation_2026-11-18.md`). Analyse : `docs/analyse_ecarts_cabinet.md`, version 2.
 
-Source des valeurs : spécifications du cabinet du 18/11/2026 (`docs/reference/cabinet/specifications_facturation_2026-11-18.md`), qui ne valent **pas** validation. Analyse : `docs/analyse_ecarts_cabinet.md`.
+Statuts (référentiel, §14) : **CONFIRMED** (règle validée et documentée) ; **CONDITIONAL** (applicable selon la nature réelle de l'opération, avec ses justificatifs) ; **PENDING_DOCUMENTATION** (pièce ou confirmation nécessaire avant activation).
 
-| Règle | Valeur ou traitement | Source | Statut |
+**Confirmation du cabinet : en attente.** Les règles CONFIRMED ne deviennent applicables qu'une fois versée dans `docs/reference/regles_fiscales_validees/` la confirmation **nominative** du cabinet, avec une copie du référentiel. Le PDF reçu le 18/11/2026 (`confirmation_cabinet_2026-11-18.pdf`) est un **modèle non rempli** : signataire et cabinet sous la forme « Nom et prénom de l'expert-comptable » et « Nom du cabinet d'expertise comptable », sans signature ni cachet. Il n'est pas retenu ; rien n'est versé dans `regles_fiscales_validees/`.
+
+| Règle | Valeur ou traitement | Référentiel | Statut |
 | --- | --- | --- | --- |
-| TVA sur la location de véhicules | 19 % | §2 | PROPOSED |
-| TVA sur le siège enfant, le GPS, le conducteur supplémentaire | 19 % | §2 | PROPOSED |
-| TVA sur l'assurance complémentaire | Selon la nature juridique et contractuelle | §2 | PENDING_ACCOUNTANT_VALIDATION |
-| TVA sur le carburant refacturé | 19 % « en principe » | §2 | PENDING_ACCOUNTANT_VALIDATION |
-| TVA sur le retard de restitution | Selon la nature de la somme facturée | §2 | PENDING_ACCOUNTANT_VALIDATION |
-| Dégâts sur véhicule | Hors champ possible en cas d'indemnisation réelle | §2 | PENDING_ACCOUNTANT_VALIDATION |
-| Franchise d'assurance | Selon la nature de la retenue | §2 | PENDING_ACCOUNTANT_VALIDATION |
-| Timbre fiscal : montant | 1,000 DT par facture concernée, ligne distincte, inclus dans le net à payer | §3 | PROPOSED |
-| Timbre fiscal : conditions et exonérations | À préciser (« sous réserve de confirmation des dispositions applicables ») | §3 | PENDING_ACCOUNTANT_VALIDATION |
-| Mentions obligatoires des factures et des avoirs | Liste du §4 (société, document, client particulier ou professionnel, lignes, récapitulatif) | §4, §6 | PROPOSED |
-| Numérotation des factures | Séquence centralisée pour les 4 agences, format `AVI-AAAA-NNNNNN`, agence dans un champ distinct | §5 | PROPOSED |
-| Remise à zéro annuelle de la numérotation | Non tranchée (« doit être confirmée par le cabinet ») | §5 | PENDING_ACCOUNTANT_VALIDATION |
-| Numérotation des avoirs et des factures complémentaires (Q30) | Numéro propre ; séquence commune ou distincte non précisée | §5, §6 | PENDING_ACCOUNTANT_VALIDATION |
-| Statuts de facture | `DRAFT`, `VALIDATED`, `ISSUED`, `PARTIALLY_PAID`, `PAID`, `CREDITED`, `CANCELLED` | §6 | PROPOSED |
-| Arrondis | 3 décimales ; TVA calculée sur la base groupée par taux puis arrondie ; timbre ajouté séparément | §7 | PENDING_ACCOUNTANT_VALIDATION (« la méthode définitive doit être validée ») |
-| Qualification fiscale des retenues sur caution (Q51) | À qualifier selon la nature de la retenue | §9.3, §10 | PENDING_ACCOUNTANT_VALIDATION |
-| Format des exports pour le cabinet (Q1) | XLSX et CSV UTF-8 ; colonnes des journaux §9.1 à §9.5 ; fréquences §9.6 ; identifiants stables | §9 | PROPOSED (logiciel, séparateur et codes comptables non fournis) |
-| Multidevise | Devise de référence TND ; devise d'origine, taux et contre-valeur conservés | §11 | PROPOSED (besoin réel à confirmer, Q78) |
-| Facturation électronique (TEIF / TTN, Q16) | Obligation étendue aux services selon le cabinet ; situation d'Aviator à confirmer | §8 | PENDING_ACCOUNTANT_VALIDATION |
+| TVA : `RENTAL`, `CHILD_SEAT`, `GPS`, `EXTRA_DRIVER`, `EXTRA_RENTAL_PERIOD`, `FUEL_RECHARGE` | 19 % | §2.1, §2.3, §2.4 A | CONFIRMED (applicable après la confirmation nominative) |
+| Assurance : `INSURANCE_PREMIUM` (exonérée, prime véritable), `ADDITIONAL_PROTECTION_SERVICE` et `EXCESS_REDUCTION_OPTION` (19 % en principe) | Selon la nature réelle ; jamais d'exonération déduite du libellé | §2.2 | CONDITIONAL |
+| Retard : `LATE_RETURN_PENALTY` | Hors champ si la nature indemnitaire est démontrée | §2.4 B | CONDITIONAL |
+| Dégâts : `VEHICLE_DAMAGE_COMPENSATION` (hors champ si indemnitaire), `REPAIR_SERVICE` (normalement 19 %), `DAMAGE_ADMIN_FEE` (19 % en principe) | Selon la nature réelle, justificatifs conservés | §2.5 | CONDITIONAL |
+| Franchise : `INSURANCE_EXCESS_COMPENSATION` (hors champ si indemnitaire), `EXCESS_REDUCTION_OPTION`, `CLAIM_ADMIN_FEE` (19 % en principe) | Selon la nature réelle, justificatifs du sinistre | §2.6 | CONDITIONAL |
+| Timbre fiscal | 1,000 DT par facture ordinaire concernée, ligne distincte, ajouté au TTC (art. 117 du Code des droits d'enregistrement et de timbre) | §3.1, §3.2 | CONFIRMED (applicable après la confirmation nominative) |
+| Numérotation des factures | `AVI-000001`, série centralisée et continue pour les 4 agences, **sans remise à zéro annuelle** ; année et agence dans des champs distincts | §4 | CONFIRMED (applicable après la confirmation nominative) |
+| Méthode d'arrondi | 3 décimales ; TVA sur la base agrégée par taux, arrondie à 3 décimales ; timbre après le TTC ; exemple : 115,000 HT, 21,850 TVA, 136,850 TTC, 137,850 net à payer | §5 | CONFIRMED (applicable après la confirmation nominative) |
+| Annulation et avoirs | Aucune suppression ; avoir avec son propre numéro, lié à la facture initiale ; facture corrigée éventuelle | §6 | CONFIRMED (applicable après la confirmation nominative). **Q30 reste ouverte** : même série que les factures ou non |
+| Format des exports (Q1) | XLSX et CSV UTF-8 ; journaux §9.1 à §9.5 (dont le code fiscal) ; identifiants stables | §9 | Référentiel (logiciel du cabinet, séparateur et codes comptables non fournis) |
+| Multidevise (Q78) | Colonne devise dans les encaissements ; contrôle des opérations en devises à la clôture | §9.2, §11 | Ouverte (besoin réel à confirmer) |
+| 1. Nature juridique des options d'assurance, contrats avec les assureurs | Pièces à fournir | §14 | PENDING_DOCUMENTATION |
+| 2. Clauses contractuelles relatives aux retards | Pièces à fournir | §14 | PENDING_DOCUMENTATION |
+| 3. Conditions de retenue des franchises | Pièces à fournir | §14 | PENDING_DOCUMENTATION |
+| 4. Justification des indemnités pour dégâts | Pièces à fournir | §14 | PENDING_DOCUMENTATION |
+| 5. Adhésion à TTN et date de dépôt de la demande (Q84) | Pièces à fournir | §7.3, §14 | PENDING_DOCUMENTATION |
+| 6. Identité juridique et matricule fiscal communs aux 4 agences | Pièces à fournir | §10, §14 | PENDING_DOCUMENTATION |
+| 7. Conditions d'application des exonérations de timbre (art. 118) | Pièces à fournir ; jamais d'exonération automatique d'une facture « impayée » | §3.3, §14 | PENDING_DOCUMENTATION |
 
-**Aucune règle n'est CONFIRMED au 18/11/2026.** Aucun document n'a été versé dans `docs/reference/regles_fiscales_validees/`.
+**Aucune règle n'est applicable en production au 18/11/2026** : la confirmation nominative manque.

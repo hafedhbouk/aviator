@@ -25,7 +25,10 @@ Source : `docs/analyse_ecarts_cabinet.md`, validée le 18/11/2026 avec décision
 | E17. Banque sur l'encaissement | 0,25 | Banque pour les chèques et virements ; imputation selon Q81 |
 | E19. Avoirs remboursés ou imputés | 1 | Remboursement (décaissement tracé) ou imputation sur une autre facture, totale ou partielle |
 | E23. Qualification des retenues sur caution | 0,25 | Nature fiscale de la retenue (Q51) |
-| **Total** | **3,75** | |
+| N2. Qualification selon la nature réelle (référentiel v1.0) | 1 | Code fiscal choisi pour chaque ligne, jamais déduit du libellé ; ligne exonérée ou hors champ : justificatif rattaché obligatoire (contrat d'assurance, clause de retard, dossier de dommage de la phase 5, justificatifs du sinistre), sinon validation refusée ; règle `PENDING_DOCUMENTATION` jamais applicable en production |
+| N3. Exonération du timbre | 0,25 | Appliquée à la main sur une facture, par une règle active de `stamp_duty_rules`, avec motif et justificatif ; jamais automatique pour une facture « impayée » |
+| N4. Numérotation `AVI-000001` | 0 | Série unique sans remise à zéro (`SequencePeriod::None`, longueur 6) ; année et agence dans des champs distincts |
+| **Total** | **5** | |
 
 ### Option, selon Q78
 
@@ -36,6 +39,16 @@ Source : `docs/analyse_ecarts_cabinet.md`, validée le 18/11/2026 avec décision
 | Phase 6 | Charge (j) |
 | --- | ---: |
 | Référence | 31 |
-| Demande d'évolution (indispensable) | +3,75 |
-| **Nouveau total** | **34,75** |
-| **Écart** | **+3,75 j (+12,1 %)** ; 36,25 j (+16,9 %) avec l'option multidevise |
+| Demande d'évolution (indispensable, référentiel v1.0) | +5 |
+| **Nouveau total** | **36** |
+| **Écart** | **+5 j (+16,1 %)** ; **37,5 j (+21 %, au-delà du seuil d'alerte)** avec l'option multidevise |
+
+### Tests de référence (référentiel v1.0)
+
+| Test | Attendu |
+| --- | --- |
+| **Exemple chiffré de la §5** sur une facture complète | Facture de location 100,000 + GPS 10,000 + siège enfant 5,000 : total HT **115,000**, TVA 19 % **21,850**, TTC **136,850**, timbre **1,000**, net à payer **137,850**, identiques à l'écran, dans le PDF et dans le journal des ventes |
+| **Libellé « assurance »** | Une ligne dont le libellé contient « assurance » (« Assurance tous risques », « ASSURANCE », « assurance complémentaire »…) n'est **jamais** exonérée automatiquement : sans code fiscal choisi, la validation est refusée ; avec `INSURANCE_PREMIUM` sans contrat ni justificatif de l'assureur, la validation est refusée ; avec `ADDITIONAL_PROTECTION_SERVICE`, TVA 19 % |
+| Hors champ sans justificatif | `LATE_RETURN_PENALTY`, `VEHICLE_DAMAGE_COMPENSATION` ou `INSURANCE_EXCESS_COMPENSATION` sans justificatif : validation refusée |
+| Timbre d'une facture impayée | Le timbre reste dû ; aucune exonération automatique |
+| Numérotation | `AVI-000001`, puis `AVI-000002` d'une autre agence et d'une autre année ; aucune remise à zéro ; numéros uniques sous facturation simultanée |
