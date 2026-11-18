@@ -16,6 +16,12 @@ it('envoie les en-têtes de sécurité sur toutes les pages', function () {
         ->assertHeaderMissing('X-Powered-By');
 });
 
+it('redirige la racine du site vers le back-office, sans page d\'accueil de Laravel', function () {
+    $this->get('/')
+        ->assertRedirect('/admin')
+        ->assertDontSee('Laravel');
+});
+
 it('impose HTTPS (HSTS) hors du poste local et des tests', function () {
     app()->detectEnvironment(fn (): string => 'production');
 
