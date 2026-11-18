@@ -45,7 +45,7 @@ Budget du lot 1 (245 jours prévus) :
 ## Décisions et actions attendues de la direction
 
 1. **Accord sur les 14,5 jours indispensables**, intégrés au lot 1 comme demande d'évolution.
-2. **Lettre de confirmation du cabinet à compléter.** Le document reçu le 18/11/2026 est un modèle non rempli : pas de nom de cabinet, pas de signataire, pas de signature. Tant qu'une confirmation nominative et signée n'est pas reçue, aucune règle fiscale ne peut servir en réel.
+2. **Validation du référentiel : faite.** La direction a attesté par écrit, le 18/11/2026, que le cabinet a validé le référentiel ; l'original reste chez Aviator. Avant la mise en service, la direction signera aussi le rapport de configuration fiscale produit par l'application.
 3. **Facture électronique (TTN)** : la demande d'adhésion est déposée. Il reste à fournir :
    - la **date de dépôt** et une **copie de la preuve** (à conserver : elle justifie les factures papier pendant la finalisation) ;
    - le **délai annoncé par TTN** pour finaliser l'adhésion ;

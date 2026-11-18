@@ -2,7 +2,7 @@
 
 | Version | Date | Document analysé | Statut |
 | --- | --- | --- | --- |
-| **2** | 18/11/2026 | Référentiel fiscal et comptable v1.0 (`docs/reference/cabinet/referentiel_fiscal_aviator_v1.0_2026-11.md`), qui **remplace** les spécifications du 18/11 pour la conception | En vigueur ; révisée le 18/11/2026 après les réponses de la direction (D26 : dinar uniquement ; Q84 : situation B pour TTN), voir V2.6 |
+| **2** | 18/11/2026 | Référentiel fiscal et comptable v1.0 (`docs/reference/cabinet/referentiel_fiscal_aviator_v1.0_2026-11.md`), qui **remplace** les spécifications du 18/11 pour la conception | En vigueur ; révisée le 18/11/2026 après les réponses de la direction (D26 : dinar uniquement ; Q84 : situation B pour TTN), voir V2.6 ; référentiel validé (V2.1) |
 | 1 | 18/11/2026 | Spécifications du 18/11 (`docs/reference/cabinet/specifications_facturation_2026-11-18.md`) | Remplacée par la version 2 ; conservée plus bas pour l'historique |
 
 ---
@@ -14,8 +14,8 @@ Pas de code : documentation et plans seulement. La §13 du référentiel (plan d
 ## V2.1 Statut documentaire
 
 - Les statuts du référentiel (§14) remplacent ceux de la version 1 : **CONFIRMED** (règle validée et documentée), **CONDITIONAL** (applicable selon la nature réelle de l'opération et ses justificatifs), **PENDING_DOCUMENTATION** (pièce ou confirmation nécessaire avant activation).
-- Les règles notées CONFIRMED ne deviennent applicables qu'une fois versée dans `docs/reference/regles_fiscales_validees/` la **confirmation nominative** du cabinet, avec une copie du référentiel.
-- **Confirmation reçue le 18/11/2026 : non recevable en l'état.** Le PDF déposé (`confirmation_cabinet_2026-11-18.pdf`) est un modèle non rempli. Le signataire et le cabinet y figurent sous la forme « Nom et prénom de l'expert-comptable » et « Nom du cabinet d'expertise comptable », sans signature, cachet ni en-tête. Le titre cité (« Référentiel comptable et fiscal – Projet Aviator – Version 1.0 – Novembre 2026 ») diffère aussi légèrement de celui du fichier (« Référentiel fiscal et comptable final »). Elle n'est pas versée et aucune règle ne passe en CONFIRMED applicable (`docs/projet.md` §8).
+- **Référentiel validé le 18/11/2026** : confirmation du cabinet conservée par Aviator, attestée par Faouzi Bannour, directeur général, le 18/11/2026 (`docs/reference/regles_fiscales_validees/`). Le référentiel y est copié sans modification (SHA-256 `43b2de817cb6590f2e90875afbff9c29c795f50599073fe3ecd7cbb98158e887`). Les règles notées CONFIRMED sont applicables ; CONDITIONAL et PENDING_DOCUMENTATION gardent leur statut (`docs/projet.md` §8).
+- Historique : une première lettre de confirmation, reçue le même jour, était un modèle non rempli (sans nom de cabinet ni signataire) ; elle n'a pas été retenue, puis a été supprimée.
 
 ## V2.2 Écarts nouveaux ou modifiés par rapport à la version 1
 
@@ -37,16 +37,16 @@ Inchangés par rapport à la version 1 : E1, E5, E6, E8, E10, E11 (statuts du do
 
 ## V2.3 Les 15 codes fiscaux et leur paramétrage initial
 
-Statuts selon la décision du 18/11/2026 (`docs/projet.md` §8). « CONFIRMED* » : confirmé par le référentiel, **applicable seulement après la confirmation nominative** du cabinet.
+Statuts selon `docs/projet.md` §8 (référentiel validé le 18/11/2026).
 
 | Code | Désignation | Traitement fiscal | Justificatif obligatoire | Statut |
 | --- | --- | --- | --- | --- |
-| `RENTAL` | Location de véhicule | Taxable, TVA 19 % | Non | CONFIRMED* |
-| `CHILD_SEAT` | Siège enfant | Taxable, TVA 19 % | Non | CONFIRMED* |
-| `GPS` | GPS | Taxable, TVA 19 % | Non | CONFIRMED* |
-| `EXTRA_DRIVER` | Conducteur supplémentaire | Taxable, TVA 19 % | Non | CONFIRMED* |
-| `EXTRA_RENTAL_PERIOD` | Prolongation de location (y compris retard rémunérant une durée supplémentaire) | Taxable, TVA 19 % | Non | CONFIRMED* |
-| `FUEL_RECHARGE` | Carburant refacturé | Taxable, TVA 19 % « en principe », dans la base imposable | Non | CONFIRMED* |
+| `RENTAL` | Location de véhicule | Taxable, TVA 19 % | Non | CONFIRMED |
+| `CHILD_SEAT` | Siège enfant | Taxable, TVA 19 % | Non | CONFIRMED |
+| `GPS` | GPS | Taxable, TVA 19 % | Non | CONFIRMED |
+| `EXTRA_DRIVER` | Conducteur supplémentaire | Taxable, TVA 19 % | Non | CONFIRMED |
+| `EXTRA_RENTAL_PERIOD` | Prolongation de location (y compris retard rémunérant une durée supplémentaire) | Taxable, TVA 19 % | Non | CONFIRMED |
+| `FUEL_RECHARGE` | Carburant refacturé | Taxable, TVA 19 % « en principe », dans la base imposable | Non | CONFIRMED |
 | `INSURANCE_PREMIUM` | Prime d'assurance véritable | Exonérée de TVA ; taxe spécifique sur les assurances éventuelle | **Oui** : contrat et justificatif de l'assureur | CONDITIONAL |
 | `ADDITIONAL_PROTECTION_SERVICE` | Protection commerciale proposée par Aviator | Taxable, TVA 19 % « en principe » | Non | CONDITIONAL |
 | `EXCESS_REDUCTION_OPTION` | Option de réduction de franchise | Taxable, TVA 19 % « en principe » | Non | CONDITIONAL |
