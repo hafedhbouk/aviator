@@ -165,7 +165,7 @@ Douze modules, de A à L. Priorités : **P1** indispensable au démarrage, **P2*
 | A-04 | Grilles tarifaires par catégorie, durée (jour, semaine, mois) et saison | P1 |
 | A-05 | Options facturables : conducteur additionnel, siège enfant, GPS, livraison, franchise réduite | P1 |
 | A-06 | Règles de réservation : durée minimale, préavis, tolérance de retard, délai d'expiration, délai de préparation entre deux locations | P1 |
-| A-07 | Facturation : numérotation continue et sans trou par année, conditions de paiement, modes de paiement | P1 |
+| A-07 | Facturation : numérotation centralisée pour les 4 agences, continue et sans trou, sans remise à zéro annuelle (référentiel fiscal v1.0 validé par le cabinet) ; série distincte pour les avoirs ; format paramétrable ; conditions et modes de paiement | P1 |
 | A-08 | Taxes applicables aux factures (TVA, timbre fiscal), avec date d'effet, uniquement selon les règles validées par l'expert-comptable | P1 |
 | A-09 | Notifications push : événements, destinataires et délais des alertes (assurance, visite technique, entretien, fin de leasing, retards, demandes d'approbation) ; aucun SMS | P2 |
 
@@ -485,7 +485,7 @@ Tout passe par « Disponible », sauf le départ d'une réservation et le passag
 | RG-04 | Kilométrage de retour ≥ kilométrage de départ | Validation de l'état des lieux |
 | RG-05 | Une période facturée d'un contrat ne l'est pas deux fois | Contrôle à la validation de la facture |
 | RG-06 | Facture validée jamais modifiée ni supprimée ; correction par avoir | Statut verrouillé, suppression interdite en base et dans l'interface |
-| RG-07 | Numérotation des factures continue, chronologique, sans trou | Compteur par année attribué dans une transaction à la validation, jamais au brouillon |
+| RG-07 | Numérotation chronologique continue ; une facture validée n'est jamais modifiée ni supprimée | Compteur attribué dans une transaction à la validation, jamais au brouillon |
 | RG-08 | Restitué + retenu ≤ montant de caution reçu | Verrou de ligne sur la caution et recalcul serveur |
 | RG-09 | Retards facturés au-delà de la tolérance, selon l'unité paramétrée | Service de tarification |
 | RG-10 | Remise au-delà du seuil soumise à l'approbation du super admin | Statut « en attente d'approbation » et contrôle serveur |
@@ -728,7 +728,7 @@ Chaque question doit être tranchée avant la phase indiquée ; sans réponse, l
 | Q8 | Confirmation écrite d'Oxahost : calendrier de PHP 8.4, cron toutes les minutes et Composer, lieu des sauvegardes, prix annuel exact (358,80 ou 418,68 DT HT) | Responsable technique, Oxahost | 2 |
 | Q9 | Les téléphones du super admin et des agences : Android ou iPhone ? Pour l'iPhone, iOS 16.4 ou plus est nécessaire pour les notifications push | Direction | 9 |
 | Q10 | Grilles tarifaires par agence et par saison, remises et seuil des utilisateurs d'agence ? | Direction | 3 |
-| Q11 | Taux de TVA, timbre fiscal et mentions obligatoires des factures ; une numérotation commune ou une par agence ? | Expert-comptable | 3 |
+| Q11 | Taux de TVA, timbre fiscal, mentions obligatoires et numérotation des factures : répondu par le référentiel fiscal v1.0 (18/11/2026), sauf l'affichage de l'année dans le numéro et la série des factures complémentaires, à confirmer | Expert-comptable | 3 |
 | Q12 | Contrats de leasing en cours : sociétés, échéanciers, apports, valeurs résiduelles, à fournir pour chaque véhicule | Direction | 4 |
 | Q13 | Par « apports », entend-on bien l'apport initial versé à l'achat ou au leasing ? Faut-il aussi suivre des apports d'associés ? | Direction | 4 |
 | Q14 | Règles de retard, de restitution anticipée, montants et modes de caution par catégorie | Direction | 5 |

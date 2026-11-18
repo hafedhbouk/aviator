@@ -28,10 +28,17 @@ Le plan complet sera établi au démarrage de la phase et soumis à validation.
 
 Le contrôle « opérations en devises » est **sans objet** (D26 : dinar uniquement) ; il est affiché comme tel, sans calcul.
 
+## Écran de numérotation (D27, arbitrage du 18/11/2026)
+
+| Élément | Charge (j) | Contenu |
+| --- | ---: | --- |
+| Écran de numérotation | 1 | Déplacé de la phase 6. Préfixe et format modifiables par le **super admin seulement**, depuis l'administration ; changement journalisé (avant, après, qui, quand), appliqué aux **prochains numéros** seulement ; refus d'un format sans `{SEQUENCE}` ou pouvant produire un numéro déjà attribué, dans sa série ou dans l'autre ; format avec l'année proposé seulement si la confirmation écrite du cabinet est enregistrée. Il reprend les contrôles de la commande Artisan de la phase 6 |
+
 | Phase 9 | Charge (j) |
 | --- | ---: |
 | Référence | 38 |
 | Purge des journaux | +0,5 |
 | Clôture mensuelle (exigence du cabinet) | +3,5 |
-| **Total** | **42** |
-| **Écart** | **+4 j (+10,5 %)** |
+| Écran de numérotation (D27) | +1 |
+| **Total** | **43** |
+| **Écart** | **+5 j (+13,2 %)** |

@@ -124,16 +124,18 @@ Source : courriel de la direction du 18/11/2026 (`docs/reference/regles_fiscales
 
 | N° | Exigence | Référentiel v1.0 | Écart | Phase | Charge (j) | Risque | Classement |
 | --- | --- | --- | --- | --- | ---: | --- | --- |
-| N12 | Deux séries indépendantes, `AVI-{YEAR}-{SEQUENCE}` et `AV-{YEAR}-{SEQUENCE}`, compteurs continus ; remise à zéro présente mais verrouillée | §4.1 : série continue, format recommandé `AVI-000001` ; §6 : avoir avec son propre numéro | Ajout : format par modèle indépendant de la période du compteur, compteur attaché à la série (0,5) ; remise à zéro verrouillée (0,25) | 6 | 0,75 | Compteur remis à zéro par un changement de préfixe | Indispensable |
-| N13 | Préfixe et format modifiables par le super admin, journalisés, pour les prochains numéros ; refus d'un format sans `{SEQUENCE}` ou pouvant reproduire un numéro existant | §4.2 : interdiction de modifier ou réutiliser un numéro | Ajout : écran d'administration et contrôles | 6 (ou 9) | 1 | Numéro en double après un changement de format | Indispensable |
+| N12 | Deux séries indépendantes, `AVI-{SEQUENCE}` et `AV-{SEQUENCE}` au départ (format avec l'année prévu, désactivé), compteurs continus ; remise à zéro présente mais verrouillée | §4.1 : série continue, format recommandé `AVI-000001` ; §6 : avoir avec son propre numéro | Ajout : format par modèle indépendant de la période du compteur, compteur attaché à la série (0,5) ; remise à zéro verrouillée (0,25) | 6 | 0,75 | Compteur remis à zéro par un changement de préfixe | Indispensable |
+| N13 | Préfixe et format modifiables par le super admin, journalisés, pour les prochains numéros ; refus d'un format sans `{SEQUENCE}` ou pouvant reproduire un numéro existant | §4.2 : interdiction de modifier ou réutiliser un numéro | Ajout : commande Artisan en phase 6 (0,25), écran d'administration en phase 9 (1) | 6, 9 | 1,25 | Numéro en double après un changement de format | Indispensable (demande de la direction) |
 | N14 | Avoir lié à sa facture, partiels et totaux dans la série `AV-`, total ≤ montant de la facture | §6 | Aucun (E-04, RG-06) ; tests explicites | 6 | 0 | — | Indispensable |
 
-**Points à arbitrer** (signalés, non tranchés) :
+**Arbitrages du 18/11/2026** :
 
-1. Le format avec l'année diffère du format **recommandé** et CONFIRMED par le référentiel (`AVI-000001`, §4.1). Le référentiel (§4.2) exige la validation du cabinet pour toute modification de la politique de numérotation ; le courriel de la direction demande lui-même que « les modalités de séquencement et de renouvellement annuel des compteurs » soient confirmées avec le cabinet avant la mise en production. Une ligne de contrôle est ajoutée au plan de la phase 10.
-2. Le courriel est signé « La Direction », sans nom ni fonction, alors que l'attestation du référentiel nommait son signataire.
+1. **Réglage initial = format du référentiel validé** : `AVI-{SEQUENCE}` et `AV-{SEQUENCE}`, compteurs continus. Le format `AVI-{YEAR}-{SEQUENCE}` est prévu mais désactivé, et ne s'active qu'après une confirmation écrite du cabinet (Q87). Sans elle, la production démarre avec le format validé (contrôle de la phase 10).
+2. **Courriel de la direction à confirmer** jusqu'au dépôt de la confirmation nominative de Faouzi Bannour ; les règles sur les avoirs (série distincte, référence à la facture, plafond) sont planifiées, car elles ne contredisent pas le référentiel.
+3. **Écran de numérotation (1 j) en phase 9** ; en phase 6, une commande Artisan réservée au terminal, journalisée, refusée en production sans `--force` (+0,25 j).
+4. **Factures complémentaires** : série `AVI-` par défaut, paramétrable ; question au cabinet avec le format et la remise à zéro (Q87).
 
-**Charges** : indispensable porté de 14,5 j à **16,25 j** ; lot 1 : **265,25 j (+20,25 j, +8,3 %)**. **Phase 6 : 37,75 j (+21,8 %), au-delà du seuil d'alerte** : décision attendue (accepter, ou déplacer l'écran de numérotation en phase 9 : phase 6 à 36,75 j, +18,5 % ; phase 9 à 43 j, +13,2 %).
+**Charges après arbitrage** : D27 = 2 j (phase 6 : 1 j ; phase 9 : 1 j), demande de la direction. Phase 6 : **37 j (+19,4 %)**, sous le seuil d'alerte de 37,2 j ; phase 9 : 43 j (+13,2 %). Lot 1 : **265,5 j (+20,5 j, +8,4 %)**.
 
 ---
 

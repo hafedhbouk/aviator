@@ -5,7 +5,7 @@
 | Phase | 3. Paramétrage et référentiels (lot 1) |
 | Branche | `phase/03-parametrage`, créée depuis `main` après la fusion de `phase/02-architecture-socle` |
 | Budget | **19 j** : référence 16 j, reports de la phase 2 (+0,25 j), demande d'évolution du cabinet, part indispensable (+2,75 j). **Seuil d'alerte : 19,2 j** (+20 %), soit 0,2 j de marge |
-| Statut | **Plan à valider.** Aucun code avant la validation du rapport de la phase 2 et de ce plan |
+| Statut | **Plan validé le 18/11/2026** (rapport de la phase 2 validé avec réserves le même jour). Démarrage après la fusion de la phase 2 dans `main` |
 | Critère d'acceptation (cahier §7.1) | Paramétrage complet saisi en recette, validé par l'admin du siège. Il suppose la recette installée (réserve n° 1 de la phase 2, à lever avant la fin de cette phase) |
 | Sources | Cahier, module A (A-01 à A-09), G-05 ; **référentiel fiscal v1.0 validé** (`docs/reference/regles_fiscales_validees/`) ; analyse d'écarts, version 2 (`docs/analyse_ecarts_cabinet.md`) ; `docs/modele_donnees.md` §3 ; décisions D13 à D27 |
 

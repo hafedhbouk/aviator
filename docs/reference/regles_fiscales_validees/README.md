@@ -39,7 +39,7 @@ sha256sum docs/reference/regles_fiscales_validees/referentiel_fiscal_aviator_v1.
 | --- | --- | --- |
 | `reponse_q30_numerotation.pdf` | Courriel de la direction (« La Direction, Aviator Tunisie », 18/11/2026) : série distincte pour les avoirs (`AV-`), factures `AVI-`, compteurs indépendants, préfixes et formats configurables, avoir rattaché à la facture d'origine | `e94f0a8730a8adf91c692b3798117c084fd49b8d6d7e70702651c0996234e383` |
 
-**Réserves** (D27, à arbitrer) : courriel sans signataire nommé ; il demande lui-même que les modalités de séquencement et de renouvellement annuel des compteurs soient confirmées avec le cabinet avant la mise en production, comme le référentiel v1.0 (§4.2).
+**Statut** (D27, arbitrée le 18/11/2026) : courriel **à confirmer** (signé « La Direction », sans nom) jusqu'au dépôt de la confirmation nominative de Faouzi Bannour. Les règles sur les avoirs sont planifiées. Le format avec l'année reste désactivé tant que le cabinet ne l'a pas confirmé par écrit (Q87) ; le réglage initial est le format validé du référentiel (`AVI-{SEQUENCE}`, `AV-{SEQUENCE}`).
 
 ## À déposer pour une règle nouvelle ou modifiée
 

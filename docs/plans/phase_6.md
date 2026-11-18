@@ -32,15 +32,16 @@ Source : `docs/analyse_ecarts_cabinet.md`, validée le 18/11/2026 avec décision
 
 ### Numérotation des factures et des avoirs (D27, Q30)
 
-Source : courriel de la direction du 18/11/2026 (`docs/reference/regles_fiscales_validees/reponse_q30_numerotation.pdf`). **À arbitrer** : (1) le format avec l'année diffère du format recommandé par le référentiel validé (`AVI-000001`, §4.1), et le référentiel (§4.2) comme le courriel exigent la confirmation du cabinet pour les modalités de séquencement avant la mise en production ; (2) le courriel est signé « La Direction », sans nom ni fonction.
+Source : courriel de la direction du 18/11/2026 (`docs/reference/regles_fiscales_validees/reponse_q30_numerotation.pdf`), arbitré le 18/11/2026. Le courriel reste **à confirmer** jusqu'au dépôt de la confirmation nominative de Faouzi Bannour ; les règles sur les avoirs ne contredisent pas le référentiel et sont planifiées.
 
 | Élément | Charge (j) | Contenu |
 | --- | ---: | --- |
-| D27-1. Format par modèle et compteur par série | 0,5 | `SequenceDefinition` actuelle : l'année n'apparaît dans le numéro que si le compteur repart à zéro chaque année, et la clé du compteur est le préfixe. D27 exige un **modèle** (`{PREFIX}`, `{YEAR}`, `{SEQUENCE}`) indépendant de la période du compteur, et un compteur attaché à la **série** (factures, avoirs), pour qu'un changement de préfixe ne remette pas le compteur à zéro. `{YEAR}` = année d'émission à l'heure de Tunis. Formats par défaut : `AVI-{YEAR}-{SEQUENCE}`, `AV-{YEAR}-{SEQUENCE}`, 6 chiffres |
-| D27-2. Remise à zéro verrouillée | 0,25 | Option prévue dans le service, refusée tant que la règle n'est pas CONFIRMED dans une version ultérieure du référentiel (test) |
-| D27-3. Écran de numérotation (super admin) | 1 | Préfixe et format modifiables par le super admin seulement ; changement journalisé (avant, après, qui, quand), appliqué aux **prochains numéros** seulement ; refus d'un format sans `{SEQUENCE}` ou pouvant produire un numéro déjà attribué, dans sa série ou dans l'autre (par exemple un préfixe de facture `AV-`) |
+| D27-1. Format par modèle et compteur par série | 0,5 | `SequenceDefinition` actuelle : l'année n'apparaît dans le numéro que si le compteur repart à zéro chaque année, et la clé du compteur est le préfixe. D27 exige un **modèle** (`{PREFIX}`, `{YEAR}`, `{SEQUENCE}`) indépendant de la période du compteur, et un compteur attaché à la **série** (factures, avoirs), pour qu'un changement de préfixe ne remette pas le compteur à zéro. **Réglage initial : `AVI-{SEQUENCE}` et `AV-{SEQUENCE}`** (format du référentiel validé, 6 chiffres) |
+| D27-2. Verrous | 0,25 | Format avec l'année (`AVI-{YEAR}-{SEQUENCE}`, `{YEAR}` = année d'émission à l'heure de Tunis) **prévu mais désactivé**, activable seulement quand une confirmation écrite du cabinet est enregistrée ; remise à zéro annuelle présente mais refusée tant qu'elle n'est pas CONFIRMED dans une version ultérieure du référentiel |
+| D27-3. Commande Artisan de réglage du format | 0,25 | Réservée au terminal (aucun écran en phase 6) ; changement journalisé (avant, après, qui, quand) ; **refusée en production sans `--force`** ; appliquée aux prochains numéros seulement ; refus d'un format sans `{SEQUENCE}` ou pouvant produire un numéro déjà attribué, dans sa série ou dans l'autre ; refus du format avec l'année tant que le verrou D27-2 est fermé |
 | D27-4. Avoirs liés, plafonnés | 0 | Déjà prévu (E-04, RG-06) : avoir lié obligatoirement à sa facture ; avoirs partiels et totaux dans la série `AV-` ; total des avoirs d'une facture ≤ son montant, contrôlé sous verrou |
-| **Total D27** | **1,75** | |
+| D27-5. Factures complémentaires | 0 | Série `AVI-` par défaut, paramétrable (Q87) |
+| **Total D27 en phase 6** | **1** | L'écran de numérotation (1 j) est en phase 9 |
 
 ### Dinar uniquement (D26)
 
@@ -50,11 +51,11 @@ Aucune devise étrangère (réponse de la direction à Q78, 18/11/2026) : multid
 | --- | ---: |
 | Référence | 31 |
 | Demande d'évolution (indispensable, référentiel v1.0) | +5 |
-| Numérotation D27 | +1,75 |
-| **Nouveau total** | **37,75** |
-| **Écart** | **+6,75 j (+21,8 %), au-delà du seuil d'alerte de 20 %** |
+| Numérotation D27 (écran en phase 9) | +1 |
+| **Nouveau total** | **37** |
+| **Écart** | **+6 j (+19,4 %)**, sous le seuil d'alerte (37,2 j), avec 0,2 j de marge |
 
-**Alerte (CLAUDE.md, règle 5)** : décision attendue. Option : déplacer l'écran de numérotation (D27-3, 1 j) en phase 9 ; les formats par défaut suffisent pour la phase 6. La phase 6 passerait à 36,75 j (+18,5 %) et la phase 9 à 43 j (+13,2 %). Le total du lot 1 ne change pas (265,25 j).
+**Arbitrage du 18/11/2026** : l'écran de numérotation passe en phase 9 ; en phase 6, une commande Artisan le remplace (+0,25 j). La phase 6 reste sous le seuil d'alerte, sans marge réelle.
 
 ### Tests de référence (référentiel v1.0)
 
@@ -64,9 +65,10 @@ Aucune devise étrangère (réponse de la direction à Q78, 18/11/2026) : multid
 | **Libellé « assurance »** | Une ligne dont le libellé contient « assurance » (« Assurance tous risques », « ASSURANCE », « assurance complémentaire »…) n'est **jamais** exonérée automatiquement : sans code fiscal choisi, la validation est refusée ; avec `INSURANCE_PREMIUM` sans contrat ni justificatif de l'assureur, la validation est refusée ; avec `ADDITIONAL_PROTECTION_SERVICE`, TVA 19 % |
 | Hors champ sans justificatif | `LATE_RETURN_PENALTY`, `VEHICLE_DAMAGE_COMPENSATION` ou `INSURANCE_EXCESS_COMPENSATION` sans justificatif : validation refusée |
 | Timbre d'une facture impayée | Le timbre reste dû ; aucune exonération automatique |
-| **Passage d'année (D27)** | Dernière facture émise le 31/12/2026 à 23:59 (heure de Tunis) : `AVI-2026-000125` ; suivante le 01/01/2027 à 00:00 : `AVI-2027-000126` ; même chose pour les avoirs (`AV-2026-…` puis `AV-2027-…`, sans remise à zéro) ; une facture émise le 31/12/2026 à 23:30 UTC (00:30 à Tunis le 01/01/2027) porte l'année 2027 |
+| **Passage d'année (D27)** | Format initial : dernière facture de 2026 `AVI-000125`, première de 2027 `AVI-000126` (aucune remise à zéro) ; même chose pour les avoirs. Format avec l'année, une fois déverrouillé : `AVI-2026-000125` (31/12/2026 à 23:59, heure de Tunis) puis `AVI-2027-000126` ; une facture émise le 31/12/2026 à 23:30 UTC (00:30 à Tunis le 01/01/2027) porte l'année 2027 |
+| **Format avec l'année verrouillé (D27)** | Activer `AVI-{YEAR}-{SEQUENCE}` est refusé tant que la confirmation écrite du cabinet n'est pas enregistrée |
 | **Deux séries indépendantes (D27)** | Factures et avoirs ont chacun leur compteur : émettre un avoir n'avance pas le compteur des factures ; numéros uniques sous émission simultanée, dans chaque série |
 | **Remise à zéro verrouillée (D27)** | Activer la remise à zéro annuelle est refusé tant que la règle n'est pas CONFIRMED |
 | **Avoirs plafonnés (D27)** | Facture de 137,850 : avoir partiel de 50,000 accepté, second avoir de 87,850 accepté, troisième avoir de 0,001 refusé ; un avoir sans facture d'origine est refusé ; deux avoirs simultanés qui dépasseraient ensemble le montant : un seul passe |
-| **Format modifiable (D27)** | Super admin seulement (admin et utilisateur d'agence refusés) ; changement journalisé ; le numéro suivant prend le nouveau format, les numéros existants ne changent pas ; format sans `{SEQUENCE}` refusé ; format pouvant reproduire un numéro existant refusé (par exemple préfixe de facture remplacé par `AV-`) ; changer le préfixe ne remet pas le compteur à zéro |
+| **Commande de réglage du format (D27)** | Changement journalisé ; refusé en production sans `--force` ; le numéro suivant prend le nouveau format, les numéros existants ne changent pas ; format sans `{SEQUENCE}` refusé ; format pouvant reproduire un numéro existant refusé (par exemple préfixe de facture remplacé par `AV-`) ; changer le préfixe ne remet pas le compteur à zéro |
 | **Dinar uniquement (D26)** | Une facture, un avoir, un encaissement ou une caution dans une devise autre que `TND` (par exemple `EUR`) est refusé avec un message clair ; rien n'est enregistré |

@@ -5,12 +5,12 @@
 | Phase | 2. Architecture et socle (lot 1) |
 | Branche | `phase/02-architecture-socle` (créée depuis `main` après la fusion de `phase/01-analyse`) ; 31 commits, dernier commit `8cd8872` |
 | Dates | 17 au 18/11/2026 |
-| Statut proposé | **Validée avec réserves** — réserve n° 1 : installation en recette (§8) |
+| Statut | **Validée avec réserves** le 18/11/2026 par Hafedh — réserve n° 1 : installation en recette (§8, §10) |
 | Critère d'acceptation (cahier §7.1) | Socle déployé en recette ; résultat de `aviator:check-environment` joint au rapport, dans les 30 jours de garantie |
 | Valideur | Responsable technique |
 | Plan | `docs/plans/phase_2.md` (plan, avenants 1 et 2, points budgétaires) |
 
-**En bref** : le socle est livré et testé (355 tests, CI au vert). L'installation en recette est **reportée**, faute de nom de domaine (Q6) : c'est la réserve n° 1. Charge : **20,25 j** pour 19 j de référence et un plafond de 20,25 j. Trois points restent à arbitrer avant la phase 6 (D27), et deux autres doivent être tranchés avant la validation (§5 et §9).
+**En bref** : le socle est livré et testé (355 tests, CI au vert). L'installation en recette est **reportée**, faute de nom de domaine (Q6) : c'est la réserve n° 1. Charge : **20,25 j** pour 19 j de référence et un plafond de 20,25 j. La numérotation D27 a été arbitrée le 18/11/2026. Deux points restent à trancher avant la validation (§9).
 
 ---
 
@@ -87,13 +87,13 @@ Décisions D14 à D27 dans `docs/decisions.md` :
 | D20, D21 | Cron toutes les 5 minutes en secours ; pas de `storage:link` |
 | D22 → D25 | Déploiement par archive, terminal web de cPanel (D22 remplacée) |
 | D23, D24 | Gestion des clés ; recherche de clients (phase 4) |
-| D26, D27 | Dinar uniquement ; numérotation des factures et des avoirs |
+| D26, D27 | Dinar uniquement ; numérotation des factures et des avoirs (arbitrée le 18/11/2026 : réglage initial `AVI-{SEQUENCE}` et `AV-{SEQUENCE}`, format avec l'année désactivé sans confirmation écrite du cabinet, écran en phase 9) |
 
 | Écart | Traitement |
 | --- | --- |
 | Cahier §6.5 : « déploiement automatisé depuis Git par SSH » | Impossible chez Oxahost ; cahier mis à jour par la direction (D25) |
 | Cahier §2.2 : points Oxahost « à confirmer » | Confirmés par Oxahost ; cahier mis à jour |
-| **A-07 et RG-07 : numérotation « par année »** | **À trancher** : le référentiel fiscal validé (§4.1) impose un compteur **sans remise à zéro annuelle** (D27). Le cahier n'est pas modifié ; je propose d'aligner A-07 et RG-07 sur le référentiel |
+| **A-07 et RG-07 : numérotation « par année »** | **Résolu le 18/11/2026** : cahier aligné sur le référentiel validé (compteur sans remise à zéro annuelle, série distincte pour les avoirs), ainsi que Q11 |
 | Critère d'acceptation : « socle déployé en recette » | Non atteint : installation reportée (réserve n° 1, §8) |
 | J-08 « déclenchable par l'administrateur » | Sauvegarde déclenchée par le script d'installation et JetBackup, sans bouton dans l'application (D14 : `exec` désactivé) |
 
@@ -111,10 +111,10 @@ Décisions D14 à D27 dans `docs/decisions.md` :
 
 **Décision attendue** sur ces 1,25 j :
 
-- **(a) Les imputer à la demande d'évolution du cabinet** (proposé). L'écart cumulé du lot 1 passe de 265,25 j à 266,5 j (+8,8 %).
+- **(a) Les imputer à la demande d'évolution du cabinet** (proposé). L'écart cumulé du lot 1 passe de 265,5 j à 266,75 j (+8,9 %).
 - **(b) Les compter dans la phase 2.** Elle passerait à 21,5 j (+13,2 %, au-delà du plafond de 20,25 j mais sous le seuil d'alerte de 20 %).
 
-Écart cumulé du lot 1 au 18/11/2026 (`docs/projet.md` §5) : **265,25 j projetés pour 245 j (+20,25 j, +8,3 %)**, avant les deux points ci-dessus.
+Écart cumulé du lot 1 au 18/11/2026 (`docs/projet.md` §5), après les arbitrages D27 : **265,5 j projetés pour 245 j (+20,5 j, +8,4 %)**, avant les deux points ci-dessus.
 
 ## 6. Risques nouveaux
 
@@ -122,7 +122,7 @@ Décisions D14 à D27 dans `docs/decisions.md` :
 | --- | --- | --- |
 | Installation en recette repoussée (Q6) | Les surprises de l'hébergement apparaissent tard ; le critère de la phase 3 (« paramétrage complet saisi en recette ») en dépend | Réserve n° 1 avec date limite (§8) ; scripts et contrôle testés en CI et dans WSL |
 | Phase 3 à **+18,75 %** (19 j pour 16 j) | Aucune marge avant le seuil d'alerte (19,2 j) | Plan de la phase 3 serré, sans aléa supplémentaire ; dépassement signalé immédiatement |
-| Phase 6 à **+21,8 %** avec D27 | Au-delà du seuil d'alerte | Décision attendue : accepter, ou déplacer l'écran de numérotation en phase 9 (`docs/plans/phase_6.md`) |
+| Phase 6 à **+19,4 %** (37 j, seuil 37,2 j) | Écran de numérotation déplacé en phase 9 (arbitrage du 18/11) : plus de marge | Aucun ajout sans accord ; dépassement signalé immédiatement |
 | Filament et OpenSpout passeront à PHP 8.4 | Blocage des mises à jour tant qu'Oxahost reste en PHP 8.3 | Versions épinglées compatibles PHP 8.3 (D6) |
 | Avenant TTN | Doit être prêt dès la finalisation de l'adhésion (situation B, Q84) | Délai de TTN à obtenir (Q16) pour planifier l'avenant |
 | Durée de la suite de tests sur le poste | De 1 à 6 minutes selon la charge de la machine | Sans effet sur la CI (environ 1 min 30) |
@@ -135,9 +135,9 @@ Décisions D14 à D27 dans `docs/decisions.md` :
 | Q27 | Confirmation de D13 (carnet d'adresses et exports réservés au super admin) | Direction |
 | Q76 | 2FA obligatoire aussi pour les utilisateurs d'agence ? (recommandé) | Direction |
 | Q77 | Durées de conservation des journaux | Direction, conseil juridique |
-| D27 | (1) Le format avec l'année, qui s'écarte du référentiel §4.1, exige la confirmation du cabinet (§4.2) ; (2) le courriel du 18/11 n'a pas de signataire nommé | Direction, cabinet |
+| D27, Q30 | Confirmation nominative (Faouzi Bannour) du courriel du 18/11 sur la série des avoirs | Direction |
 | Q16 | TTN : date de dépôt et copie de la preuve, délai annoncé, type de certificat | Direction |
-| Q30 (reste) | Numérotation des factures complémentaires | Cabinet |
+| **Q87** (nouvelle) | Numérotation : format avec l'année, remise à zéro annuelle, série des factures complémentaires | Cabinet |
 | **Q85** (nouvelle) | Code fiscal de l'option « livraison » (A-05) et des kilomètres supplémentaires (E-05), absents des 15 codes du référentiel | Cabinet |
 | **Q86** (nouvelle) | Mode d'arrondi de la TVA à 3 décimales : demi supérieur ou autre ? Le référentiel (§5) ne le précise pas | Cabinet |
 | Q1, Q79 à Q83 | Logiciel du cabinet, annulation sans avoir, remise des exports, imputation, forme du journal des ventes, réouverture d'une période close | Cabinet, direction |
@@ -191,5 +191,18 @@ Puis la suite de `docs/installation_recette.md`.
 2. **Imputation des 1,25 j hors lots** (§5) : demande d'évolution du cabinet (proposé) ou phase 2.
 3. **A-07 et RG-07** : aligner le cahier sur le compteur continu du référentiel validé (§4).
 4. **Plan de la phase 3** : `docs/plans/phase_3.md`.
-5. **Arbitrages D27** (avant la phase 6) : format avec l'année et confirmation du cabinet ; signataire du courriel ; dépassement de la phase 6.
-6. Après validation : fusion de `phase/02-architecture-socle` dans `main`, puis création de la branche `phase/03-parametrage`.
+5. Après validation : fusion de `phase/02-architecture-socle` dans `main`, puis création de la branche `phase/03-parametrage`.
+
+## 10. Décision de validation (18/11/2026)
+
+| Point | Décision |
+| --- | --- |
+| Statut | **Validée avec réserves**, par Hafedh (responsable technique) |
+| Réserve n° 1 | Installation en recette et résultat d'`aviator:check-environment` joint, au plus tard avant la fin de la phase 3 |
+| Charge hors lots (1,25 j) | Imputée à la demande d'évolution du cabinet et de la direction |
+| Levée de la réserve | 0,25 j accordés au-delà du plafond (phase 2 : 20,5 j) |
+| Cahier des charges | A-07, RG-07 et Q11 alignés sur le référentiel validé |
+| Numérotation D27 | Arbitrée : réglage initial `AVI-{SEQUENCE}` et `AV-{SEQUENCE}` ; format avec l'année désactivé sans confirmation écrite du cabinet (Q87) ; écran en phase 9 |
+| Plan de la phase 3 | Validé |
+| Lot 1 | 267 j projetés (+22 j, +9,0 %) |
+| Suite | Pull request `phase/02-architecture-socle` → `main` (branche protégée, fusion sur GitHub une fois la CI verte), puis `phase/03-parametrage` depuis `main` à jour |

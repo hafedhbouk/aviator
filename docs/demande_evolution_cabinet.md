@@ -32,6 +32,8 @@ Aviator ne reçoit que des dinars : la gestion des devises est retirée. Les exp
 | Préparation à la facture électronique (sans l'envoi à TTN) | Indispensable | 0,75 | |
 | Clôture mensuelle (12 contrôles avant de clôturer un mois) | Indispensable | 3,5 | |
 | **Total indispensable** | | **14,5** | |
+| **Demande de la direction (D27)** : numérotation des factures `AVI-000001` et des avoirs `AV-000001` en séries distinctes, compteurs continus ; format avec l'année prêt mais activé seulement si le cabinet l'accepte ; réglage par une commande en phase 6, écran d'administration en phase 9 | Demande de la direction | 2 | |
+| Analyse des exigences du cabinet et de la direction (spécifications, référentiel, devises, TTN, numérotation), faite pendant la phase 2 | Réalisé | 1,25 | |
 | Envoi automatique des exports chaque jour | Reporté (exports à la demande, par période) | 0,5 | |
 | Accès du cabinet aux exports | Non retenu | 1,5 | |
 | **Facture électronique complète (envoi à TTN, signature, rejets, archivage)** | **Hors lot 1, avenant séparé, à livrer dès la fin de l'adhésion** | **18 à 27** | |
@@ -40,7 +42,9 @@ Budget du lot 1 (245 jours prévus) :
 
 | Choix | Jours | Écart |
 | --- | ---: | ---: |
-| Indispensable seul | **263,5** | **+7,6 %** |
+| Indispensable du cabinet | 263,5 | +7,6 % |
+| Indispensable du cabinet et demande de la direction (D27) | 265,5 | +8,4 % |
+| **Avec l'analyse déjà réalisée (1,25 j) et la levée de la réserve de la phase 2 (0,25 j)** | **267** | **+9,0 %** |
 
 ## Décisions et actions attendues de la direction
 
@@ -52,7 +56,8 @@ Budget du lot 1 (245 jours prévus) :
    - le **type de certificat de signature** : fichier ou clé USB.
 
    L'avenant TTN n'empêche pas la mise en service de l'application, mais il doit être prêt dès que l'adhésion est finalisée. Le délai de TTN fixera donc la date à laquelle le lancer.
-4. **Pièces à fournir au cabinet**, sans lesquelles les traitements concernés restent bloqués :
+4. **Numérotation (D27)** : confirmer nominativement le courriel du 18/11/2026 sur la série des avoirs (Faouzi Bannour), et demander au cabinet s'il accepte l'année dans le numéro, une éventuelle remise à zéro annuelle, et la série des factures complémentaires. Sans réponse du cabinet, la mise en service se fait avec `AVI-000001` et `AV-000001`.
+5. **Pièces à fournir au cabinet**, sans lesquelles les traitements concernés restent bloqués :
    - contrats avec les assureurs ;
    - clauses de retard du contrat de location ;
    - conditions de retenue des franchises ;
