@@ -142,3 +142,31 @@ Reportées dans `docs/questions_ouvertes.md` : Q11, Q16, Q1 et Q30 complétées 
 3. Multidevise : niveau (a) en lot 1 seulement si Aviator reçoit des devises (Q78).
 4. TEIF : confirmer le traitement en avenant séparé, et la structure (E13) en lot 1.
 5. Après validation : reporter les charges dans `docs/projet.md` §5 et dans les plans des phases 3, 6, 8 et 10.
+
+## 8. Décisions du 18/11/2026 (provisoires, à confirmer par la direction)
+
+Analyse validée par le responsable technique, avec ces décisions :
+
+| Point | Décision | Charge |
+| --- | --- | ---: |
+| Indispensable (E2 à E23) | Intégré au lot 1 comme **demande d'évolution du client** : phases 3 (+2,25 j), 6 (+3,75 j) et 8 (+2,75 j) | 8,75 j |
+| Clôture mensuelle (E26, E27) | Recommandée, **déplacée en phase 9** pour que la phase 8 reste sous +20 % ; en attente de la direction | 3,5 j |
+| Multidevise (E24) | Selon Q78 ; version minimale (devise, taux, montant converti) **chiffrée à part** comme option : phase 6 (1,5 j), phase 8 (0,25 j) | 1,75 j |
+| Exports quotidiens automatiques (E21) | **Reportés** ; export manuel par période dans le lot 1 | 0 |
+| Accès du cabinet (E22), multidevise complète (E24 b) | Non retenus pour le lot 1 | 0 |
+| TEIF / TTN (E14) | **Avenant séparé, hors lot 1** ; interface `ElectronicInvoicingProvider` (E13) gardée dans le lot 1 ; questions pour TTN et le cabinet ajoutées à Q16 | (18 à 27 j hors lot 1) |
+
+### Deux scénarios
+
+| Phase | Référence (j) | Indispensable seul | Indispensable + clôture |
+| --- | ---: | ---: | ---: |
+| 3. Paramétrage | 16 | 18,5 (+15,6 %) | 18,5 (+15,6 %) |
+| 6. Facturation | 31 | 34,75 (+12,1 %) | 34,75 (+12,1 %) |
+| 8. Exports | 20 | **22,75 (+13,75 %)** | **22,75 (+13,75 %)** |
+| 9. Statistiques, mobile, sécurité | 38 | **38,5 (+1,3 %)** | **42 (+10,5 %)** |
+| **Lot 1** | **245** | **257,75 (+12,75 j, +5,2 %)** | **261,25 (+16,25 j, +6,6 %)** |
+| Lot 1 avec l'option multidevise (+1,75 j) | 245 | 259,5 (+14,5 j, +5,9 %) | 263 (+18 j, +7,3 %) |
+
+Aucune phase ne dépasse le seuil d'alerte de 20 % dans ces scénarios. Avec l'option multidevise, la phase 6 passe à 36,25 j (+16,9 %) et la phase 8 à 23 j (+15 %).
+
+Report dans `docs/projet.md` (§5, §6) et dans les plans des phases 3, 6, 8, 9 et 10. Synthèse pour la direction : `docs/demande_evolution_cabinet.md`.

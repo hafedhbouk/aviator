@@ -59,6 +59,12 @@ La table des paramètres fiscaux (aujourd'hui `taxes` dans `docs/modele_donnees.
 | E5. Rapport de configuration fiscale | 0,5 |
 | E6. Garde-fou dans `aviator:check-environment` | 0,25 |
 | E7. Conditions et exonérations du timbre | 0,5 |
-| **Total proposé, à valider avec l'analyse** | **2,25** |
+| **Total, intégré au lot 1 le 18/11/2026** (demande d'évolution du client, à confirmer par la direction) | **2,25** |
 
-Si l'analyse est validée telle quelle, la phase 3 passe de 16,25 j à **18,5 j** (+15,6 % sur la référence de 16 j, sous le seuil d'alerte de 20 %).
+| Phase 3 | Charge (j) |
+| --- | ---: |
+| Référence | 16 |
+| Reports de la phase 2 | +0,25 |
+| Demande d'évolution du cabinet (indispensable) | +2,25 |
+| **Nouveau total** | **18,5** |
+| **Écart** | **+2,5 j (+15,6 %)**, sous le seuil d'alerte de 20 % |

@@ -58,17 +58,17 @@ Dernière mise à jour : 18/11/2026
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1. Analyse et maquettes | 1 | 12 | | Validée avec réserves | [À COMPLÉTER] | 17/11/2026 | 1) Ateliers avec les 4 agences, à tenir pendant la phase 2 et avant la phase 4 ; 2) Q27 (carnet d'adresses) appliquée par défaut, à confirmer par la direction ; 3) Q70 : bascule du poste et des tests en MariaDB 10.11, à vérifier en phase 2. Rapport : `docs/rapports/phase_1.md` |
 | 2. Architecture et socle | 1 | 19 | | En cours | | | Projeté **20,25 j** : 18,5 j après rééquilibrage, plus 1,25 j pour D25 (déploiement par archive, contrainte de l'hébergeur), rapport compris ; **plafond relevé de 19,5 à 20,25 j** le 18/11/2026 (`docs/plans/phase_2.md`, avenant 2) |
-| 3. Paramétrage et référentiels | 1 | 16 | | | | | Projeté 16,25 j : reports de la phase 2 (`docs/plans/phase_3.md`) |
+| 3. Paramétrage et référentiels | 1 | 16 | | | | | Projeté **18,5 j** : reports de la phase 2 (0,25 j) et demande d'évolution du cabinet, part indispensable (2,25 j) (`docs/plans/phase_3.md`) |
 | 4. Parc, leasing et réservations | 1 | 39 | | | | | Projeté 41,75 j : reports de la phase 2 (`docs/plans/phase_4.md`) |
 | 5. Contrats et états des lieux | 1 | 30 | | | | | Projeté 29,5 j : `drivers` avancé en phase 4 (`docs/plans/phase_5.md`) |
-| 6. Facturation, encaissements, cautions | 1 | 31 | | | | | |
+| 6. Facturation, encaissements, cautions | 1 | 31 | | | | | Projeté **34,75 j** : demande d'évolution du cabinet, part indispensable (3,75 j) (`docs/plans/phase_6.md`) ; option multidevise minimale (+1,5 j) selon Q78 |
 | 7. CRM et recommandations | 1 | 21 | | | | | Projeté 20,75 j : table des recommandations créée en phase 4 |
-| 8. Maintenance, dépenses, exports | 1 | 20 | | | | | |
-| 9. Statistiques, mobile et sécurité | 1 | 38 | | | | | Projeté 38,5 j : purge des journaux (Q77, `docs/plans/phase_9.md`) |
+| 8. Maintenance, dépenses, exports | 1 | 20 | | | | | Projeté **22,75 j** (+13,75 %) : demande d'évolution du cabinet, part indispensable (2,75 j) (`docs/plans/phase_8.md`) ; option multidevise minimale (+0,25 j) selon Q78 |
+| 9. Statistiques, mobile et sécurité | 1 | 38 | | | | | Projeté 38,5 j : purge des journaux (Q77, `docs/plans/phase_9.md`) ; **42 j** (+10,5 %) si la direction retient la clôture mensuelle (+3,5 j) |
 | 10. Recette et mise en production du lot 1 | 1 | 19 | | | | | |
 | 11. Espace client | 2 | 45 | | | | | |
 | **Total** | | **290** | | | | | |
-| **Écart cumulé du lot 1** (au 18/11/2026) | 1 | **245** prévus | **249** projetés | **+4 j (+1,6 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 20,25 j (D25). Mise à jour à chaque fin de phase |
+| **Écart cumulé du lot 1** (au 18/11/2026) | 1 | **245** prévus | **257,75** projetés | **+12,75 j (+5,2 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 projetée à 20,25 j (D25) ; demande d'évolution du cabinet, part indispensable : +8,75 j. **Avec la clôture mensuelle : 261,25 j (+16,25 j, +6,6 %)**. Option multidevise minimale : +1,75 j de plus. Mise à jour à chaque fin de phase |
 
 Statuts : À démarrer · En cours · En attente de validation · Validée · Validée avec réserves.
 
@@ -91,6 +91,7 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 18/11/2026 | D25 : déploiement par archive construite sur le poste (`build-release.sh`), envoyée par FTPS ou par le gestionnaire de fichiers et installée dans le terminal web de cPanel (`install-release.sh`, `rollback-release.sh`) ; racine web `~/apps/<env>/current/public` ; 2FA sur le compte cPanel ; remplace `scripts/deploy.sh` et D22. Cahier des charges §6.5 et §2.2 mis à jour en conséquence le 18/11/2026 | Responsable technique |
 | 18/11/2026 | Plafond de la phase 2 relevé de 19,5 à 20,25 j pour D25 (contrainte de l'hébergeur), **confirmé** ; écart cumulé du lot 1 projeté à +4 j (+1,6 %). Lot 10 validé | Responsable technique |
 | 18/11/2026 | Spécifications du cabinet comptable reçues (`docs/reference/cabinet/`), **sans valeur de validation** : chaque règle fiscale porte un statut CONFIRMED, PROPOSED ou PENDING_ACCOUNTANT_VALIDATION (§8) ; seules les règles CONFIRMED servent en production (garde-fou dans `aviator:check-environment` en phase 3 et dans la liste de mise en production en phase 10). Phase 3 non bloquée sur le principe ; elle démarre après la validation du rapport de la phase 2 et de l'analyse d'écarts (`docs/analyse_ecarts_cabinet.md`) | Responsable technique |
+| 18/11/2026 | **Demande d'évolution du cabinet** (`docs/analyse_ecarts_cabinet.md`, validée avec décisions provisoires) : part indispensable (8,75 j) intégrée au lot 1, phases 3 (+2,25 j), 6 (+3,75 j) et 8 (+2,75 j) ; écart cumulé du lot 1 : +12,75 j (+5,2 %). En attente de la direction : clôture mensuelle déplacée en phase 9 (+3,5 j) ; multidevise minimale, option chiffrée à part (+1,75 j) selon Q78 ; exports quotidiens automatiques reportés (export manuel par période dans le lot 1). Facturation électronique TEIF / TTN : avenant séparé, hors lot 1 ; interface `ElectronicInvoicingProvider` (0,75 j) dans le lot 1. Synthèse pour la direction : `docs/demande_evolution_cabinet.md` | Responsable technique ; **à confirmer par la direction** |
 
 ## 7. Points à confirmer avec Oxahost avant commande
 

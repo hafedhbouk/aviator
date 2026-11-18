@@ -15,3 +15,21 @@ Le plan complet sera établi au démarrage de la phase et soumis à validation.
 | Ajouts | +0,5 |
 | **Nouveau total** | **38,5** |
 | **Écart** | **+0,5 j (+1,3 %)** |
+
+## Demande d'évolution du cabinet : clôture mensuelle (18/11/2026)
+
+**En attente de la décision de la direction.** Recommandée par l'analyse d'écarts (`docs/analyse_ecarts_cabinet.md`, E26, E27), déplacée de la phase 8 vers la phase 9 pour que la phase 8 reste sous le seuil d'alerte.
+
+| Élément | Charge (j) | Contenu |
+| --- | ---: | --- |
+| E26. Préparation à la clôture mensuelle | 3 | Écran qui réunit les 12 contrôles du cabinet (factures, avoirs, encaissements, impayés, cautions non restituées, dépenses, justificatifs manquants, écarts de caisse, TVA collectée, devises, régularisations, cohérence contrats / factures / encaissements), avec un état et un lien vers chaque anomalie |
+| E27. Réouverture exceptionnelle d'une période close | 0,5 | Super admin, motif obligatoire, journalisée, nouvelle version des exports (selon Q83) |
+| **Total, si retenue** | **3,5** | |
+
+| Phase 9 | Sans clôture | Avec clôture |
+| --- | ---: | ---: |
+| Référence | 38 | 38 |
+| Purge des journaux | +0,5 | +0,5 |
+| Clôture mensuelle | — | +3,5 |
+| **Total** | **38,5** | **42** |
+| **Écart** | **+0,5 j (+1,3 %)** | **+4 j (+10,5 %)** |
