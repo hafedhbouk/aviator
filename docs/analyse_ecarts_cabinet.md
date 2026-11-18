@@ -2,7 +2,7 @@
 
 | Version | Date | Document analysé | Statut |
 | --- | --- | --- | --- |
-| **2** | 18/11/2026 | Référentiel fiscal et comptable v1.0 (`docs/reference/cabinet/referentiel_fiscal_aviator_v1.0_2026-11.md`), qui **remplace** les spécifications du 18/11 pour la conception | En vigueur ; révisée le 18/11/2026 après les réponses de la direction (D26 : dinar uniquement ; Q84 : situation B pour TTN), voir V2.6 ; référentiel validé (V2.1) |
+| **2** | 18/11/2026 | Référentiel fiscal et comptable v1.0 (`docs/reference/cabinet/referentiel_fiscal_aviator_v1.0_2026-11.md`), qui **remplace** les spécifications du 18/11 pour la conception | En vigueur ; révisée le 18/11/2026 après les réponses de la direction (D26 : dinar uniquement ; Q84 : situation B pour TTN), voir V2.6 ; référentiel validé (V2.1) ; Q30 et numérotation D27 (V2.7) |
 | 1 | 18/11/2026 | Spécifications du 18/11 (`docs/reference/cabinet/specifications_facturation_2026-11-18.md`) | Remplacée par la version 2 ; conservée plus bas pour l'historique |
 
 ---
@@ -72,6 +72,8 @@ Les sept vérifications documentaires de la §14 (contrats d'assurance, clauses 
 
 ## V2.5 Charges et écart cumulé du lot 1
 
+Avant D27 ; voir V2.7 pour les totaux à jour.
+
 ### Par classement
 
 | Classement | Points | Charge (j) |
@@ -115,6 +117,23 @@ Les sept vérifications documentaires de la §14 (contrats d'assurance, clauses 
 | Q84 : situation TTN | Demande d'adhésion déposée : **situation B** (référentiel §7.2) | Factures papier conformes autorisées pendant la finalisation, sous réserve de conserver la preuve du dépôt (PENDING_DOCUMENTATION). Interface `ElectronicInvoicingProvider` gardée dans le lot 1 (0,75 j). Connecteur TTN : avenant séparé, **pas un préalable** à la mise en production du lot 1, à livrer **dès la finalisation de l'adhésion**. Restent attendus (Q16) : date de dépôt et copie de la preuve, délai annoncé par TTN, type de certificat de signature |
 
 **Résultat** : lot 1 projeté à **263,5 j (+18,5 j, +7,6 %)**, indispensable seul ; aucune phase au-delà du seuil d'alerte.
+
+## V2.7 Q30 et numérotation (D27, 18/11/2026)
+
+Source : courriel de la direction du 18/11/2026 (`docs/reference/regles_fiscales_validees/reponse_q30_numerotation.pdf`). Décision D27 (`docs/decisions.md`).
+
+| N° | Exigence | Référentiel v1.0 | Écart | Phase | Charge (j) | Risque | Classement |
+| --- | --- | --- | --- | --- | ---: | --- | --- |
+| N12 | Deux séries indépendantes, `AVI-{YEAR}-{SEQUENCE}` et `AV-{YEAR}-{SEQUENCE}`, compteurs continus ; remise à zéro présente mais verrouillée | §4.1 : série continue, format recommandé `AVI-000001` ; §6 : avoir avec son propre numéro | Ajout : format par modèle indépendant de la période du compteur, compteur attaché à la série (0,5) ; remise à zéro verrouillée (0,25) | 6 | 0,75 | Compteur remis à zéro par un changement de préfixe | Indispensable |
+| N13 | Préfixe et format modifiables par le super admin, journalisés, pour les prochains numéros ; refus d'un format sans `{SEQUENCE}` ou pouvant reproduire un numéro existant | §4.2 : interdiction de modifier ou réutiliser un numéro | Ajout : écran d'administration et contrôles | 6 (ou 9) | 1 | Numéro en double après un changement de format | Indispensable |
+| N14 | Avoir lié à sa facture, partiels et totaux dans la série `AV-`, total ≤ montant de la facture | §6 | Aucun (E-04, RG-06) ; tests explicites | 6 | 0 | — | Indispensable |
+
+**Points à arbitrer** (signalés, non tranchés) :
+
+1. Le format avec l'année diffère du format **recommandé** et CONFIRMED par le référentiel (`AVI-000001`, §4.1). Le référentiel (§4.2) exige la validation du cabinet pour toute modification de la politique de numérotation ; le courriel de la direction demande lui-même que « les modalités de séquencement et de renouvellement annuel des compteurs » soient confirmées avec le cabinet avant la mise en production. Une ligne de contrôle est ajoutée au plan de la phase 10.
+2. Le courriel est signé « La Direction », sans nom ni fonction, alors que l'attestation du référentiel nommait son signataire.
+
+**Charges** : indispensable porté de 14,5 j à **16,25 j** ; lot 1 : **265,25 j (+20,25 j, +8,3 %)**. **Phase 6 : 37,75 j (+21,8 %), au-delà du seuil d'alerte** : décision attendue (accepter, ou déplacer l'écran de numérotation en phase 9 : phase 6 à 36,75 j, +18,5 % ; phase 9 à 43 j, +13,2 %).
 
 ---
 

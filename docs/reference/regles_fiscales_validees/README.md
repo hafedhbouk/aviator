@@ -28,10 +28,18 @@ sha256sum docs/reference/regles_fiscales_validees/referentiel_fiscal_aviator_v1.
 | --- | --- |
 | TVA | Oui (§2) |
 | Timbre | Oui (§3) |
-| Facture : mentions, numérotation, avoirs | Oui (§4, §6) ; Q30 (série des avoirs) reste ouverte |
+| Facture : mentions, numérotation, avoirs | Oui (§4, §6) ; série des avoirs (Q30) : courriel de la direction ci-dessous, D27 |
 | Arrondi | Oui (§5), avec exemple chiffré |
 | Exports | Colonnes et formats (§9) ; logiciel du cabinet, séparateur et codes comptables non fournis (Q1) |
 | Facturation électronique | Principes (§7) ; situation d'Aviator : Q16, Q84 |
+
+### Numérotation des avoirs (Q30), 18/11/2026
+
+| Fichier | Contenu | SHA-256 |
+| --- | --- | --- |
+| `reponse_q30_numerotation.pdf` | Courriel de la direction (« La Direction, Aviator Tunisie », 18/11/2026) : série distincte pour les avoirs (`AV-`), factures `AVI-`, compteurs indépendants, préfixes et formats configurables, avoir rattaché à la facture d'origine | `e94f0a8730a8adf91c692b3798117c084fd49b8d6d7e70702651c0996234e383` |
+
+**Réserves** (D27, à arbitrer) : courriel sans signataire nommé ; il demande lui-même que les modalités de séquencement et de renouvellement annuel des compteurs soient confirmées avec le cabinet avant la mise en production, comme le référentiel v1.0 (§4.2).
 
 ## À déposer pour une règle nouvelle ou modifiée
 
