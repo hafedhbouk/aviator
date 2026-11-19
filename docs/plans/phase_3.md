@@ -104,11 +104,12 @@ La direction le signera avant la mise en production (`docs/plans/phase_10.md`).
 
 ### 3.5 Garde-fou
 
-`aviator:check-environment` reçoit une ligne « Règles fiscales ». En production, elle passe en **ERREUR** dans trois cas :
+`aviator:check-environment` reçoit une ligne « Règles fiscales ». En production, elle passe en **ERREUR** dans quatre cas :
 
 - aucune référence validée n'est enregistrée ;
 - une règle active est PENDING_DOCUMENTATION ;
-- une règle CONFIRMED n'a pas de référence.
+- une règle CONFIRMED n'a pas de référence ;
+- **les mentions obligatoires des factures sont vides** (fiche société absente ou `company.invoice_legal_mentions` vide). Décision du 19/11/2026, à la validation du lot L1 : les mentions sont un paramètre fiscal, vide par défaut, saisi par le super admin à partir de la règle FACTURE validée ; pas de production sans elles.
 
 Hors production, ces cas donnent un AVERTISSEMENT. Une règle CONDITIONAL est admise, car son justificatif est exigé ligne par ligne en phase 6. Les règles en cause sont citées par leur code seulement.
 
@@ -143,7 +144,7 @@ Hypothèse de l'estimation : les valeurs par défaut des questions (§7) sont re
 | --- | --- |
 | **Exemple chiffré de la §5** (test de référence) | Location 100,000 + GPS 10,000 + siège enfant 5,000, tous à 19 % : total HT **115,000** ; TVA **21,850** (sur la base agrégée par taux, arrondie à 3 décimales) ; TTC **136,850** ; timbre **1,000** ajouté après le TTC ; net à payer **137,850** |
 | **Libellé « assurance »** | Aucune correspondance par libellé. Une prestation ou une option dont le libellé contient « assurance » (toutes casses, avec ou sans accent) n'obtient ni `INSURANCE_PREMIUM` ni une exonération. Un test d'architecture interdit aussi au domaine fiscal de lire un libellé |
-| Statuts | Une règle PENDING_DOCUMENTATION n'est jamais renvoyée comme applicable ; une règle inactive non plus ; contrôle de l'environnement en ERREUR en production, en AVERTISSEMENT ailleurs |
+| Statuts | Une règle PENDING_DOCUMENTATION n'est jamais renvoyée comme applicable ; une règle inactive non plus ; contrôle de l'environnement en ERREUR en production, en AVERTISSEMENT ailleurs ; mentions des factures vides : ERREUR en production, AVERTISSEMENT ailleurs |
 | Versions | Un changement de taux crée une nouvelle version datée et clôt la précédente ; une date antérieure retrouve l'ancienne version ; chevauchement refusé, y compris sous saisie simultanée |
 | Timbre | 1,000 DT par facture ; une exonération PENDING_DOCUMENTATION ne s'applique jamais ; aucune exonération automatique d'une facture impayée |
 | Arrondi (Q86) | Base de 0,150 à 19 % : TVA de 0,029 en demi supérieur (valeur par défaut) et 0,028 en demi pair ; le réglage change le résultat |
@@ -185,6 +186,14 @@ Commande de contrôle : `composer check`, avant chaque commit, avec son résulta
 2. Après validation : fusion de `phase/02-architecture-socle` dans `main`, puis création de `phase/03-parametrage`.
 3. Q85 et Q86 posées au cabinet.
 4. La recette installée avant la fin de la phase (réserve n° 1), pour la saisie du paramétrage par l'admin du siège.
+
+## 10. Suivi de la charge (mis à jour à chaque fin de lot)
+
+Charge estimée en jours-équivalents d'un développeur Laravel expert, comme en phase 2. Budget 19 j, seuil d'alerte 19,2 j.
+
+| Lot | Prévu (j) | Estimé (j) | Cumul estimé (j) | Cumul prévu (j) | Commentaire |
+| --- | ---: | ---: | ---: | ---: | --- |
+| L1. Société et logo | 1,25 | 1 | 1 | 1,25 | Validé le 19/11/2026 ; la route du logo a réutilisé le disque privé et les en-têtes de la phase 2 |
 
 ## Annexe — décisions reprises
 

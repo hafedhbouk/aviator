@@ -42,3 +42,7 @@ Le contrôle « opérations en devises » est **sans objet** (D26 : dinar unique
 | Écran de numérotation (D27) | +1 |
 | **Total** | **43** |
 | **Écart** | **+5 j (+13,2 %)** |
+
+## Option à décider : format du matricule fiscal (19/11/2026)
+
+Décision du 19/11/2026, à la validation du lot L1 de la phase 3 : la fiche société n'impose **aucun format** au matricule fiscal (il est seulement mis en majuscules), pour ne pas inventer de règle. **Option**, à décider plus tard : un **avertissement non bloquant** quand le matricule ne suit pas le format attendu (fiche société, puis fiches des clients entreprises et des fournisseurs). Le format de référence devra venir d'un document validé (`docs/reference/regles_fiscales_validees/`). Non chiffrée, hors charge de la phase 9 tant qu'elle n'est pas retenue.
