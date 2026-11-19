@@ -197,6 +197,7 @@ Charge estimée en jours-équivalents d'un développeur Laravel expert, comme en
 | L2. Agences et lieux | 1 | 1 | 2 | 2,25 | Ressource des agences (création sans développement, code fixé à la création, siège non désactivable, pas de désactivation avec des utilisateurs actifs), lieux et horaires (`OpeningHours`), portée par agence |
 | L3. Catégories et règles des conducteurs | 1,5 | 1,25 | 3,25 | 3,75 | Catégories, valeurs générales `reservations` (Q41, Q42) et `CategoryRules` (surcharges), saisie des montants à la française (`AmountInput`, `AmountField`, réutilisés en L4, L5 et L7) |
 | L4. Saisons et grilles tarifaires | 3 | 2,5 | 5,75 | 6,75 | Saisons sans chevauchement, grilles communes ou par agence (Q10), tranches continues (`RateLines`), validité au jour loué (Q88, nouvelle), journal des tranches, `RateResolver` (prix d'un jour) prêt pour la phase 4 |
+| L6. Paramètres fiscaux (avancé avant L5, dont les options dépendent de `tax_codes`) | 4,25 | 4 | 9,75 | 11 | Tables et seeder du référentiel v1.0, `TaxRuleResolver`, `TaxCalculator` (exemple §5 exact, Q86), versions datées sous verrou (test à deux processus), activation, écrans (super admin en écriture, admin en lecture), rapport (écran, XLSX, imprimable), garde-fou à quatre cas, test d'architecture (aucun libellé) |
 
 ## Annexe — décisions reprises
 
