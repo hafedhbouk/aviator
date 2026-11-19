@@ -6,6 +6,7 @@ use App\Filament\Auth\EditProfile;
 use App\Filament\Auth\Login;
 use App\Filament\Auth\ResetPassword;
 use App\Http\Controllers\PrintFiscalConfigurationReport;
+use App\Http\Controllers\VehicleDocumentFileController;
 use App\Http\Middleware\EnsurePrivilegedTwoFactor;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -77,6 +78,11 @@ class AdminPanelProvider extends PanelProvider
                 Route::get('fiscal/rapport/imprimer', PrintFiscalConfigurationReport::class)
                     ->middleware(EnsurePrivilegedTwoFactor::class)
                     ->name('fiscal-report.print');
+                // Fichiers privés (D21) : servis après la policy du document propriétaire.
+                Route::get('fichiers/vehicules/documents/{document}', VehicleDocumentFileController::class)
+                    ->whereNumber('document')
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('private-files.vehicle-document');
             });
     }
 }

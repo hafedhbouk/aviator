@@ -29,6 +29,13 @@ use Illuminate\Support\Facades\Auth;
 final class AgencyScope implements Scope
 {
     /**
+     * @param  string  $column  colonne de l'agence : « agency_id » pour un document ;
+     *                          « current_agency_id » pour un véhicule, lu par l'agence
+     *                          où il se trouve (architecture §8.3)
+     */
+    public function __construct(private readonly string $column = 'agency_id') {}
+
+    /**
      * @param  Builder<covariant TModel>  $builder
      * @param  TModel  $model
      */
@@ -41,6 +48,6 @@ final class AgencyScope implements Scope
         }
 
         // Sans agence autorisée, whereIn([]) ne renvoie aucune ligne (Laravel produit « 0 = 1 »).
-        $builder->whereIn($model->qualifyColumn('agency_id'), $user->authorizedAgencyIds());
+        $builder->whereIn($model->qualifyColumn($this->column), $user->authorizedAgencyIds());
     }
 }

@@ -32,7 +32,7 @@ it('attribue les permissions par défaut de la matrice des droits', function (Ro
     expect($actual)->toBe(collect($expected)->map(fn (Permission $p) => $p->value)->sort()->values()->all());
 })->with([
     'super admin' => [Role::SuperAdmin, Permission::cases()],
-    'admin' => [Role::Admin, [Permission::AgenciesAll, Permission::CustomersViewNames, Permission::ExportsAccounting, Permission::ReferenceDataManage]],
+    'admin' => [Role::Admin, [Permission::AgenciesAll, Permission::CustomersViewNames, Permission::ExportsAccounting, Permission::FleetManage, Permission::ReferenceDataManage]],
     'utilisateur d\'agence' => [Role::AgencyUser, [Permission::CustomersViewNames]],
 ]);
 
