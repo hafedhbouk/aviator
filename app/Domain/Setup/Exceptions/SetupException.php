@@ -101,6 +101,21 @@ final class SetupException extends RuntimeException
         return new self('Grille refusée : une grille active existe déjà pour cette catégorie, cette saison et cette agence sur la même période. Fermez-la (fin de validité) ou désactivez-la.');
     }
 
+    public static function optionWithoutTaxCode(): self
+    {
+        return new self('Option non activable : choisissez son code fiscal (jamais déduit du libellé).');
+    }
+
+    public static function optionTaxRuleUnavailable(string $reason): self
+    {
+        return new self("Option non activable : {$reason}");
+    }
+
+    public static function optionWithoutPrice(): self
+    {
+        return new self('Option non activable : saisissez son prix HT.');
+    }
+
     public static function inactiveReference(string $what): self
     {
         return new self("Grille refusée : {$what} inactive.");
