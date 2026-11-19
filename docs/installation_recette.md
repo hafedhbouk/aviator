@@ -26,7 +26,7 @@ Arborescence créée sur le serveur :
 L'archive est construite par le workflow GitHub **« Release »** (`.github/workflows/release.yml`), qui exécute `scripts/build-release.sh` sous Ubuntu, avec PHP 8.3 et un service MariaDB 10.11 pour `composer check`. Le workflow n'utilise aucun secret.
 
 1. Sur GitHub : *Actions → Release → Run workflow*. Choisir la branche dans « Use workflow from » (recette : par exemple `phase/03-parametrage`), ou saisir une branche ou une étiquette `vX.Y.Z` dans le champ « ref ». Une étiquette `vX.Y.Z` poussée sur GitHub (production) lance aussi le workflow, sans action manuelle.
-2. Attendre la fin de l'exécution (environ 10 minutes). Si un contrôle échoue, aucune archive n'est publiée.
+2. Attendre la fin de l'exécution : 1 min 40 s mesurées le 19/11/2026, davantage si le cache Composer de GitHub est vide. Le téléchargement de l'artefact (15 Mo) a pris 7 minutes depuis le poste. Si un contrôle échoue, aucune archive n'est publiée.
 3. Dans la page de l'exécution, section *Artifacts* : télécharger l'artefact `aviator-<version>` (fichier `.zip`). Il est **conservé 30 jours** ; au-delà, relancer le workflow.
 4. Décompresser le `.zip` sur le poste : il contient les deux fichiers à envoyer, `aviator-<version>.tar.gz` (sans `.env`, sans tests, sans `node_modules`, sans `.git`, avec la structure vide de `storage/`) et `aviator-<version>.tar.gz.sha256`.
 5. Vérifier l'empreinte dans Git Bash, dans le dossier décompressé : `sha256sum --check aviator-<version>.tar.gz.sha256` doit répondre `OK`. `install-release.sh` la contrôle de nouveau sur le serveur.
