@@ -204,6 +204,7 @@ Charge estimée en jours-équivalents d'un développeur Laravel expert, comme en
 | L8. Réglages | 2,25 | 1,75 | 13,25 | 15,75 | Six pages pour le super admin (réservation, tarification, facturation, approbations, notifications A-09, sécurité Q76) ; `UpdateSettings` (catalogue des clés, validation, journal avant/après) ; valeurs vides pour A-06 et A-09 non décidées (Q90, nouvelle). **Constat** : aucun fichier `lang/fr`, les messages de validation de Laravel s'affichent en clés brutes (`validation.required`) depuis la phase 2 ; correction prévue en L10 |
 | L10. Droits, audit et tests transverses | 1,25 | 1 | 14,25 | 17 | Matrice du §2 sur les 12 écrans et les 3 profils, policies sans suppression, journal sur tous les modèles modifiables, recherche globale fermée ; traductions `lang/fr` (validation, authentification, mots de passe, pagination), parité testée avec le framework |
 | L11. Données de référence et guide de saisie | 0,5 | 0,25 | 14,5 | 17,5 | Seeders (agences, référentiel fiscal, options, modes de paiement) appelés par `DatabaseSeeder` ; `docs/guide_saisie_parametrage.md`. L'appui à la saisie en recette attend l'installation de la recette (réserve n° 1) |
+| L12. Rapport | 0,5 | 0,5 | 15 | 18 | `docs/rapports/phase_3.md`, au statut « en attente de la saisie en recette » ; décisions D28 à D34 |
 
 ## Annexe — décisions reprises
 
