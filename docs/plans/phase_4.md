@@ -81,6 +81,35 @@ L'atelier de fin de phase (§9) se tient **en recette**, avec le paramétrage r�
 - **Un critère obligatoire non tenu**, et non corrigeable en 0,5 j de plus → **repli : frise Livewire maison** (grille CSS véhicules × jours, blocs positionnés côté serveur, aucune dépendance). Charge estimée du repli : 4 j au lieu de 3 j, soit **+1 j pris sur les aléas**, signalé au compte rendu du lot L0.
 - Dans les deux cas : **décision D35** écrite avec les captures et les mesures, puis **arrêt pour ta validation** avant le lot L1. C'est le seul arrêt prévu en cours de phase, hors écarts.
 
+### Résultat du prototype (19/11/2026)
+
+`guava/calendar` 3.2.2 (MIT ; PHP ^8.2, Filament ^5) installé. Prototype : page `Comptoir → Planning (prototype)` (`app/Filament/Pages/PlanningPrototype.php`, accessible sur le poste et en test seulement), widget `app/Filament/Prototype/PlanningPrototypeCalendar.php`, données fictives générées en mémoire (`PlanningDemoData` : 50 véhicules, 4 agences, 347 occupations sur novembre). La règle « qui voit quoi » est dans le domaine, indépendante de la bibliothèque : `app/Domain/Availability/Planning/PlanningProjection.php`, réutilisée telle quelle au lot L12.
+
+Conditions de mesure : poste de développement, serveur intégré de PHP (un seul processus) avec OPcache et `php artisan optimize`, comme le fait `install-release.sh`. Sans OPcache ni mise en cache, la seule route `/up` prend 0,55 s sur le poste : ces conditions-là ne sont pas représentatives. Navigateur Chromium sans interface, compte d'agence de Sfax.
+
+| N° | Critère | Résultat | Preuve |
+| --- | --- | --- | --- |
+| 1 | Frise par ressource, regroupée, semaine et mois | **Tenu** : `resourceTimelineWeek` (créneaux de 6 h) et `resourceTimelineMonth` (créneaux d'un jour), véhicules regroupés par agence (groupes repliables) | Captures 1 et 2 |
+| 2 | 50 véhicules × 1 mois, 300 blocs : page < 2 s, données < 300 ms | **Page : tenu** (blocs affichés en 0,76 à 1,41 s à chaud ; premier octet 313 ms ; `DOMContentLoaded` 498 ms ; 347 blocs en vue mois). **Données : partiellement mesuré** : projection 30 ms côté domaine, mais requête Livewire complète entre 203 et 389 ms à chaud sur le serveur intégré de PHP (mono-processus). Rendu côté navigateur sous 150 ms | Script de mesure ; à remesurer en recette au lot L12, sur données réelles et index |
+| 3 | Données construites côté serveur ; « Occupé » sans nom ni numéro pour une autre agence | **Tenu** : aucun nom, numéro, lien ni modèle dans la charge utile JSON des blocs d'une autre agence ; identifiant opaque | `tests/Feature/Planning/PlanningPrototypeTest.php` (8 tests) |
+| 4 | Clic sur un bloc de son agence ; clic sur une case libre | **Tenu** : un bloc détaillé porte un lien (ouverture du document) ; une case libre déclenche l'assistant prérempli (« Assistant prérempli : Djerba, le 19/11/2026 à 12:00 ») ; un bloc « Occupé » n'est pas cliquable (`pointer-events: none`) | Navigateur |
+| 5 | Délai hachuré, couleurs par type, retard en rouge | **Tenu** : fin du bloc hachurée dans la proportion exacte du délai (calculée côté serveur), bleu réservation, vert contrat, orange maintenance, gris immobilisation, gris clair « Occupé », contour rouge pour un retard | Capture 2 |
+| 6 | Français, `Africa/Tunis`, 24 h, lundi | **Tenu** : « lun. 16/11 », « 18 h », « novembre 2026 », boutons « Aujourd'hui », « Semaine », « Mois » | Captures 1 et 2 |
+| 7 | Glisser-déposer désactivable | **Tenu** : désactivé par défaut et laissé désactivé ; une tentative de déplacement ne bouge pas le bloc (0 px) ; test sur les deux réglages | Navigateur, test D39 |
+| 8 | MIT, PHP 8.3, Filament 5, assets compilés, aucun CDN | **Tenu** : JavaScript livré avec le paquet (164 Ko, compilé), publié par `filament:upgrade` à chaque `composer install`, donc aussi dans l'archive (`build-release.sh`, étape 6) ; aucune adresse externe chargée par le code (contrôle des sources publiées : seules des URL de documentation figurent dans le texte) ; aucune requête en échec pendant les essais. `composer check` vert. Fichiers publiés ajoutés au `.gitignore` comme ceux de Filament | `composer check` ; `build-release.sh` à exécuter avant la fusion (lot L16) |
+| 9 | Tablette ; smartphone en consultation | **Tenu** : tablette lisible (1024 px) ; sur smartphone, colonne des véhicules réduite à 120 px, frise défilante, aucun défilement horizontal de la page | Captures 4 et 5 |
+| 10 | Thèmes clair et sombre | **Tenu** | Capture 3 |
+
+Captures : `docs/plans/phase_4_prototype/` (données fictives).
+
+**Défauts du paquet relevés, contournés dans le prototype** (à garder au lot L12) :
+
+1. `CalendarResource::toCalendarObject()` ne convertit pas les ressources enfants (elles arrivent vides au navigateur : lignes sans titre, aucun bloc rattaché). Contournement : enfants transmis déjà convertis en tableaux.
+2. Un clic sur un événement sans lien ni modèle signé provoque une exception côté serveur. Contournement : les blocs « Occupé » ne sont pas cliquables ; au lot L12, tout bloc détaillé porte un lien.
+3. Le calendrier affiche l'heure du navigateur ; le paquet convertit les heures côté serveur à partir du décalage envoyé par le navigateur. Tunis est à UTC+1 toute l'année : un poste réglé sur un autre fuseau verrait des heures décalées. Test prévu au lot L12 avec un navigateur sur un autre fuseau.
+
+**Recommandation (D35)** : retenir **`guava/calendar`**. Les huit critères obligatoires sont tenus. Seul le temps de la requête de données reste à confirmer en recette, sur un vrai serveur. Le repli (frise Livewire maison) n'est pas nécessaire ; le jour d'aléas réservé au repli (+1 j) reste disponible.
+
 ## 4. Décisions de ce plan
 
 | N° | Décision | Raison | Statut |
@@ -210,6 +239,7 @@ Budget 41,75 j, seuil d'alerte 46,8 j.
 | Lot | Prévu (j) | Estimé (j) | Cumul estimé (j) | Cumul prévu (j) | Commentaire |
 | --- | ---: | ---: | ---: | ---: | --- |
 | Plan | — | 0,25 | 0,25 | — | Ce document ; D33 et D34 validées dans `docs/decisions.md` et `docs/projet.md` (compté dans L16) |
+| L0. Prototype du planning | 1,25 | 1,25 | 1,5 | 1,25 | `guava/calendar` 3.2.2, projection « qui voit quoi » dans le domaine (`PlanningProjection`, réutilisée en L12), 8 tests, mesures dans le navigateur, 3 défauts du paquet contournés. Temps passé aussi sur l'environnement de mesure : MariaDB arrêtée, hôte `aviator.test` de Laragon inopérant (HTTP 404, HTTPS en erreur), OPcache absent en ligne de commande. Recommandation D35 : `guava/calendar`. **Arrêt pour validation** |
 
 ## 12. Ce dont j'ai besoin
 

@@ -108,7 +108,7 @@ Pour l'admin et l'utilisateur d'agence. Le super admin dispose en plus du carnet
 
 | N° | Décision | Raison | Statut | Validée par |
 | --- | --- | --- | --- | --- |
-| D35 | Choix du planning : `guava/calendar` ou repli sur une frise Livewire maison, selon les critères du prototype (`docs/plans/phase_4.md` §3) | D5 | À décider à la fin du lot L0 | |
+| D35 | Planning sur **`guava/calendar`** 3.2.2 (frise par véhicule, vues semaine et mois), sans repli. Règle « qui voit quoi » dans le domaine (`PlanningProjection`), indépendante de la bibliothèque. Trois défauts du paquet contournés (ressources enfants, clic sans lien, fuseau du navigateur). Temps de la requête de données à remesurer en recette au lot L12 | Prototype du lot L0 : 8 critères obligatoires sur 8 tenus, 2 facultatifs sur 2 (`docs/plans/phase_4.md` §3, « Résultat du prototype ») | **Proposée** (19/11/2026), en attente de validation | |
 | D36 | Dérogation à la liste noire (RG-15) et remise au-delà du seuil (RG-10) : **refus** en phase 4 ; mécanisme d'approbation en phase 5 (`approval_requests`) ; colonnes `override_approval_id` et `discount_approval_id` créées vides | La table des approbations relève de la phase 5 | **Validée** (19/11/2026) | Hafedh |
 | D37 | Acompte à la réservation (C-10, P2) reporté en phase 6, avec les encaissements | Q40 ; aucun document fiscal sans règle validée | **Validée** (19/11/2026) | Hafedh |
 | D38 | Verrous de sérialisation **en base** (`named_locks`, ligne verrouillée par `SELECT … FOR UPDATE`), jamais par le cache ; `SaveSeason` corrigé en conséquence | Un verrou de cache dépend du magasin configuré (`array` dans `phpunit.xml`, non partagé entre processus) ; revue de la phase 3, observation n° 1 | **Validée** (19/11/2026) | Hafedh |
