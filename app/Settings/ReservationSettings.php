@@ -22,6 +22,21 @@ class ReservationSettings extends Settings
     /** Ancienneté minimale du permis, en années (Q42 : 2). */
     public int $min_license_years;
 
+    /** Durée minimale d'une location, en jours ; null = aucune (Q90). */
+    public ?int $min_rental_days;
+
+    /** Préavis minimal avant le départ, en heures ; null = aucun (Q90). */
+    public ?int $min_notice_hours;
+
+    /** Expiration d'une réservation non confirmée, en heures ; null = jamais (Q90, C-09). */
+    public ?int $draft_expiry_hours;
+
+    /** Délai avant de proposer le statut « non présenté », en minutes (Q39 : 120). */
+    public int $no_show_after_minutes;
+
+    /** Restitution dans une autre agence (Q3 : non). */
+    public bool $allow_one_way;
+
     public static function group(): string
     {
         return 'reservations';

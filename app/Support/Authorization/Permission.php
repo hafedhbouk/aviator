@@ -27,6 +27,7 @@ enum Permission: string
     // Paramétrage (module A, phase 3).
     case ReferenceDataManage = 'reference_data.manage';
     case FiscalManage = 'fiscal.manage';
+    case SettingsManage = 'settings.manage';
 
     /**
      * Profils qui reçoivent cette permission par défaut.
@@ -42,7 +43,8 @@ enum Permission: string
             self::CustomersExport,
             self::CustomersExportNames,
             self::CustomersNotifyBulk,
-            self::FiscalManage => [Role::SuperAdmin],
+            self::FiscalManage,
+            self::SettingsManage => [Role::SuperAdmin],
 
             self::AgenciesAll,
             self::ExportsAccounting,
@@ -80,6 +82,7 @@ enum Permission: string
             self::ExportsAccounting => 'Produire les exports pour l\'expert-comptable',
             self::ReferenceDataManage => 'Modifier le paramétrage (société, agences, catégories, tarifs, options, fournisseurs)',
             self::FiscalManage => 'Modifier les paramètres fiscaux et les mentions des factures',
+            self::SettingsManage => 'Modifier les réglages (réservation, tarification, facturation, approbations, notifications, sécurité)',
         };
     }
 }
