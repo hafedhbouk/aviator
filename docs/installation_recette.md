@@ -4,7 +4,7 @@ Phase 2, lot 10, décision **D25** (déploiement par archive). À exécuter par 
 
 **Résultat attendu** : la recette répond sur `https://recette.<domaine>/admin`, protégée par mot de passe, avec un compte super admin dont la 2FA est active. `aviator:check-environment` ne signale **aucune erreur**, et sa sortie est jointe au rapport de la phase 2.
 
-**Principe (D25)** : l'archive est construite et contrôlée **sur le poste** (`scripts/build-release.sh`). Elle contient déjà les dépendances PHP (`vendor/`) et les assets compilés (`public/build`). Elle est envoyée sur le serveur par **FTPS** ou par le **gestionnaire de fichiers** de cPanel, puis installée dans le **terminal web de cPanel** par `install-release.sh`. Aucune connexion SSH depuis le poste, aucun `composer install`, `npm` ni `git` sur le serveur (`proc_open` et `exec` y sont désactivées).
+**Principe (D25)** : l'archive est construite et contrôlée par le workflow GitHub « Release » (`scripts/build-release.sh` ; sur le poste en secours), puis téléchargée depuis GitHub. Elle contient déjà les dépendances PHP (`vendor/`) et les assets compilés (`public/build`). Elle est envoyée sur le serveur par **FTPS** ou par le **gestionnaire de fichiers** de cPanel, puis installée dans le **terminal web de cPanel** par `install-release.sh`. Aucune connexion SSH depuis le poste, aucun `composer install`, `npm` ni `git` sur le serveur (`proc_open` et `exec` y sont désactivées).
 
 Notations : `<domaine>` (Q6), `<cpaneluser>` (identifiant cPanel), `<version>` (nom de l'archive, par exemple `phase-02-architecture-socle-5788747`).
 
@@ -21,20 +21,27 @@ Arborescence créée sur le serveur :
 
 ---
 
-## Étape 0 — Construire l'archive sur le poste (Git Bash)
+## Étape 0 — Construire l'archive (GitHub Actions)
+
+L'archive est construite par le workflow GitHub **« Release »** (`.github/workflows/release.yml`), qui exécute `scripts/build-release.sh` sous Ubuntu, avec PHP 8.3 et un service MariaDB 10.11 pour `composer check`. Le workflow n'utilise aucun secret.
+
+1. Sur GitHub : *Actions → Release → Run workflow*. Choisir la branche dans « Use workflow from » (recette : par exemple `phase/03-parametrage`), ou saisir une branche ou une étiquette `vX.Y.Z` dans le champ « ref ». Une étiquette `vX.Y.Z` poussée sur GitHub (production) lance aussi le workflow, sans action manuelle.
+2. Attendre la fin de l'exécution (environ 10 minutes). Si un contrôle échoue, aucune archive n'est publiée.
+3. Dans la page de l'exécution, section *Artifacts* : télécharger l'artefact `aviator-<version>` (fichier `.zip`). Il est **conservé 30 jours** ; au-delà, relancer le workflow.
+4. Décompresser le `.zip` sur le poste : il contient les deux fichiers à envoyer, `aviator-<version>.tar.gz` (sans `.env`, sans tests, sans `node_modules`, sans `.git`, avec la structure vide de `storage/`) et `aviator-<version>.tar.gz.sha256`.
+5. Vérifier l'empreinte dans Git Bash, dans le dossier décompressé : `sha256sum --check aviator-<version>.tar.gz.sha256` doit répondre `OK`. `install-release.sh` la contrôle de nouveau sur le serveur.
+
+Version : `vX.Y.Z` pour une étiquette, `<branche>-<commit court>` pour une branche (les `/` deviennent des `-`, par exemple `phase-03-parametrage-1a2b3c4`).
+
+**En secours** (GitHub indisponible), construire sur le poste, dans Git Bash :
 
 ```bash
 cd /d/aviator
-git checkout phase/02-architecture-socle && git pull
-scripts/build-release.sh phase/02-architecture-socle
+git checkout <branche> && git pull
+scripts/build-release.sh <branche ou vX.Y.Z>
 ```
 
-Le script prend une copie de travail de la branche, lance `composer check` (mêmes contrôles que la CI), installe les dépendances de production (`composer install --no-dev`, plateforme PHP 8.3), compile les assets et produit, dans `D:\aviator-builds` (variable `AVIATOR_BUILD_DIR` ; dossier à exclure de l'antivirus du poste) :
-
-- `aviator-<version>.tar.gz` : sans `.env`, sans tests, sans `node_modules`, sans `.git`, avec la structure vide de `storage/` ;
-- `aviator-<version>.tar.gz.sha256` : son empreinte.
-
-Le dossier de travail du dépôt n'est pas modifié. Si un contrôle échoue, aucune archive n'est produite. La durée de chaque étape est affichée.
+Le script se relance sous `scripts/clean-env.sh` (aucune variable de `.env` héritée du terminal), prend une copie de travail de la référence, lance `composer check`, installe les dépendances de production (`composer install --no-dev`, plateforme PHP 8.3), compile les assets et produit les deux mêmes fichiers dans `D:\aviator-builds` (variable `AVIATOR_BUILD_DIR` ; dossier à exclure de l'antivirus du poste). Le dossier de travail du dépôt n'est pas modifié.
 
 Préparez aussi, dans le gestionnaire de mots de passe d'Aviator, une fiche « Recette » qui recevra : le mot de passe de la base, celui du compte e-mail, celui du compte FTP, `APP_KEY` et `AVIATOR_BLIND_INDEX_KEY` (étape 5).
 
@@ -63,10 +70,10 @@ Si `php -v` n'affiche pas 8.3, noter le chemin de PHP 8.3 (par exemple `/opt/alt
 
 ## Étape 3 — Envoyer l'archive
 
-Envoyer **les deux fichiers** `aviator-<version>.tar.gz` et `aviator-<version>.tar.gz.sha256` dans `/home/<cpaneluser>/deploiement/` :
+Envoyer **les deux fichiers** décompressés à l'étape 0, `aviator-<version>.tar.gz` et `aviator-<version>.tar.gz.sha256` (jamais le `.zip` de GitHub), dans `/home/<cpaneluser>/deploiement/` :
 
-- par **FTPS** (compte de l'étape 1.5, binaire) ;
-- ou par le **gestionnaire de fichiers** de cPanel (*Charger*).
+- par **FTPS**, de préférence : compte de l'étape 1.5, « FTP explicite sur TLS », transfert en **binaire** ;
+- ou par le **gestionnaire de fichiers** de cPanel (*Charger*), si le client FTP n'est pas disponible.
 
 ## Étape 4 — Premier lancement : création de `shared/.env`
 

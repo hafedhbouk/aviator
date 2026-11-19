@@ -179,10 +179,10 @@ L'ancienne skill `tunisia-car-rental-erpnext` (dans `C:\Users\<vous>\.claude\ski
 | Ouvrir l'application | `https://aviator.test/admin` (Laragon démarré) |
 | Assets en direct | `npm run dev` |
 | Tâches planifiées et files | `php artisan schedule:work` |
-| Tests | `php artisan test` (ou `--parallel` si ParaTest fonctionne sur le poste) |
-| Qualité | `vendor/bin/pint --test && vendor/bin/phpstan analyse && composer audit` |
+| Tests | `scripts/clean-env.sh php artisan test` (jamais `php artisan test` directement : une variable de `.env` héritée du terminal primerait sur `.env.testing`) |
+| Contrôles complets (avant chaque commit) | `composer check` (passe par `scripts/clean-env.sh`) |
 | Base de dev à zéro | `php artisan migrate:fresh --seed` (jamais en recette ni en production) |
-| Construire l'archive de version | `scripts/build-release.sh <branche ou vX.Y.Z>` dans Git Bash, puis `docs/installation_hebergement_oxahost.md`, annexe A |
+| Construire l'archive de version | Workflow GitHub « Release » (`docs/installation_recette.md`, étape 0) ; en secours : `scripts/build-release.sh <branche ou vX.Y.Z>` dans Git Bash |
 
 ## 8. Problèmes fréquents
 
