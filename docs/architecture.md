@@ -501,6 +501,8 @@ stateDiagram-v2
 
 Trois rôles fixes, créés par seeder : `super_admin`, `admin`, `agency_user` ; `customer` passe par une garde séparée au lot 2. Les permissions sont nommées `<ressource>.<action>` (par exemple `invoices.issue`, `customers.address_book`, `customers.export`). Les policies vérifient la permission **et** la portée par agence.
 
+Permissions du paramétrage (phase 3) : `reference_data.manage` (super admin et admin : société, agences et lieux, catégories, saisons, grilles, options, modes de paiement, fournisseurs) ; `fiscal.manage` (super admin : paramètres fiscaux et mentions des factures ; l'admin les lit).
+
 | Domaine | super_admin | admin | agency_user |
 | --- | --- | --- | --- |
 | Paramétrage, tarifs, taxes | Écriture | Écriture (taxes en lecture) | — |

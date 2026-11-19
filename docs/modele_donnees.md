@@ -131,7 +131,7 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 
 ### `company`
 
-`id` ; `legal_name` VARCHAR(255) NN ; `trade_name` VARCHAR(255) N ; `tax_id` VARCHAR(32) N ; `trade_register` VARCHAR(64) N ; `address` VARCHAR(255) N ; `city` VARCHAR(100) N ; `phone`, `email` N ; `currency` CHAR(3) NN défaut `TND` ; `logo_path` VARCHAR(255) N (disque `private`) ; `invoice_legal_mentions` TEXT N (**rempli seulement à partir d'une règle validée**) ; horodatages. Une seule ligne.
+`id` ; `legal_name` VARCHAR(255) NN ; `trade_name` VARCHAR(255) N ; `tax_id` VARCHAR(32) N ; `trade_register` VARCHAR(64) N ; `address` VARCHAR(255) N ; `city` VARCHAR(100) N ; `phone`, `email` N ; `currency` CHAR(3) NN défaut `TND` ; `logo_path` VARCHAR(255) N (disque `private`, dossier `public-files/company`, PNG, JPEG ou WebP ; servi par la route `/fichiers/public/{chemin}`, D21) ; `invoice_legal_mentions` TEXT N (**rempli seulement à partir d'une règle validée** ; modifiable par le super admin seulement) ; horodatages. Une seule ligne, d'identifiant 1 (`Company::SINGLETON_ID`), créée au premier enregistrement. Réalisé en phase 3, lot L1.
 
 ### `agency_locations`
 
