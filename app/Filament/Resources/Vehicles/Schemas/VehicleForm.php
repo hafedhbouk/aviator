@@ -26,7 +26,7 @@ class VehicleForm
     {
         return $schema
             ->components([
-                Section::make('Identification')
+                Section::make('Identification')->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextInput::make('internal_code')->label('Code interne')->required()->maxLength(16)
@@ -45,8 +45,8 @@ class VehicleForm
                         Select::make('fuel')->label('Carburant')->required()->options(self::options(FuelType::cases())),
                         Select::make('transmission')->label('Boîte de vitesses')->required()->options(self::options(Transmission::cases())),
                     ]),
-                Section::make('Agence')
-                    ->columns(2)
+                Section::make('Agence')->columnSpanFull()
+                    ->columns(4)
                     ->schema([
                         Select::make('agency_id')->label('Agence de rattachement')->required()
                             ->options(fn (?Vehicle $record): array => Agency::query()
@@ -66,7 +66,7 @@ class VehicleForm
                             ->disabled()->dehydrated(false)
                             ->visibleOn(['view', 'edit']),
                     ]),
-                Section::make('Acquisition')
+                Section::make('Acquisition')->columnSpanFull()
                     ->description('Données de gestion, sans calcul d\'amortissement (B-02). Le contrat de leasing ou de crédit se saisit à part.')
                     ->columns(3)
                     ->schema([
