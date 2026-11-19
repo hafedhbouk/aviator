@@ -26,6 +26,7 @@ it('ne lance jamais storage:link : ni dans le code, ni dans Composer, ni au dép
         base_path('scripts/lib/release-files.sh'),
         base_path('routes/console.php'),
         base_path('routes/web.php'),
+        base_path('routes/public.php'),
         base_path('bootstrap/app.php'),
     ];
 
