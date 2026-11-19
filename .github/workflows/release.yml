@@ -13,9 +13,6 @@ name: Release
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
-    # TEMPORAIRE : premier passage sur la branche, pour que GitHub enregistre le workflow
-    # (le lancement manuel exige sinon sa présence sur main). Retiré au commit suivant.
-    branches: [fix/02-build-ci]
   workflow_dispatch:
     inputs:
       ref:

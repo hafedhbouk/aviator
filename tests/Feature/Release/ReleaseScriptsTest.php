@@ -212,6 +212,8 @@ it('décrit un workflow « Release » manuel et sur étiquette, sans secret, arc
         ->toContain('bash scripts/build-release.sh "$RELEASE_REF"', 'bash scripts/ci-env-testing.sh')
         ->toContain('retention-days: 30', 'aviator-*.tar.gz.sha256', 'permissions:', 'contents: read')
         ->not->toContain('secrets.')
+        // Jamais sur une poussée de branche : manuel ou étiquette seulement.
+        ->not->toContain('branches:')
         // La référence saisie n'est jamais interpolée dans un script (injection).
         ->not->toMatch('/run:.*\$\{\{\s*inputs\./')
         // Écriture dans le dépôt : un seul job, réservé aux étiquettes poussées.
