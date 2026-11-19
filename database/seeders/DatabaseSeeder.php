@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AgencySeeder::class,
             FiscalReferenceSeeder::class,
             OptionSeeder::class,
+            PaymentMethodSeeder::class,
         ]);
     }
 }

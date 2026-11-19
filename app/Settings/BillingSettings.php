@@ -21,6 +21,12 @@ class BillingSettings extends Settings
      */
     public string $vat_rounding_mode;
 
+    /**
+     * Conditions de paiement (A-07) : délai accordé, en jours, après la date de la
+     * facture. 0 = paiement comptant (valeur par défaut, à confirmer : Q89).
+     */
+    public int $payment_terms_days;
+
     public static function group(): string
     {
         return 'billing';
