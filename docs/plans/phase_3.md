@@ -196,6 +196,7 @@ Charge estimée en jours-équivalents d'un développeur Laravel expert, comme en
 | L1. Société et logo | 1,25 | 1 | 1 | 1,25 | Validé le 19/11/2026 ; la route du logo a réutilisé le disque privé et les en-têtes de la phase 2 |
 | L2. Agences et lieux | 1 | 1 | 2 | 2,25 | Ressource des agences (création sans développement, code fixé à la création, siège non désactivable, pas de désactivation avec des utilisateurs actifs), lieux et horaires (`OpeningHours`), portée par agence |
 | L3. Catégories et règles des conducteurs | 1,5 | 1,25 | 3,25 | 3,75 | Catégories, valeurs générales `reservations` (Q41, Q42) et `CategoryRules` (surcharges), saisie des montants à la française (`AmountInput`, `AmountField`, réutilisés en L4, L5 et L7) |
+| L4. Saisons et grilles tarifaires | 3 | 2,5 | 5,75 | 6,75 | Saisons sans chevauchement, grilles communes ou par agence (Q10), tranches continues (`RateLines`), validité au jour loué (Q88, nouvelle), journal des tranches, `RateResolver` (prix d'un jour) prêt pour la phase 4 |
 
 ## Annexe — décisions reprises
 

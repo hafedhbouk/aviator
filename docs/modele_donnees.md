@@ -143,12 +143,13 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 
 ### `seasons`
 
-`id` ; `name` VARCHAR(100) NN ; `starts_on` DATE NN ; `ends_on` DATE NN ; I (`starts_on`, `ends_on`) ; horodatages. Pas de chevauchement (contrôle applicatif).
+`id` ; `name` VARCHAR(100) NN ; `starts_on` DATE NN ; `ends_on` DATE NN ; I (`starts_on`, `ends_on`) ; horodatages. Bornes incluses ; pas de chevauchement (contrôle applicatif sous verrou, `SaveSeason`). Supprimable seulement si aucune grille ne l'utilise. Réalisé en phase 3, lot L4.
 
 ### `rate_plans` et `rate_plan_lines`
 
 - `rate_plans` : `id` ; `vehicle_category_id` FK RESTRICT ; `season_id` FK RESTRICT ; `agency_id` FK RESTRICT **N** (grille commune si nulle, Q10) ; `valid_from` DATE NN ; `valid_to` DATE N ; `is_active` BOOLEAN NN ; horodatages ; I (`vehicle_category_id`, `season_id`, `agency_id`, `valid_from`).
 - `rate_plan_lines` : `id` ; `rate_plan_id` FK CASCADE ; `min_days` SMALLINT UNSIGNED NN ; `max_days` SMALLINT UNSIGNED N ; `daily_amount` DECIMAL(15,3) NN (HT, Q34) ; horodatages ; U (`rate_plan_id`, `min_days`).
+- Réalisé en phase 3, lot L4 (index de recherche nommé `rate_plans_lookup_index`, nom par défaut trop long pour MariaDB). Règles (`SaveRatePlan`, `RateLines`) : une seule grille **active** par catégorie, saison et agence sur une même période de validité (contrôle sous verrou de la catégorie) ; validité appliquée au **jour loué** (Q88) ; tranches continues depuis 1 jour, dernière sans limite, prix > 0 ; tranches remplacées ensemble, journalisées sur la grille (`rate_plan_lines_updated`, avant et après) ; aucune grille supprimée. Prix d'un jour : `App\Domain\Setup\RateResolver` (grille de l'agence, sinon grille commune ; aucun prix plutôt que zéro).
 
 ### `options`
 
