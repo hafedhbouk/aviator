@@ -6,7 +6,7 @@ Les décisions validées sont aussi reportées dans `docs/projet.md` §6. Statut
 
 | N° | Décision | Raison | Statut | Validée par |
 | --- | --- | --- | --- | --- |
-| D1 | Toute occupation d'un véhicule (réservation affectée, contrat, maintenance, immobilisation) est matérialisée dans une table `vehicle_blocks`, sur laquelle porte le contrôle RG-01 | Une seule requête d'intersection, indexée et testable, quelle que soit la source de l'occupation ; la maintenance bloque la disponibilité (G-03) | Proposée | |
+| D1 | Toute occupation d'un véhicule (réservation affectée, contrat, maintenance, immobilisation) est matérialisée dans une table `vehicle_blocks`, sur laquelle porte le contrôle RG-01 | Une seule requête d'intersection, indexée et testable, quelle que soit la source de l'occupation ; la maintenance bloque la disponibilité (G-03) | **Validée** (19/11/2026, plan de la phase 4) | Hafedh |
 | D2 | Deux contextes de domaine ajoutés au prompt maître : `Rental` (contrats) et `Approvals` (demandes au super admin) | RG-03, RG-04, RG-10, F-05 et K-11 ont des règles propres | Proposée | |
 | D3 | Trois rôles fixes créés par seeder ; pas d'éditeur de rôles (`filament-shield` non retenu) | Moins de surface d'attaque ; matrice des droits lisible et testée dans le code | Proposée | |
 | D4 | Pas de multi-tenancy Filament ; portée par agence via `AgencyScope` et les policies | Le super admin et l'admin travaillent sur toutes les agences | Proposée | |
@@ -103,3 +103,14 @@ Pour l'admin et l'utilisateur d'agence. Le super admin dispose en plus du carnet
 | D32 | Code d'une agence et code d'un mode de paiement fixés à la création ; siège non désactivable ; agence non désactivable tant que des utilisateurs actifs y sont rattachés par défaut ; aucune suppression dans le paramétrage (sauf une saison inutilisée) | Les codes identifient les documents et les exports ; historique conservé | **Validée** (19/11/2026) | Hafedh |
 | D33 | Valeurs fiscales initiales (`FiscalReferenceSeeder`) : règles en vigueur à la date de validation du référentiel (18/11/2026) ; exonérations de l'article 118 créées PENDING_DOCUMENTATION et inactives, sans activation possible ; règles jamais modifiées sur place (nouvelle version datée sous verrou) | Référentiel v1.0 §3.3, §14 ; plan de la phase 3 §3.1 | **Validée** (19/11/2026, clôture de la phase 3 : reprend le référentiel v1.0 validé) | Hafedh |
 | D34 | Traductions françaises dans `lang/fr` (validation, authentification, mots de passe, pagination), parité des clés avec le framework testée ; message de réinitialisation neutre (ne révèle pas si un compte existe) | Messages affichés en clés brutes depuis la phase 2 | **Validée** (19/11/2026, clôture de la phase 3) | Hafedh |
+
+## Décisions de la phase 4 (19/11/2026, plan validé)
+
+| N° | Décision | Raison | Statut | Validée par |
+| --- | --- | --- | --- | --- |
+| D35 | Choix du planning : `guava/calendar` ou repli sur une frise Livewire maison, selon les critères du prototype (`docs/plans/phase_4.md` §3) | D5 | À décider à la fin du lot L0 | |
+| D36 | Dérogation à la liste noire (RG-15) et remise au-delà du seuil (RG-10) : **refus** en phase 4 ; mécanisme d'approbation en phase 5 (`approval_requests`) ; colonnes `override_approval_id` et `discount_approval_id` créées vides | La table des approbations relève de la phase 5 | **Validée** (19/11/2026) | Hafedh |
+| D37 | Acompte à la réservation (C-10, P2) reporté en phase 6, avec les encaissements | Q40 ; aucun document fiscal sans règle validée | **Validée** (19/11/2026) | Hafedh |
+| D38 | Verrous de sérialisation **en base** (`named_locks`, ligne verrouillée par `SELECT … FOR UPDATE`), jamais par le cache ; `SaveSeason` corrigé en conséquence | Un verrou de cache dépend du magasin configuré (`array` dans `phpunit.xml`, non partagé entre processus) ; revue de la phase 3, observation n° 1 | **Validée** (19/11/2026) | Hafedh |
+| D39 | Planning en **lecture seule** en phase 4 : toute modification passe par le formulaire et `ModifyReservation`, sous verrou. Le glisser-déposer est une évolution possible, à discuter à l'atelier de fin de phase, chiffrée avant développement | Aucun contrôle ne doit être contourné | **Validée** (19/11/2026) | Hafedh |
+| D40 | Création **minimale** du client au comptoir (fiche complète en phase 7), **à condition** d'au moins un numéro de pièce d'identité ou de permis ; détection des doublons par empreinte (D24, K-05) et contrôle de la liste noire (RG-15) dès la création. Tests : création sans pièce ni permis refusée ; client sur liste noire recréé avec la même pièce, retrouvé et refusé | Une réservation exige un client ; empêcher le contournement de la liste noire par une nouvelle fiche | **Validée avec condition** (19/11/2026) | Hafedh |

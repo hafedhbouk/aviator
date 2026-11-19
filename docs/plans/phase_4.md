@@ -1,19 +1,225 @@
-# Phase 4 — Parc, leasing et réservations : éléments reportés
+# Plan de la phase 4 — Parc, leasing et réservations
 
-Ce document recueille ce qui a été décidé pendant les phases précédentes pour la phase 4. Le plan complet de la phase 4 sera établi au démarrage de la phase et soumis à validation (règle 1 du prompt maître).
+| Élément | Valeur |
+| --- | --- |
+| Phase | 4. Parc, leasing et réservations (lot 1) |
+| Branche | `phase/04-parc-leasing-reservations`, créée le 19/11/2026 depuis `main` (`cbd9ff3`, fusion de la pull request n° 4) |
+| Budget | **41,75 j** : référence 39 j + reports de la phase 2 (2,75 j). **Seuil d'alerte : 46,8 j** (référence + 20 %), soit 5,05 j de marge |
+| Statut | **Plan validé le 19/11/2026** par Hafedh, avec D1 et D36 à D40 (D40 avec condition, §4). Calendrier des réserves validé (§0) |
+| Critère d'acceptation | Scénarios 1, 2, 10 et 15 verts ; machine à états du véhicule ; alertes (`references/phases.md` §12). **En plus** : atelier avec les agences en fin de phase (§9) |
+| Sources | Cahier, modules B (B-01 à B-15) et C (C-01 à C-10), RG-01, RG-02, RG-13, RG-15, RG-17 ; `docs/architecture.md` §6.1 et §7 ; `docs/modele_donnees.md` §4 et §5 ; parcours P1 et P2 (`docs/maquettes/parcours.md`) ; décisions D1, D5, D8, D11, D13, D21, D24 ; revue de la phase 3 (`docs/rapports/phase_3.md` §10) |
 
-## Reporté de la phase 2
+## 0. Rappel : deux réserves non levées, à lever avant l'atelier
 
-| Élément | Origine | Détail |
+L'atelier de fin de phase (§9) se tient **en recette**, avec le paramétrage réel. Il ne peut pas avoir lieu tant que ces deux réserves restent ouvertes :
+
+| Réserve | Ce qui manque | Qui | Bloque |
+| --- | --- | --- | --- |
+| **Phase 2, n° 1 — installation de la recette** (prioritaire) | Choix du domaine par la direction (Q6) ; installation selon `docs/installation_recette.md` ; résultat d'`aviator:check-environment` joint au rapport de la phase 2. La ligne « Règles fiscales » restera en ERREUR tant que les mentions des factures manquent : c'est attendu (D28) | Direction (Q6), puis Hafedh | Tout le reste |
+| **Phase 3, n° 1 — saisie du paramétrage** | Saisie par l'admin du siège selon `docs/guide_saisie_parametrage.md` (société, lieux et horaires, catégories, saisons, grilles, prix des options, fournisseurs), puis validation par lui | Admin du siège, avec mon appui (0,25 j prévus en phase 3) | Les devis de l'atelier : sans saisons ni grilles, aucune réservation n'a de prix |
+
+**Échéances validées le 19/11/2026** : recette installée **avant la fin du lot L9** (disponibilité), saisie du paramétrage terminée **avant le lot L15** (préparation de l'atelier). Je le rappellerai à chaque fin de lot tant que ce n'est pas fait. La réserve n° 1 de la **phase 1** (ateliers avec les 4 agences, prévus avant la phase 4) est levée par ce même atelier.
+
+## 1. Périmètre
+
+### Dans la phase (P1 d'abord)
+
+1. **Prototype du planning** `guava/calendar` en tout premier, avec son repli (§3).
+2. **Module B — parc** : fiche véhicule (B-01, B-02, B-04), kilométrage tracé (B-03), assurance et visite (B-05), historique consolidé (B-06, avec ce qui existe en phase 4 : réservations, statuts, kilométrage, financement ; contrats en phase 5, maintenances et dépenses en phase 8), alertes (B-07), pièces jointes servies par le contrôleur des fichiers privés (B-08, P2), machine à états (B-09), sortie du parc (B-10, P2).
+3. **Module B — leasing et crédit** : contrat de leasing (B-11), échéancier généré et pointage (B-12), alertes de fin et de levée d'option (B-13), fin de leasing (B-14, P2), crédit bancaire (B-15, P2).
+4. **Module C — réservations** : disponibilité (C-01), planning (C-02), création, modification, annulation motivée (C-03), dates, heures et agences (C-04), par catégorie ou véhicule (C-05), devis (C-06), anti-chevauchement sous saisies simultanées (C-07), statuts (C-08), expiration automatique (C-09, P2, désactivée tant que le délai est vide : D31, Q90).
+5. **Reports des phases 2 et 3** (§2).
+
+### Hors phase
+
+| Élément | Phase | Raison |
 | --- | --- | --- |
-| **Recherche de clients (D24)** | Décision du 17/11/2026 : ne tient pas dans le budget de la phase 2 | Critères, harmonisation, limites et journalisation : voir D24 dans `docs/decisions.md`. Codée avec la réservation, qui en est le premier utilisateur |
-| **Test « client bloqué à Sfax, refusé à Sousse »** | Décision du 17/11/2026 | Avec RG-15 (contrôle de la liste noire à la réservation, `CustomerRiskGate`) et une première version de la table `customer_recommendations` (niveau, statut, ajout seul). Le blocage vaut dans toutes les agences (K-10, K-11, scénario 14) |
-| **Sélecteur d'agence active** | Lot 4 | Le service `CurrentAgency` est prêt ; ajouter le sélecteur dans le menu utilisateur avec les premiers documents d'agence |
-| **Scénario 12 par type de document** | Lot 4 | Rejouer « un agent de Sfax modifie un document de Sousse : refus » pour les réservations (puis pour chaque nouveau type de document) |
-| **Contrôleur des fichiers privés (D21)** | Proposition de rééquilibrage de la phase 2, à valider | Servir les documents des véhicules (carte grise, attestation d'assurance) depuis le disque `private`, par une route soumise aux policies ; à réutiliser en phase 5 (photos, signatures, pièces) |
-| **Prototype du planning** | D5 | Prototype `guava/calendar` au début de la phase ; repli : frise Livewire maison |
+| Acompte à la réservation (C-10, P2) | 6 | C'est un encaissement (Q40) : il arrive avec les encaissements ; aucun document fiscal avant. Décision proposée **D37** |
+| Dérogation à la liste noire et remise au-delà du seuil | 5 | Elles passent par `approval_requests` (phase 5). En phase 4 : refus net, colonnes `override_approval_id` et `discount_approval_id` créées vides. Décision proposée **D36** |
+| Contrats, départs, états des lieux | 5 | Le scénario 10 est vérifié en phase 4 au niveau du domaine (§6), l'écran de départ vient en phase 5 |
+| Maintenances, immobilisations, dépenses | 8 | `VehicleStatusService` et `vehicle_blocks` les acceptent déjà ; leurs écrans viennent en phase 8 |
+| Fiche client complète, écran des recommandations, propositions de liste noire | 7 | En phase 4 : création minimale au comptoir et première version des recommandations (§2) |
+| Push | 9 | Les alertes vont au centre de notifications (`database`) ; le push s'y ajoute en phase 9 |
+| Statistiques de rentabilité | 9 | La phase 4 fournit la requête des charges de financement par véhicule et par mois (scénario 15) |
 
-## Reports de la phase 2 (chiffrés)
+## 2. Reports des phases 2 et 3 intégrés
+
+| Élément | Origine | Lot | Charge (j) | Contenu et preuve attendue |
+| --- | --- | --- | ---: | --- |
+| **Recherche de clients (D24)** | Phase 2 | L8 | 1 | Un critère par recherche : nom exact complet (tout ordre, casse et accents ignorés), pièce, permis (empreintes HMAC), téléphone harmonisé `+216XXXXXXXX` (`SearchNormalizer::phone` corrigé, `customers.phone_search` recalculé) ; 10 résultats au plus ; journal `customer_access` sans la valeur ; 31e recherche de l'heure refusée et super admin notifié sans donnée client. Tests pour chaque règle, dont « 0123 4567 », « 0123-4567 » et « 01234567 » |
+| **Contrôleur des fichiers privés (D21)** | Phase 2 | L3 | 0,5 | Route qui sert un fichier du disque `private` après policy ; en-têtes (`Content-Type` réel, `nosniff`, `no-store`, `inline` ou `attachment`) ; tests par profil et par agence ; chemin détourné refusé. Premier usage : carte grise et attestation d'assurance (B-08) ; réutilisé en phase 5 |
+| **Migration `drivers`** | Phase 2 (avancée de la phase 5) | L8 | 0,5 | Table, modèle, permis chiffré, empreinte `license_hash`, rechiffrement couvert par `aviator:reencrypt-secrets` et `aviator:rehash-blind-index` (D23) ; tests |
+| **Test RG-15 entre agences** | Phase 2 | L8 | 0,5 | Première version de `customer_recommendations` (niveau, statut, ajout seul : RG-16) et `CustomerRiskGate` ; test « client mis sur liste noire à Sfax, réservation refusée à Sousse », sans motif affiché à l'agent |
+| **Sélecteur d'agence active** | Phase 2 | L13 | 0,25 | Choix de l'agence active dans le menu utilisateur (`CurrentAgency::switchTo`), limité aux agences de l'utilisateur ; agence par défaut des nouvelles réservations ; test |
+| **Scénario 12 rejoué** | Phase 2 | L14 | — | « Un agent de Sfax modifie une réservation de Sousse : refus » (policy, action de domaine et requête Livewire directe), puis pour les véhicules et les financements. Inclus dans le périmètre |
+| **Prototype `guava/calendar`** | D5 | L0 | — | §3. Inclus dans le périmètre |
+| **Verrou des saisons** | Revue de la phase 3, observation n° 1 | L1 | 0,25 (pris sur les aléas) | §5.3 |
+| **Total des reports chiffrés** | | | **2,75** | + 0,25 j sur les aléas pour le verrou des saisons |
+
+## 3. Prototype du planning (lot L0, en tout début de phase)
+
+**Durée bornée : 1 j**, puis 0,25 j pour la note de décision. Le prototype vit dans une page Filament isolée, sur des données de démonstration (50 véhicules, 4 agences, 300 blocs sur un mois), sans aucune action d'écriture.
+
+### Critères de choix
+
+| N° | Critère | Obligatoire | Comment je le vérifie |
+| --- | --- | --- | --- |
+| 1 | Vue **frise par ressource** : une ligne par véhicule, regroupée par agence ou catégorie, en vue semaine et mois | Oui | Capture d'écran dans le navigateur |
+| 2 | **50 véhicules × 1 mois, 300 blocs** : page affichée en moins de 2 s sur le poste, données servies en moins de 300 ms | Oui | Mesure dans le navigateur et test de la requête |
+| 3 | Données **construites côté serveur** : l'agent d'une autre agence reçoit « Occupé », sans nom ni numéro (Q38). Aucun nom de client n'atteint le navigateur pour un bloc d'une autre agence | Oui | Test sur la charge utile JSON renvoyée, par profil |
+| 4 | Clic sur un bloc de son agence → réservation ; clic sur une case libre → assistant prérempli (véhicule, date) | Oui | Navigateur |
+| 5 | Délai de préparation **hachuré**, couleurs par type (réservation, contrat, maintenance, immobilisation), retard en bordure rouge | Oui | Navigateur |
+| 6 | Français, fuseau `Africa/Tunis`, heures sur 24 h, semaine commençant le lundi | Oui | Navigateur |
+| 7 | Glisser-déposer **désactivable** : aucune modification depuis le planning en phase 4 (D39) | Oui | Navigateur |
+| 8 | Paquet MIT, compatible PHP 8.3 et Filament 5, assets compilés par `npm run build`, aucun appel à un CDN à l'exécution | Oui | `composer check`, `build-release.sh`, onglet réseau |
+| 9 | Lisible sur tablette (comptoir) ; consultation possible sur smartphone | Non | Navigateur en largeur réduite |
+| 10 | Thème clair et sombre de Filament respectés | Non | Navigateur |
+
+### Règle de décision
+
+- **Tous les critères obligatoires tenus dans la journée** → `guava/calendar` retenu ; intégration en lot L12 (3 j).
+- **Un critère obligatoire non tenu**, et non corrigeable en 0,5 j de plus → **repli : frise Livewire maison** (grille CSS véhicules × jours, blocs positionnés côté serveur, aucune dépendance). Charge estimée du repli : 4 j au lieu de 3 j, soit **+1 j pris sur les aléas**, signalé au compte rendu du lot L0.
+- Dans les deux cas : **décision D35** écrite avec les captures et les mesures, puis **arrêt pour ta validation** avant le lot L1. C'est le seul arrêt prévu en cours de phase, hors écarts.
+
+## 4. Décisions de ce plan
+
+| N° | Décision | Raison | Statut |
+| --- | --- | --- | --- |
+| D1 | `vehicle_blocks` porte toute occupation ; RG-01 en une requête sur une table | Tout le lot L9 en dépend | **Validée** (19/11/2026) |
+| D35 | Choix du planning (après le prototype) | §3 | À décider à la fin de L0 |
+| D36 | Dérogation à la liste noire et remise au-delà du seuil : **refus** en phase 4, mécanisme d'approbation en phase 5 | `approval_requests` est une table de la phase 5 | **Validée** (19/11/2026) |
+| D37 | Acompte (C-10, P2) reporté en phase 6 avec les encaissements | Q40 ; aucun document fiscal sans règle validée | **Validée** (19/11/2026) |
+| D38 | Verrous de sérialisation **en base** (ligne verrouillée par `SELECT … FOR UPDATE` dans une table `named_locks`), jamais par le cache | Le verrou de cache dépend du magasin configuré : `array` dans `phpunit.xml`, qui n'est pas partagé entre processus | **Validée** (19/11/2026) |
+| D39 | Planning en **lecture seule** en phase 4 : toute modification passe par le formulaire et `ModifyReservation`, sous verrou. **Le glisser-déposer est une évolution possible, à discuter à l'atelier** (§9) : s'il est demandé, il appellera `ModifyReservation` avec les mêmes contrôles et sera chiffré avant développement | Un déplacement par glisser-déposer ne doit contourner aucun contrôle | **Validée** (19/11/2026) |
+| D40 | Création **minimale** du client au comptoir ; fiche complète en phase 7. **Condition** : au moins le **numéro de pièce d'identité ou de permis** est exigé ; dès cette création, la détection des doublons par empreinte (D24, K-05) et le contrôle de la liste noire (RG-15, `CustomerRiskGate`) s'appliquent : une pièce ou un permis déjà connu renvoie à la fiche existante, avec son niveau de risque | Une réservation exige un client ; parcours P1, étape 2 bis ; empêcher le contournement de la liste noire par une nouvelle fiche | **Validée avec condition** (19/11/2026) |
+
+Tests exigés par la condition de D40 (lot L8) :
+
+1. **Création minimale sans pièce ni permis : refusée** (message explicite, rien n'est enregistré, aucune empreinte calculée).
+2. **Client sur liste noire recréé au comptoir avec la même pièce** (saisie différente : espaces, tirets, casse, autre agence) : **retrouvé** par l'empreinte, aucune nouvelle fiche créée, et réservation **refusée** (RG-15, D36), sans motif affiché à l'agent. Variante avec le même permis.
+
+Valeurs par défaut des questions ouvertes appliquées en phase 4, toutes paramétrables : Q3 (retour à l'agence de départ), Q28 (« Réservé » = départ dans les 24 h), Q29 (5 transitions ajoutées), Q31 (`pending` et `no_show`), Q32 (tranches de 24 h), Q33 (tarif dégressif, chaque jour au prix de sa saison), Q36 (pas de surréservation), Q37 (seule l'agence de départ crée), Q38 (« Occupé » sans nom), Q39 (non-présentation proposée après 120 min, confirmée par l'agence), Q41 (60 min), Q49 (`RES-AAAA-NNNNN`), Q90 (délais vides : alertes et expiration désactivées).
+
+## 5. Concurrence : tests sur deux processus
+
+Même méthode que `tests/Feature/Concurrency/SequenceConcurrencyTest.php` et `TaxRuleConcurrencyTest.php` : script de travail dans `tests/Support/`, lancé par `Symfony\Process` (pas de `pcntl` sous Windows), deux connexions réelles à `aviator_test`, `DatabaseTruncation`. Chaque test est rejoué dans `composer check`.
+
+### 5.1 RG-02 — réservations (scénario 1)
+
+| Test | Mise en place | Attendu |
+| --- | --- | --- |
+| Même véhicule, même période | Deux processus lancent `CreateReservation` en même temps, chacun avec le même véhicule | Une seule réservation et un seul `vehicle_block` ; l'autre reçoit « Ce véhicule vient d'être réservé sur cette période » ; aucun numéro `RES` consommé par l'échec |
+| Verrou tenu | Le premier processus garde la transaction ouverte (point d'arrêt de test) ; le second démarre | Le second **attend**, puis voit l'occupation et échoue ; durée mesurée ≥ durée de rétention |
+| Dernier véhicule d'une catégorie (Q36) | Capacité de 1 ; deux réservations « catégorie seulement » | Une seule aboutit (verrou sur la ligne `vehicle_categories`) |
+| Affectation croisée | Deux réservations par catégorie affectées au même véhicule en même temps (`AssignVehicle`) | Une seule affectation |
+| Modification contre création | Un processus prolonge une réservation sur la période qu'un second réserve | Une seule des deux aboutit |
+| Rafale | 10 processus sur le même véhicule et la même période | Exactement une réservation |
+
+### 5.2 RG-01 — bornes (sans concurrence)
+
+Délai de préparation inclus (la fin + 60 min touche le départ suivant : refus ; 1 min après : accepté) ; passage de minuit, de fin de mois et d'année ; réservation annulée ou expirée libérée (scénario 2) ; modification qui ne se bloque pas elle-même ; véhicule `retired`, `maintenance` ou `unavailable` exclu de la disponibilité.
+
+### 5.3 Verrou des saisons (revue de la phase 3)
+
+1. **Test d'abord**, sur l'état actuel : deux processus enregistrent en même temps deux saisons qui se chevauchent. Avec le magasin de cache `array` des tests, je m'attends à ce que les deux passent : le résultat sera cité tel quel.
+2. **Correction** (D38) : `SaveSeason` sérialisé par un verrou de ligne en base (`named_locks`), comme le reste du domaine ; `Cache::lock` retiré.
+3. Le même test doit alors donner : une saison enregistrée, l'autre refusée pour chevauchement. Variante « verrou tenu » comme en §5.1.
+
+## 6. Scénarios d'acceptation
+
+| Scénario | Test | Niveau |
+| --- | --- | --- |
+| **1.** Deux réservations simultanées, même véhicule, même période : une seule aboutit | §5.1 | Deux processus, MariaDB |
+| **2.** Réservation annulée : véhicule de nouveau disponible | `CancelReservation` (motif obligatoire) désactive le `vehicle_block` ; la même période est ensuite réservable ; le statut du véhicule revient à `available` si « Réservé » | Domaine + écran |
+| **10.** Véhicule à l'assurance expirée : départ refusé | `Fleet\DepartureGuard` : refus si l'assurance ou la visite technique n'est pas valide **à la date de départ** ; `VehicleStatusService` refuse la transition vers `rented` dans ce cas ; affectation à une réservation refusée pour la même raison ; alerte si l'échéance tombe **pendant** la location. L'écran de départ (phase 5) appellera ce même garde | Domaine ; repris en phase 5 |
+| **15.** Loyer de leasing compté une seule fois dans les charges et la rentabilité | `Fleet\FinancingCharges::forVehicleAndMonth()` : un loyer par mois d'échéance (`charge_month`, RG-17), unicité (`vehicle_financing_id`, `sequence`) ; régénérer l'échéancier, pointer un loyer ou lever l'option ne double jamais la charge ; l'apport compté une seule fois (Q19). La phase 9 réutilise cette requête | Domaine |
+| **12.** (rejoué) Agent de Sfax modifiant un document de Sousse : refus | Réservations, véhicules, financements | Policies + actions + Livewire |
+| RG-15 entre agences | §2 | Domaine + écran |
+
+## 7. Lots et charge
+
+| Lot | Contenu | Charge (j) |
+| --- | --- | ---: |
+| **L0. Prototype du planning** | §3 ; décision D35 ; **arrêt pour validation** | 1,25 |
+| **L1. Verrous en base** | Table `named_locks`, `Support\Locking\NamedLock` ; test à deux processus des saisons, puis correction de `SaveSeason` (§5.3) | 0,25 |
+| L2. Véhicules | Migrations `vehicles`, `vehicle_documents` ; B-01, B-02, B-04, B-05, B-10 ; ressource Filament, portée par agence (agence de rattachement), policies, journal | 4 |
+| L3. Fichiers privés | Contrôleur D21 ; pièces jointes B-08 | 0,5 |
+| L4. Kilométrage et historique | `vehicle_mileage_logs`, `RecordMileage`, `CorrectMileage` (baisse refusée sans motif, B-03) ; onglet d'historique B-06 | 1,25 |
+| L5. Machine à états | `VehicleStatusService` (seul à écrire `vehicles.status`), `vehicle_status_logs`, transitions du §6 de la skill + Q29, fenêtre « Réservé » (Q28), `DepartureGuard` (scénario 10), commande `fleet:check-status` | 3 |
+| L6. Leasing et crédit | `vehicle_financings`, `financing_installments` ; B-11 à B-15 ; génération et pointage de l'échéancier en `brick/math` ; fin de leasing (levée d'option ou restitution → sortie du parc) ; `FinancingCharges` (scénario 15) | 4,5 |
+| L7. Alertes | `fleet:check-documents`, `financing:due-alerts` (planificateur, idempotentes) ; notifications `database` sans donnée sensible ; délais lus dans les réglages (vides = désactivées, Q90) | 1,75 |
+| L8. Clients au comptoir | `drivers` (0,5), recherche D24 (1), création minimale avec pièce ou permis obligatoire, doublons par empreinte et liste noire dès la création (D40 et ses deux tests, 0,75), recommandations v1 et `CustomerRiskGate` (0,5) | 2,75 |
+| L9. Disponibilité | `vehicle_blocks`, `AvailabilityQuery` (C-01, capacité Q36, projection sans donnée client pour les autres agences), `VehicleLock`, `BlockRegistry` ; tests §5.1 et §5.2 | 4,5 |
+| L10. Devis | `BillableDurationCalculator` (Q32), `QuoteCalculator` → `PriceQuote` figé (grille, saison par jour loué, agence, options ; remise sous le seuil seulement : D36) ; HT ; TTC affiché seulement avec des règles applicables (`TaxCalculator` de la phase 3) | 3 |
+| L11. Réservations | Migrations `reservations`, `reservation_options` ; numéro `RES` par `SequenceAllocator` ; actions `Create`, `Modify`, `Confirm`, `Cancel`, `AssignVehicle`, `ExpireReservations`, `MarkNoShow` ; statuts C-08 et Q31 ; assistant comptoir en 5 étapes (P1) ; liste, filtres, portée par agence | 6 |
+| L12. Planning | Intégration de l'option retenue en L0 ; projection serveur ; filtres agence et catégorie | 3 |
+| L13. Sélecteur d'agence active | §2 | 0,25 |
+| L14. Droits, audit et tests transverses | Matrice par profil sur les nouveaux écrans ; scénario 12 par type de document ; recherche globale et sélecteurs (aucune fuite du carnet, D13) ; tests d'architecture (aucun SQL brut, aucune écriture de `vehicles.status` hors du service) | 1,25 |
+| L15. Préparation de l'atelier | Données de démonstration fictives (`DemoFleetSeeder`, jamais en production), déroulé, fiche de recueil (§9) | 1 |
+| L16. Rapport et revue | `docs/rapports/phase_4.md`, revue de la branche | 1 |
+| Aléas | 3 j au départ, dont 0,25 j déjà affectés à L1 ; couvrent le repli du planning (+1 j) s'il est choisi | 2,5 |
+| **Total** | | **41,75** |
+
+Ordre : L0 → L1 → L2 → L3 → L5 → L4 → L9 → L8 → L10 → L11 → L6 → L7 → L12 → L13 → L14 → L15 → L16. La disponibilité et la machine à états passent avant le leasing, conformément au prompt de la phase (« priorité : `Availability`, puis `VehicleStatusService` »).
+
+À chaque fin de lot : `composer check` (nombre de tests, statut de chaque outil), commits fichier par fichier, commande de push, charge estimée reportée au §11. Arrêt sur décision, écart ou risque de dépassement.
+
+## 8. Tables migrées
+
+`named_locks`, `vehicles`, `vehicle_documents`, `vehicle_status_logs`, `vehicle_mileage_logs`, `vehicle_blocks`, `vehicle_financings`, `financing_installments`, `drivers`, `customer_recommendations` (v1), `reservations`, `reservation_options`. InnoDB, `utf8mb4_unicode_ci`, montants en `DECIMAL(15,3)`, aucune fonctionnalité propre à MySQL 8. `docs/modele_donnees.md` mis à jour à chaque lot.
+
+## 9. Atelier avec les agences (fin de phase)
+
+**Préalables** : les deux réserves du §0 levées ; archive de la phase 4 installée en recette ; un compte par agence (2FA active), un pour l'admin du siège ; données de démonstration fictives **en plus** du paramétrage réel, aucun vrai client.
+
+**Format proposé** : une séance de 2 h par écran partagé avec les 4 agents et l'admin du siège, puis 30 min de prise en main libre ; compte rendu dans `docs/rapports/atelier_phase_4.md`.
+
+### Ce qu'il faut montrer
+
+| N° | Démonstration | Pour | Ce qu'on leur demande |
+| --- | --- | --- | --- |
+| 1 | **Planning** de leur agence, filtres, autres agences en « Occupé » sans nom | Agents | La frise est-elle lisible ? Faut-il voir le nom du client des autres agences (Q38) ? **Le glisser-déposer pour déplacer une réservation est-il utile** (D39 : évolution possible, chiffrée avant développement) ? |
+| 2 | **Réservation au comptoir** de bout en bout : recherche du client (et ses limites, D24), création avec doublon détecté, période, disponibilité, catégorie ou véhicule précis, devis, enregistrement, numéro `RES` | Agents | Étapes dans le bon ordre ? Champs manquants ? Format du numéro (Q49) ? |
+| 3 | **Saisie simultanée en direct** : deux agents réservent le même véhicule au même moment ; un seul réussit, l'autre reçoit le message et les véhicules restants | Tous | Le message est-il clair ? |
+| 4 | **Client sur liste noire** inscrit à Sfax, refusé à Sousse, sans motif affiché | Agents, admin | Comportement attendu ? (dérogation en phase 5) |
+| 5 | Modification, annulation avec motif, non-présentation, expiration | Agents | Délai de non-présentation (Q39) ; expiration au comptoir (Q90 c) |
+| 6 | **Fiche véhicule** : documents, kilométrage (correction motivée), statuts et leur historique, refus d'affectation d'un véhicule à l'assurance expirée (scénario 10) | Agents, admin | Signification de « Réservé » (Q28), transitions manquantes (Q29) |
+| 7 | **Alertes** dans le centre de notifications : assurance, visite, fin de leasing | Admin, agents | Délais et destinataires des alertes (Q90 d) |
+| 8 | **Leasing** : contrat, échéancier généré, pointage, fin de contrat | Admin du siège, direction | Données réelles des leasings en cours (Q12) ; apports (Q13) |
+| 9 | Tablette et smartphone : planning et réservation en largeur réduite | Agents | Appareils utilisés au comptoir |
+
+### Décisions à recueillir pendant l'atelier
+
+Q3 (retour dans une autre agence), Q28, Q29, Q31, Q32 et Q33 (décompte et tarif, sur un exemple chiffré à cheval sur deux saisons), Q36 (surréservation), Q37 (réservation pour une autre agence), Q38, Q39, Q41 (délai de préparation), Q49, Q90. Chaque réponse est reportée dans `docs/questions_ouvertes.md` ; une réponse qui ajoute un mécanisme est chiffrée avant d'être développée.
+
+## 10. Risques
+
+| Risque | Parade |
+| --- | --- |
+| **Recette toujours pas installée** (Q6) | Atelier impossible ; rappel à chaque fin de lot ; si la recette n'est pas prête à L15, la phase se clôt « avec réserve », atelier reporté |
+| Prototype du planning non concluant | Repli prévu et chiffré (§3), décision écrite avant tout code d'intégration |
+| Test de concurrence instable sous Windows (temps de démarrage des processus) | Point d'arrêt explicite plutôt que temporisation ; mesure de l'attente plutôt que de l'ordre d'arrivée |
+| Questions Q32, Q33, Q36 tranchées autrement à l'atelier | Valeurs paramétrables ; chiffrage avant développement |
+| Données de leasing réelles absentes (Q12) | Saisie manuelle ou import en phase 10 ; démonstration sur des données fictives |
+| Lot L11 (6 j) plus lourd que prévu | Suivi au §11 ; signalement dès qu'un lot dépasse sa charge de plus de 25 % |
+
+## 11. Suivi de la charge (mis à jour à chaque fin de lot)
+
+Budget 41,75 j, seuil d'alerte 46,8 j.
+
+| Lot | Prévu (j) | Estimé (j) | Cumul estimé (j) | Cumul prévu (j) | Commentaire |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Plan | — | 0,25 | 0,25 | — | Ce document ; D33 et D34 validées dans `docs/decisions.md` et `docs/projet.md` (compté dans L16) |
+
+## 12. Ce dont j'ai besoin
+
+1. ~~Validation de ce plan~~ : validé le 19/11/2026. Prochaine validation : D35, à la fin du lot L0.
+2. Les deux réserves du §0, aux échéances validées : choix du domaine (Q6) par la direction et installation de la recette avant la fin de L9 ; saisie du paramétrage avant L15.
+3. Les données réelles des leasings en cours (Q12), si possible avant l'atelier.
+
+## Annexe — reports décidés pendant les phases précédentes
+
+### Reports de la phase 2 (chiffrés)
 
 Rééquilibrage validé le 17/11/2026 (`docs/plans/phase_2.md`, point budgétaire).
 
@@ -27,13 +233,6 @@ Rééquilibrage validé le 17/11/2026 (`docs/plans/phase_2.md`, point budgétair
 | **Total des reports** | **2,75** | |
 
 Le scénario 12 rejoué sur les réservations et le prototype du planning (D5) font partie du périmètre déjà prévu de la phase 4 : pas de charge supplémentaire.
-
-| Phase 4 | Charge (j) |
-| --- | ---: |
-| Référence (`docs/projet.md` §5) | 39 |
-| Reports de la phase 2 | +2,75 |
-| **Nouveau total** | **41,75** |
-| **Écart** | **+2,75 j (+7,1 %)** |
 
 ### Effets sur les phases suivantes
 
