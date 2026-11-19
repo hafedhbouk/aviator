@@ -14,6 +14,8 @@ const RELEASE_SCRIPTS = [
     'scripts/install-release.sh',
     'scripts/rollback-release.sh',
     'scripts/lib/release-files.sh',
+    'scripts/clean-env.sh',
+    'scripts/ci-env-testing.sh',
 ];
 
 /**
@@ -119,6 +121,109 @@ it('n\'utilise sur le serveur ni Composer, ni npm, ni Git, ni « set -e » globa
     expect($code)->not->toMatch('/\b(composer|npm|git)\b/')
         ->and($code)->not->toMatch('/^\s*set\s+-[a-z]*e/m');
 })->with(['scripts/install-release.sh', 'scripts/rollback-release.sh']);
+
+// --- Environnement des contrôles (clean-env.sh) ---------------------------------------
+
+/**
+ * Copie clean-env.sh dans un faux dépôt, avec ses .env.example et .env.
+ */
+function cleanEnvFixture(): string
+{
+    $root = tempDir('release-cleanenv');
+    makeTree($root, [
+        '.env.example' => "# commentaire\nAVIATOR_FIXTURE_A=valeur-exemple\n\nexport AVIATOR_FIXTURE_B=\n",
+        '.env' => "AVIATOR_FIXTURE_C=\"valeur du fichier\"\nPATH=/nulle-part\n",
+    ]);
+    mkdir($root.'/scripts');
+    copy(base_path('scripts/clean-env.sh'), $root.'/scripts/clean-env.sh');
+
+    return $root;
+}
+
+const CLEAN_ENV_SECRETS = [
+    'AVIATOR_FIXTURE_A' => 'secret-a-4f1c',
+    'AVIATOR_FIXTURE_B' => 'secret-b-9d2e',
+    'AVIATOR_FIXTURE_C' => 'secret-c-77ab',
+];
+
+it('retire les variables nommées dans .env.example et .env, garde les autres et lance la commande', function () {
+    $script = escapeshellarg(bashPath(cleanEnvFixture().'/scripts/clean-env.sh'));
+
+    $process = runBash("bash {$script} env", CLEAN_ENV_SECRETS + ['AVIATOR_FIXTURE_KEEP' => 'gardee']);
+
+    expect($process->isSuccessful())->toBeTrue($process->getErrorOutput())
+        ->and($process->getOutput())->not->toContain('AVIATOR_FIXTURE_A=', 'AVIATOR_FIXTURE_B=', 'AVIATOR_FIXTURE_C=')
+        ->and($process->getOutput())->toContain('AVIATOR_FIXTURE_KEEP=gardee', 'AVIATOR_CLEAN_ENV=1', 'PATH=')
+        ->and($process->getOutput())->not->toContain('PATH=/nulle-part')
+        ->and($process->getErrorOutput())->toContain('3 variable(s)');
+});
+
+it('n\'affiche jamais aucune valeur et transmet le code de sortie de la commande', function () {
+    $script = escapeshellarg(bashPath(cleanEnvFixture().'/scripts/clean-env.sh'));
+
+    $ok = runBash("bash {$script} true", CLEAN_ENV_SECRETS);
+    $failed = runBash("bash {$script} bash -c 'exit 7'", CLEAN_ENV_SECRETS);
+    $usage = runBash("bash {$script}");
+
+    $printed = $ok->getOutput().$ok->getErrorOutput().$failed->getOutput().$failed->getErrorOutput();
+
+    expect($ok->getExitCode())->toBe(0)
+        ->and($failed->getExitCode())->toBe(7)
+        ->and($usage->getExitCode())->toBe(64);
+
+    foreach ([...CLEAN_ENV_SECRETS, 'valeur-exemple', 'valeur du fichier', '/nulle-part'] as $value) {
+        expect($printed)->not->toContain($value);
+    }
+});
+
+it('fait passer composer check, composer test et build-release.sh par clean-env.sh', function () {
+    $scripts = json_decode((string) file_get_contents(base_path('composer.json')), true, flags: JSON_THROW_ON_ERROR)['scripts'];
+    $build = (string) file_get_contents(base_path('scripts/build-release.sh'));
+
+    expect($scripts['check'])->toBe([
+        'Composer\\Config::disableProcessTimeout',
+        'bash scripts/clean-env.sh composer run-script --timeout=0 check-steps',
+    ])
+        // check-steps refuse de tourner sans clean-env.sh, avant tout contrôle.
+        ->and($scripts['check-steps'][1])->toContain("getenv('AVIATOR_CLEAN_ENV') === '1'", 'exit(1)')
+        ->and($scripts['check-steps'])->toContain('@php artisan test')
+        ->and($scripts['test'])->toContain('bash scripts/clean-env.sh php artisan test')
+        ->and($build)->toContain('exec bash "$ROOT/scripts/clean-env.sh" bash "$ROOT/scripts/build-release.sh" "$@"')
+        ->and($build)->not->toContain('UNSET_ARGS');
+});
+
+it('refuse composer check-steps lancé sans clean-env.sh', function () {
+    $guard = json_decode((string) file_get_contents(base_path('composer.json')), true, flags: JSON_THROW_ON_ERROR)['scripts']['check-steps'][1];
+    $code = preg_replace('/^@php -r "(.*)"$/s', '$1', $guard);
+
+    $without = new Process([PHP_BINARY, '-r', $code], base_path(), ['AVIATOR_CLEAN_ENV' => false]);
+    $with = new Process([PHP_BINARY, '-r', $code], base_path(), ['AVIATOR_CLEAN_ENV' => '1']);
+
+    expect($without->run())->toBe(1)
+        ->and($without->getErrorOutput())->toContain('composer check')
+        ->and($with->run())->toBe(0);
+});
+
+it('décrit un workflow « Release » manuel et sur étiquette, sans secret, archive conservée 30 jours', function () {
+    $release = (string) file_get_contents(base_path('.github/workflows/release.yml'));
+    $ci = (string) file_get_contents(base_path('.github/workflows/ci.yml'));
+
+    expect($release)->toContain('workflow_dispatch:', 'tags: ["v[0-9]+.[0-9]+.[0-9]+"]', 'image: mariadb:10.11', 'php-version: "8.3"')
+        ->toContain('bash scripts/build-release.sh "$RELEASE_REF"', 'bash scripts/ci-env-testing.sh')
+        ->toContain('retention-days: 30', 'aviator-*.tar.gz.sha256', 'permissions:', 'contents: read')
+        ->not->toContain('secrets.')
+        // Jamais sur une poussée de branche : manuel ou étiquette seulement.
+        ->not->toContain('branches:')
+        // La référence saisie n'est jamais interpolée dans un script (injection).
+        ->not->toMatch('/run:.*\$\{\{\s*inputs\./')
+        // Écriture dans le dépôt : un seul job, réservé aux étiquettes poussées.
+        ->and(substr_count($release, 'contents: write'))->toBe(1)
+        ->and($release)->toMatch("/  publication:\n(?:.*\n)*?    if: github\.event_name == 'push' && startsWith\(github\.ref, 'refs\/tags\/v'\)\n(?:.*\n)*?    permissions:\n      contents: write\n/")
+        ->toContain('gh release create "$TAG" aviator-*.tar.gz aviator-*.tar.gz.sha256', '--verify-tag', 'GH_TOKEN: ${{ github.token }}')
+        ->and($ci)->toContain('bash scripts/ci-env-testing.sh')
+        ->not->toContain('secrets.')
+        ->not->toMatch('/^\s+DB_DATABASE:/m');
+});
 
 // --- Contenu de l'archive ------------------------------------------------------------
 

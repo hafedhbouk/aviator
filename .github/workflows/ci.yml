@@ -33,15 +33,6 @@ jobs:
           --health-timeout=5s
           --health-retries=20
 
-    env:
-      APP_ENV: testing
-      DB_CONNECTION: mariadb
-      DB_HOST: 127.0.0.1
-      DB_PORT: 3306
-      DB_DATABASE: aviator_test
-      DB_USERNAME: root
-      DB_PASSWORD: ""
-
     steps:
       - name: Récupérer le code
         uses: actions/checkout@v7
@@ -67,12 +58,13 @@ jobs:
       - name: Base de test en utf8mb4_unicode_ci
         run: mysql --host=127.0.0.1 --user=root -e "ALTER DATABASE aviator_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; SELECT VERSION();"
 
-      - name: Fichier d'environnement de la CI
+      # composer check passe par scripts/clean-env.sh, qui retire les variables de
+      # l'application : la configuration des tests est donc écrite dans .env.testing.
+      - name: Fichiers d'environnement de la CI
         run: |
           cp .env.example .env
           php artisan key:generate --no-interaction
-          # Clé d'empreinte générée à chaque exécution : rien n'est stocké dans la CI.
-          echo "AVIATOR_BLIND_INDEX_KEY=$(php -r 'echo bin2hex(random_bytes(32));')" >> "$GITHUB_ENV"
+          bash scripts/ci-env-testing.sh
 
       - name: Node 22
         uses: actions/setup-node@v7

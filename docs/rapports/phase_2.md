@@ -108,6 +108,7 @@ Décisions D14 à D27 dans `docs/decisions.md` :
 | **Total de la phase 2, lots 1 à 11** | **20,25** (+6,6 % sur la référence ; plafond atteint, sans marge) |
 | Dette corrigée après revue (§11), imputée à la phase 2 | 1,5 : **total réalisé 21,75 j** (+14,5 % sur la référence, au-delà du plafond, sous le seuil d'alerte de 22,8 j) |
 | Levée de la réserve n° 1 : analyse du résultat de `check-environment`, mise à jour du rapport | 0,25 (prévu) : **léger dépassement du plafond**, signalé |
+| Réserve n° 1 : contrôles indépendants de l'environnement, archive construite par GitHub Actions (§12), limite accordée 0,5 j | 0,45 : **total réalisé 22,2 j** (+16,8 % sur la référence) ; 22,45 j avec les 0,25 j prévus (+18,2 %, sous le seuil d'alerte de 22,8 j) |
 | Hors lots : analyse des exigences du cabinet, D26, D27, synthèse pour la direction | **environ 1,25** : **imputation à décider** |
 
 **Décision attendue** sur ces 1,25 j :
@@ -233,3 +234,38 @@ La revue de la pull request n° 1 (GO, aucune anomalie bloquante) a relevé troi
 - **Base de développement à recréer** : la migration `agency_assignments` a changé de nom. Sur le poste, lancer `php artisan migrate:fresh --seed` sur `aviator_dev` (données de développement seulement). La base de test est recréée par les tests.
 
 **Charge** : 1,5 j, imputé à la phase 2 (§5).
+
+## 12. Contrôles indépendants de l'environnement et archive construite par GitHub Actions (19/11/2026)
+
+Dernier point de la réserve n° 1, traité dans la branche `fix/02-build-ci`, créée depuis `main` (`f03d991`) et **imputé à la phase 2** (limite accordée : 0,5 j).
+
+**Constat** : les 41 variables de `.env` sont présentes dans l'environnement des sessions de Claude Code (hypothèse : l'outil charge le `.env` du dossier de travail). Elles priment sur `.env.testing` : en `APP_ENV=testing`, Laravel visait **`aviator_dev`** (constaté par `select database()`).
+
+| Point | Réalisation | Preuve |
+| --- | --- | --- |
+| `scripts/clean-env.sh` | Retire de l'environnement les variables nommées dans `.env.example` et `.env` (noms seulement, aucune valeur lue ni affichée ; variables du système protégées), puis lance la commande | `ReleaseScriptsTest` : variables retirées, autres conservées, aucune valeur affichée, code de sortie transmis |
+| `composer check`, `composer test` | Passent par `clean-env.sh` ; les contrôles sont dans `check-steps`, qui refuse de tourner sans lui | `ReleaseScriptsTest` : refus de `check-steps` lancé directement |
+| `build-release.sh` | Se relance sous `clean-env.sh` ; la copie de travail repasse par son propre `clean-env.sh` | Constructions ci-dessous |
+| Garde-fou de `tests/TestCase.php` | Conservé | `TestDatabaseGuardTest` |
+| CI | Configuration des tests écrite dans `.env.testing` (`scripts/ci-env-testing.sh`) : les variables `DB_*` du job seraient retirées | Exécution du workflow ci-dessous |
+| Workflow « Release » | `build-release.sh` sous Ubuntu, PHP 8.3, service `mariadb:10.11` ; lancement manuel (branche ou étiquette) et étiquettes `vX.Y.Z` ; archive et `.sha256` en artefact de 30 jours ; GitHub Release de l'étiquette (job seul en `contents: write`, jeton automatique de l'exécution) ; aucun secret | `ReleaseScriptsTest` (contrôle statique du workflow) ; exécution ci-dessous |
+| Documentation | `CLAUDE.md` (tests par `composer check` ou `scripts/clean-env.sh php artisan test`, jamais directement) ; `installation_recette.md` (étapes 0 et 3 : télécharger l'artefact, vérifier l'empreinte, envoyer par FTPS) ; `installation_hebergement_oxahost.md` (annexe A : artefact pour la recette, GitHub Release pour la production) ; `installation_poste_dev.md` | — |
+
+**Preuve sur le poste, dans une session où les 41 variables étaient présentes** : `composer check`, code de sortie 0 (Pint OK, Larastan 0 erreur, Pest 394 tests réussis et 2 ignorés sur 396 : shellcheck absent du poste, essai d'installation réservé à Linux ; audit sans vulnérabilité ; build OK). Une table témoin créée dans `aviator_test` avant le lancement a été supprimée par les tests (`migrate:fresh`). Les sommes de contrôle des 21 tables d'`aviator_dev` sont identiques avant et après.
+
+**Workflow « Release » sur GitHub** (exécution 44493357875, commit `86c7d3a`, 1 min 40 s) :
+
+- MariaDB 10.11.19 ; aucune variable de l'application dans l'environnement (`clean-env : 0 variable(s)`) ;
+- `build-release.sh` en 45 s, dont `composer check` 32 s : Pint OK, Larastan 0 erreur, **Pest 396 tests réussis** (1 207 assertions, aucun ignoré : shellcheck et l'essai d'installation sous Linux ont tourné), audit sans vulnérabilité, build OK ;
+- job « GitHub Release » ignoré, comme prévu sur une branche ;
+- artefact `aviator-fix-02-build-ci-86c7d3a` (15,5 Mo), expiration le 19/12/2026.
+
+Le lancement manuel exige que le workflow figure sur `main` ou ait déjà tourné une fois : ce premier passage a été déclenché par un `push` temporaire limité à la branche, retiré au commit suivant (test : aucun déclencheur de branche).
+
+**Contrôle de l'archive téléchargée** (mêmes contrôles qu'au §11, point 3) : empreinte SHA-256 vérifiée ; 18 870 entrées ; ni `.env`, ni `.env.testing`, ni `tests/`, `node_modules/`, `.git/`, `docs/` ou `.github/` ; `storage/` vide (fichiers `.gitignore` seulement) ; seuls les deux scripts du serveur ; `public/build/manifest.json` et `vendor/autoload.php` présents ; aucun des 10 paquets de `require-dev` ; `bootstrap/cache/packages.php` sans paquet de développement ; fichier `RELEASE` au bon commit. **Conforme.** Le script de contrôle a lui-même été éprouvé sur une fausse archive contenant `.env` et `tests/`, qu'il refuse.
+
+**Secours sur le poste** : `build-release.sh fix/02-build-ci` (`d8f053d`), lancé dans la session où les 41 variables étaient présentes, code de sortie 0, **1 590 s (26,5 min)** : `composer install` 657 s, `npm ci` 23 s, `composer check` 231 s (394 tests réussis, 2 ignorés), `composer install --no-dev` 468 s, archive 207 s. Archive de 15 Mo, 18 876 entrées, conforme aux mêmes contrôles ; supprimée ensuite, `D:\aviator-builds` vide. L'écart de 6 entrées avec l'archive de la CI n'a pas été analysé (commits différents, archive du poste supprimée) ; il est sans effet sur les contrôles.
+
+**Téléchargement de l'artefact** : 414 s pour 15 Mo depuis le poste (`gh run download` sans progression, remplacé par l'API). À surveiller lors de la première installation en recette.
+
+**Charge** : 0,45 j pour une limite de 0,5 j, imputés à la phase 2 (§5). Phase 2 : 22,2 j réalisés (+16,8 %). Lot 1 : 268,95 j projetés (+9,8 %).

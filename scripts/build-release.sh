@@ -15,11 +15,23 @@
 # SHA-256 dans AVIATOR_BUILD_DIR. Composer et npm passent par leur cache. La durée de
 # chaque étape est affichée. Le dossier de travail du dépôt n'est pas modifié.
 #
+# Le script se relance lui-même sous scripts/clean-env.sh : aucune variable de
+# l'application (.env.example, .env) n'est héritée du shell. Il tourne sur le poste
+# (secours) comme dans le workflow GitHub « Release » (.github/workflows/release.yml).
+#
 # Aucune connexion au serveur : l'archive est ensuite envoyée par FTPS ou par le
 # gestionnaire de fichiers de cPanel, puis installée par install-release.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Toute la construction tourne sans les variables de l'application : une variable
+# exportée (par exemple .env chargé par un outil) primerait sur .env.testing et ferait
+# tourner les tests sur une autre base (incident du 19/11/2026). Voir clean-env.sh.
+if [ "${AVIATOR_CLEAN_ENV:-}" != "1" ]; then
+  exec bash "$ROOT/scripts/clean-env.sh" bash "$ROOT/scripts/build-release.sh" "$@"
+fi
+
 # shellcheck source=scripts/lib/release-files.sh
 source "$ROOT/scripts/lib/release-files.sh"
 
@@ -98,16 +110,10 @@ begin_step "3/8 Dépendances front (npm ci, cache d'abord)"
 end_step
 
 begin_step "4/8 Contrôles de la CI (composer check)"
-# Les tests utilisent .env.testing (base aviator_test). Une variable exportée par le
-# shell (par exemple après avoir chargé .env dans le terminal) prime sur ce fichier :
-# APP_ENV et DB_* feraient tourner les tests sur une autre base, SESSION_PATH est
-# déformé par Git Bash. Toutes les variables nommées dans .env.example sont donc
-# retirées pour cette étape (incident du 19/11/2026).
-UNSET_ARGS=()
-while IFS= read -r key; do
-  UNSET_ARGS+=(-u "$key")
-done < <(grep -oE '^[A-Z][A-Z0-9_]*' "$WORK/src/.env.example" | sort -u)
-(cd "$WORK/src" && env "${UNSET_ARGS[@]}" composer check)
+# Les tests utilisent .env.testing (base aviator_test). Le script tourne déjà sous
+# clean-env.sh (noms de .env.example et .env du dépôt) ; la copie de travail repasse
+# par son propre clean-env.sh (noms de son .env.example), via composer check.
+(cd "$WORK/src" && bash "$ROOT/scripts/clean-env.sh" composer check)
 end_step
 
 begin_step "5/8 Export de la référence (git archive)"

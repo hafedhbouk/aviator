@@ -23,15 +23,15 @@ Un seul compte Oxahost Ultimate (Tunis) héberge la **recette** et la **producti
 ## Déploiement par archive (D25)
 
 ```text
-Poste (Git Bash)                         Serveur (terminal web de cPanel)
+GitHub Actions « Release » (ou poste)    Serveur (terminal web de cPanel)
 scripts/build-release.sh <réf>           bash install-release.sh <env> <archive>
   composer check (contrôles de la CI)      empreinte SHA-256, sauvegarde de la base,
   composer install --no-dev (PHP 8.3)      maintenance, releases/<version>,
   npm run build                            liens .env et storage/ vers shared/,
   aviator-builds/aviator-<version>.tar.gz  migrate --force, sync-permissions, optimize,
-  + .sha256                                bascule de current, remise en ligne,
+  + .sha256 (artefact, 30 jours)           bascule de current, remise en ligne,
         │                                  check-environment, 3 versions conservées
-        └── FTPS ou gestionnaire de fichiers ──┘
+        └── téléchargement, puis FTPS ──────────┘
 ```
 
 - L'archive contient les dépendances PHP (`vendor/`) et les assets compilés : le serveur n'utilise que `bash`, `tar`, `php` et `mysqldump`. Ni Composer, ni npm, ni Git.
@@ -81,7 +81,14 @@ Le planificateur de l'application traite aussi la file d'attente (`queue:work --
 
 Remplacez `<env>` par `recette` ou `prod`. **Production** : uniquement une étiquette `vX.Y.Z`, après accord explicite, avec une CI verte.
 
-**1. Sur le poste (Git Bash)** :
+**1. Construire l'archive** avec le workflow GitHub « Release ». Le workflow s'arrête si `composer check` échoue : rien n'est alors publié.
+
+- **Recette (branche)** : *Actions → Release → Run workflow* sur la branche. L'archive et son `.sha256` sont publiés comme **artefact** `aviator-<version>`, conservé **30 jours** : le télécharger (fichier `.zip`) et le décompresser (détail : `docs/installation_recette.md`, étape 0).
+- **Production (étiquette)** : pousser l'étiquette, par exemple `git tag -a v1.0.0 -m "v1.0.0" && git push origin v1.0.0`. Le workflow démarre seul. En plus de l'artefact, il crée la **GitHub Release** `v1.0.0`, à laquelle sont attachés `aviator-v1.0.0.tar.gz` et `aviator-v1.0.0.tar.gz.sha256` (empreinte reprise dans les notes), **sans limite de durée** : télécharger les deux fichiers depuis la page *Releases* du dépôt. Seul ce job de publication a le droit d'écrire dans le dépôt (`contents: write`), avec le jeton automatique de l'exécution ; aucun secret n'est enregistré. Un lancement manuel sur une étiquette ne produit qu'un artefact. La Release d'une étiquette ne se crée qu'une fois : pour reconstruire une version publiée, créer une nouvelle étiquette (`v1.0.1`).
+
+Vérifier l'empreinte sur le poste avant l'envoi : `sha256sum --check aviator-<version>.tar.gz.sha256` doit répondre `OK`.
+
+En secours, sur le poste (Git Bash) :
 
 ```bash
 cd /d/aviator
@@ -89,9 +96,7 @@ scripts/build-release.sh <branche>      # recette, par exemple phase/04-parc-lea
 scripts/build-release.sh vX.Y.Z         # production : étiquette existante uniquement
 ```
 
-Le script s'arrête si `composer check` échoue : aucune archive n'est alors produite.
-
-**2. Envoyer l'archive** : `D:\aviator-builds\aviator-<version>.tar.gz` **et** `aviator-<version>.tar.gz.sha256` (même dossier, variable `AVIATOR_BUILD_DIR`) dans `~/deploiement/`, par FTPS (binaire) ou par le gestionnaire de fichiers de cPanel.
+**2. Envoyer l'archive** : `aviator-<version>.tar.gz` **et** `aviator-<version>.tar.gz.sha256` (décompressés de l'artefact, ou dans `D:\aviator-builds` en secours) dans `~/deploiement/`, par FTPS (binaire) ou par le gestionnaire de fichiers de cPanel.
 
 **3. Dans le terminal web de cPanel** :
 
