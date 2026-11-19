@@ -200,6 +200,17 @@ it('refuse une arborescence ou une archive qui contient .env, tests, node_module
         ->and($archive->getErrorOutput())->toContain('.env', 'storage/');
 });
 
+it('construit dans AVIATOR_BUILD_DIR, jamais dans le dossier temporaire du système (contrôle statique)', function () {
+    $script = (string) file_get_contents(base_path('scripts/build-release.sh'));
+
+    expect($script)->toContain('BUILD_DIR="${AVIATOR_BUILD_DIR:-/d/aviator-builds}"')
+        ->toContain('mktemp -d "$BUILD_DIR/work.XXXXXX"')
+        ->not->toMatch('/mktemp -d\s*\)/')
+        ->not->toContain('$ROOT/dist')
+        ->toContain('npm ci --prefer-offline')
+        ->and(substr_count($script, 'mktemp'))->toBe(1);
+});
+
 it('refuse une arborescence qui contient une dépendance de développement', function (string $package) {
     $root = tempDir('release-dev');
     releaseFixture($root.'/stage');

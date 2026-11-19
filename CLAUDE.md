@@ -35,7 +35,7 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 - Montants en `DECIMAL(15,3)`, calculs avec `brick/math`, jamais de `float`.
 - Règles métier dans `app/Domain/*`, appelées par Filament et par l'espace client ; jamais dans les ressources ou les vues.
 - Droits contrôlés côté serveur (policies) ; `AgencyScope` pour les utilisateurs d'agence.
-- Aucune lecture de données d'agence par `DB::table()` ou par du SQL brut, sauf dans `App\Domain\Statistics`, qui applique la portée explicitement (test d'architecture : `DB::table`, `DB::select` et `DB::raw` interdits dans `app/` hors de ce dossier).
+- Aucune lecture de données d'agence par `DB::table()` ou par du SQL brut, sauf dans `App\Domain\Statistics`, qui applique la portée explicitement (test d'architecture `tests/Arch/DatabaseAccessTest.php` : `DB::table`, `DB::select`, `DB::raw`, `DB::statement`, `DB::connection()->select…()`, `selectRaw`, `whereRaw`, `orderByRaw`, `havingRaw` et leurs variantes interdits dans `app/` hors de ce dossier ; seule autre exception déclarée : `EnvironmentProbe`, qui lit des variables techniques de MariaDB).
 - **Carnet d'adresses complet et exports clients : super admin uniquement** ; vérifier aussi recherche globale, sélecteurs, exports de tableaux.
 - Notifications : **push uniquement** (Web Push + `database`), sans donnée sensible dans le texte ; e-mail seulement pour la sécurité des comptes.
 - Code en anglais ; interface, messages et documentation en français.
