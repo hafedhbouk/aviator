@@ -153,7 +153,7 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 
 ### `options`
 
-`id` ; `code` VARCHAR(32) NN U ; `name` VARCHAR(100) NN ; `pricing_unit` VARCHAR(32) NN (`per_day`, `per_rental`) ; `amount` DECIMAL(15,3) NN (HT) ; `max_amount_per_rental` DECIMAL(15,3) N ; `tax_code_id` FK `tax_codes` N (code fiscal ; une option sans code ne peut pas être activée) ; `is_active` BOOLEAN NN ; horodatages.
+`id` ; `code` VARCHAR(32) NN U ; `name` VARCHAR(100) NN ; `pricing_unit` VARCHAR(32) NN (`per_day`, `per_rental`) ; `amount` DECIMAL(15,3) NN (HT) ; `max_amount_per_rental` DECIMAL(15,3) N ; `tax_code_id` FK `tax_codes` N (code fiscal ; une option sans code ne peut pas être activée) ; `is_active` BOOLEAN NN ; horodatages. Réalisé en phase 3, lot L5 : `amount` **N** (prix saisi par l'admin) et `is_active` défaut 0 ; une option ne s'active qu'avec un code fiscal dont la règle est applicable (ni inactive ni PENDING_DOCUMENTATION) et un prix HT > 0 (`SaveOption`) ; `OptionSeeder` crée les 5 options du cahier inactives et sans prix, « livraison » sans code (Q85) ; aucune option supprimée.
 
 ### Paramètres fiscaux (référentiel fiscal v1.0 validé ; conception : `docs/plans/phase_3.md` §3)
 
