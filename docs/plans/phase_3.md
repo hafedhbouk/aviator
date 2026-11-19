@@ -194,6 +194,7 @@ Charge estimée en jours-équivalents d'un développeur Laravel expert, comme en
 | Lot | Prévu (j) | Estimé (j) | Cumul estimé (j) | Cumul prévu (j) | Commentaire |
 | --- | ---: | ---: | ---: | ---: | --- |
 | L1. Société et logo | 1,25 | 1 | 1 | 1,25 | Validé le 19/11/2026 ; la route du logo a réutilisé le disque privé et les en-têtes de la phase 2 |
+| L2. Agences et lieux | 1 | 1 | 2 | 2,25 | Ressource des agences (création sans développement, code fixé à la création, siège non désactivable, pas de désactivation avec des utilisateurs actifs), lieux et horaires (`OpeningHours`), portée par agence |
 
 ## Annexe — décisions reprises
 

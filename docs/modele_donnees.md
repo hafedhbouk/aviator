@@ -135,7 +135,7 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 
 ### `agency_locations`
 
-`id` ; `agency_id` FK RESTRICT, I ; `name` VARCHAR(100) NN ; `address` VARCHAR(255) N ; `is_pickup` BOOLEAN NN défaut 1 ; `is_return` BOOLEAN NN défaut 1 ; `opening_hours` JSON N (par jour : ouverture, fermeture ; pas de recherche dans le JSON) ; `is_active` BOOLEAN NN défaut 1 ; horodatages.
+`id` ; `agency_id` FK RESTRICT, I ; `name` VARCHAR(100) NN ; `address` VARCHAR(255) N ; `is_pickup` BOOLEAN NN défaut 1 ; `is_return` BOOLEAN NN défaut 1 ; `opening_hours` JSON N (clés `monday` à `sunday`, chacune une liste de 0 à 3 plages `{open, close}` en `HH:MM`, triées, sans chevauchement ; jour sans plage = fermé ; null = horaires non renseignés ; heure de Tunis ; validé par `App\Domain\Setup\OpeningHours` ; pas de recherche dans le JSON) ; `is_active` BOOLEAN NN défaut 1 ; horodatages ; **U (`agency_id`, `name`)**. Soumise à `AgencyScope` ; aucun lieu supprimé (désactivation). Réalisé en phase 3, lot L2.
 
 ### `vehicle_categories`
 
