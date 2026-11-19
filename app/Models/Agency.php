@@ -49,6 +49,16 @@ class Agency extends Model
     }
 
     /**
+     * Lieux de prise en charge et de restitution (A-02), soumis à AgencyScope.
+     *
+     * @return HasMany<AgencyLocation, $this>
+     */
+    public function locations(): HasMany
+    {
+        return $this->hasMany(AgencyLocation::class);
+    }
+
+    /**
      * Affectations de remplacement vers cette agence (Q69).
      *
      * @return HasMany<AgencyAssignment, $this>

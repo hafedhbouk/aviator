@@ -18,7 +18,7 @@ function aviatorTables(): array
 
 it('crée toutes les tables du socle (D18)', function () {
     $expected = [
-        'agencies', 'users', 'agency_assignments', 'sequences', 'customers', 'company',
+        'agencies', 'users', 'agency_assignments', 'sequences', 'customers', 'company', 'agency_locations',
         'roles', 'permissions', 'model_has_roles', 'model_has_permissions', 'role_has_permissions',
         'activity_log', 'settings', 'notifications',
         'password_reset_tokens', 'sessions', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs',
@@ -60,7 +60,8 @@ it('protège les agences contre la suppression en cascade', function () {
 
     expect($rules['users'])->toBe('RESTRICT')
         ->and($rules['customers'])->toBe('RESTRICT')
-        ->and($rules['agency_assignments'])->toBe('RESTRICT');
+        ->and($rules['agency_assignments'])->toBe('RESTRICT')
+        ->and($rules['agency_locations'])->toBe('RESTRICT');
 });
 
 it('impose l\'unicité des codes d\'agence et des clés de séquence', function () {
