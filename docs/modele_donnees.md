@@ -131,28 +131,29 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 
 ### `company`
 
-`id` ; `legal_name` VARCHAR(255) NN ; `trade_name` VARCHAR(255) N ; `tax_id` VARCHAR(32) N ; `trade_register` VARCHAR(64) N ; `address` VARCHAR(255) N ; `city` VARCHAR(100) N ; `phone`, `email` N ; `currency` CHAR(3) NN défaut `TND` ; `logo_path` VARCHAR(255) N (disque `private`) ; `invoice_legal_mentions` TEXT N (**rempli seulement à partir d'une règle validée**) ; horodatages. Une seule ligne.
+`id` ; `legal_name` VARCHAR(255) NN ; `trade_name` VARCHAR(255) N ; `tax_id` VARCHAR(32) N ; `trade_register` VARCHAR(64) N ; `address` VARCHAR(255) N ; `city` VARCHAR(100) N ; `phone`, `email` N ; `currency` CHAR(3) NN défaut `TND` ; `logo_path` VARCHAR(255) N (disque `private`, dossier `public-files/company`, PNG, JPEG ou WebP ; servi par la route `/fichiers/public/{chemin}`, D21) ; `invoice_legal_mentions` TEXT N (**rempli seulement à partir d'une règle validée** ; modifiable par le super admin seulement) ; horodatages. Une seule ligne, d'identifiant 1 (`Company::SINGLETON_ID`), créée au premier enregistrement. Réalisé en phase 3, lot L1.
 
 ### `agency_locations`
 
-`id` ; `agency_id` FK RESTRICT, I ; `name` VARCHAR(100) NN ; `address` VARCHAR(255) N ; `is_pickup` BOOLEAN NN défaut 1 ; `is_return` BOOLEAN NN défaut 1 ; `opening_hours` JSON N (par jour : ouverture, fermeture ; pas de recherche dans le JSON) ; `is_active` BOOLEAN NN défaut 1 ; horodatages.
+`id` ; `agency_id` FK RESTRICT, I ; `name` VARCHAR(100) NN ; `address` VARCHAR(255) N ; `is_pickup` BOOLEAN NN défaut 1 ; `is_return` BOOLEAN NN défaut 1 ; `opening_hours` JSON N (clés `monday` à `sunday`, chacune une liste de 0 à 3 plages `{open, close}` en `HH:MM`, triées, sans chevauchement ; jour sans plage = fermé ; null = horaires non renseignés ; heure de Tunis ; validé par `App\Domain\Setup\OpeningHours` ; pas de recherche dans le JSON) ; `is_active` BOOLEAN NN défaut 1 ; horodatages ; **U (`agency_id`, `name`)**. Soumise à `AgencyScope` ; aucun lieu supprimé (désactivation). Réalisé en phase 3, lot L2.
 
 ### `vehicle_categories`
 
-`id` ; `code` VARCHAR(16) NN U ; `name` VARCHAR(100) NN ; `description` TEXT N ; `deposit_amount` DECIMAL(15,3) N (Q14) ; `min_driver_age` TINYINT UNSIGNED N (Q42) ; `min_license_years` TINYINT UNSIGNED N (Q42) ; `included_km_per_day` INT UNSIGNED N (Q43) ; `extra_km_amount` DECIMAL(15,3) N ; `insurance_excess_amount` DECIMAL(15,3) N (Q45) ; `preparation_buffer_minutes` SMALLINT UNSIGNED N (Q41) ; `sort_order` SMALLINT NN défaut 0 ; `is_active` BOOLEAN NN défaut 1 ; horodatages.
+`id` ; `code` VARCHAR(16) NN U ; `name` VARCHAR(100) NN ; `description` TEXT N ; `deposit_amount` DECIMAL(15,3) N (Q14) ; `min_driver_age` TINYINT UNSIGNED N (Q42) ; `min_license_years` TINYINT UNSIGNED N (Q42) ; `included_km_per_day` INT UNSIGNED N (Q43) ; `extra_km_amount` DECIMAL(15,3) N ; `insurance_excess_amount` DECIMAL(15,3) N (Q45) ; `preparation_buffer_minutes` SMALLINT UNSIGNED N (Q41) ; `sort_order` SMALLINT NN défaut 0 ; `is_active` BOOLEAN NN défaut 1 ; horodatages. Vide = valeur générale (`reservations.min_driver_age` 21, `reservations.min_license_years` 2, `reservations.preparation_buffer_minutes` 60 : `App\Settings\ReservationSettings`) ou « non fixé » (caution, kilométrage illimité, prix du km, franchise sans plafond) ; valeurs effectives : `App\Domain\Setup\CategoryRules`. Aucune catégorie supprimée (désactivation). Réalisé en phase 3, lot L3.
 
 ### `seasons`
 
-`id` ; `name` VARCHAR(100) NN ; `starts_on` DATE NN ; `ends_on` DATE NN ; I (`starts_on`, `ends_on`) ; horodatages. Pas de chevauchement (contrôle applicatif).
+`id` ; `name` VARCHAR(100) NN ; `starts_on` DATE NN ; `ends_on` DATE NN ; I (`starts_on`, `ends_on`) ; horodatages. Bornes incluses ; pas de chevauchement (contrôle applicatif sous verrou, `SaveSeason`). Supprimable seulement si aucune grille ne l'utilise. Réalisé en phase 3, lot L4.
 
 ### `rate_plans` et `rate_plan_lines`
 
 - `rate_plans` : `id` ; `vehicle_category_id` FK RESTRICT ; `season_id` FK RESTRICT ; `agency_id` FK RESTRICT **N** (grille commune si nulle, Q10) ; `valid_from` DATE NN ; `valid_to` DATE N ; `is_active` BOOLEAN NN ; horodatages ; I (`vehicle_category_id`, `season_id`, `agency_id`, `valid_from`).
 - `rate_plan_lines` : `id` ; `rate_plan_id` FK CASCADE ; `min_days` SMALLINT UNSIGNED NN ; `max_days` SMALLINT UNSIGNED N ; `daily_amount` DECIMAL(15,3) NN (HT, Q34) ; horodatages ; U (`rate_plan_id`, `min_days`).
+- Réalisé en phase 3, lot L4 (index de recherche nommé `rate_plans_lookup_index`, nom par défaut trop long pour MariaDB). Règles (`SaveRatePlan`, `RateLines`) : une seule grille **active** par catégorie, saison et agence sur une même période de validité (contrôle sous verrou de la catégorie) ; validité appliquée au **jour loué** (Q88) ; tranches continues depuis 1 jour, dernière sans limite, prix > 0 ; tranches remplacées ensemble, journalisées sur la grille (`rate_plan_lines_updated`, avant et après) ; aucune grille supprimée. Prix d'un jour : `App\Domain\Setup\RateResolver` (grille de l'agence, sinon grille commune ; aucun prix plutôt que zéro).
 
 ### `options`
 
-`id` ; `code` VARCHAR(32) NN U ; `name` VARCHAR(100) NN ; `pricing_unit` VARCHAR(32) NN (`per_day`, `per_rental`) ; `amount` DECIMAL(15,3) NN (HT) ; `max_amount_per_rental` DECIMAL(15,3) N ; `tax_code_id` FK `tax_codes` N (code fiscal ; une option sans code ne peut pas être activée) ; `is_active` BOOLEAN NN ; horodatages.
+`id` ; `code` VARCHAR(32) NN U ; `name` VARCHAR(100) NN ; `pricing_unit` VARCHAR(32) NN (`per_day`, `per_rental`) ; `amount` DECIMAL(15,3) NN (HT) ; `max_amount_per_rental` DECIMAL(15,3) N ; `tax_code_id` FK `tax_codes` N (code fiscal ; une option sans code ne peut pas être activée) ; `is_active` BOOLEAN NN ; horodatages. Réalisé en phase 3, lot L5 : `amount` **N** (prix saisi par l'admin) et `is_active` défaut 0 ; une option ne s'active qu'avec un code fiscal dont la règle est applicable (ni inactive ni PENDING_DOCUMENTATION) et un prix HT > 0 (`SaveOption`) ; `OptionSeeder` crée les 5 options du cahier inactives et sans prix, « livraison » sans code (Q85) ; aucune option supprimée.
 
 ### Paramètres fiscaux (référentiel fiscal v1.0 validé ; conception : `docs/plans/phase_3.md` §3)
 
@@ -162,14 +163,15 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 - `tax_codes` : `id` ; `code` VARCHAR(48) NN U (les 15 codes du référentiel) ; `label` VARCHAR(100) NN ; `nature` VARCHAR(16) NN (`taxable`, `exempt`, `out_of_scope`) ; `requires_justification` BOOLEAN NN ; `legal_reference` VARCHAR(255) N ; `description` TEXT N ; horodatages. Liste fermée, créée par un seeder.
 - `tax_rules` : `id` ; `tax_code_id` FK RESTRICT ; `rate` DECIMAL(7,4) N (nul si non taxable) ; `valid_from` DATE NN ; `valid_to` DATE N ; `validation_status` VARCHAR(32) NN ; `fiscal_reference_id` FK N ; `is_active` BOOLEAN NN ; `created_by` FK N ; horodatages ; I (`tax_code_id`, `valid_from`). Jamais modifiée sur place : un changement crée une nouvelle version ; aucun chevauchement pour un même code.
 - `stamp_duty_rules` : `id` ; `rule_code` VARCHAR(48) NN ; `description` VARCHAR(255) NN ; `amount` DECIMAL(15,3) NN ; `applicability` VARCHAR(255) NN ; `exemption_condition` VARCHAR(255) N ; `legal_reference` VARCHAR(255) N ; `effective_from` DATE NN ; `effective_to` DATE N ; `validation_status` VARCHAR(32) NN ; `fiscal_reference_id` FK N ; `is_active` BOOLEAN NN ; horodatages. Règle de base : 1,000 DT par facture (CONFIRMED) ; exonérations de l'article 118 en `PENDING_DOCUMENTATION`, inactives.
+- **Réalisé en phase 3, lot L6.** Écarts de taille : `tax_codes.code` et `stamp_duty_rules.rule_code` VARCHAR(64), `tax_codes.label` et `legal_reference` VARCHAR(255) NN, `validation_source`, `description`, `applicability` et `exemption_condition` VARCHAR(500) ; `stamp_duty_rules.created_by` FK N ajouté. Valeurs initiales : `FiscalReferenceSeeder` (référence v1.0 et SHA-256, 15 codes, 15 règles prenant effet le 18/11/2026, timbre `STANDARD` 1,000 DT, exonérations `EXEMPT_ART118_NOT_ACCEPTED`, `EXEMPT_ART118_NOT_PAID`, `EXEMPT_ART118_EXPORT` inactives) ; idempotent, ne modifie jamais l'existant ; lancé par `db:seed` à la première installation. Les modèles interdisent la modification sur place (seuls `valid_to`/`effective_to` et `is_active` changent) et la suppression ; référence et codes immuables. Services : `App\Domain\Tax\TaxRuleResolver` (code exact, refuse PENDING_DOCUMENTATION, inactive, date sans règle), `TaxCalculator` (§5, réglage `billing.vat_rounding_mode`, Q86), `StampDutyResolver`, `FiscalGuard` (ligne « Règles fiscales » de `aviator:check-environment`) ; actions `AddTaxRuleVersion`, `AddStampDutyRuleVersion`, `SetFiscalRuleActive` (super admin, journalisées). Rapport de configuration fiscale : `App\Domain\TaxReporting` (écran, XLSX, version imprimable avec zone de signature).
 
 ### `payment_methods`
 
-`id` ; `code` VARCHAR(32) NN U (`cash`, `cheque`, `card`, `transfer`, `bill_of_exchange`) ; `name` VARCHAR(100) NN ; `requires_reference` BOOLEAN NN ; `is_active` BOOLEAN NN ; horodatages.
+`id` ; `code` VARCHAR(32) NN U (`cash`, `cheque`, `card`, `transfer`, `bill_of_exchange`) ; `name` VARCHAR(100) NN ; `requires_reference` BOOLEAN NN ; `is_active` BOOLEAN NN ; horodatages. Réalisé en phase 3, lot L7 : code fixé à la création, aucune suppression ; `PaymentMethodSeeder` (référence exigée sauf pour les espèces). Conditions de paiement : réglage `billing.payment_terms_days` (0 = comptant, Q89).
 
 ### `suppliers`
 
-`id` ; `type` VARCHAR(32) NN (`garage`, `insurer`, `leasing_company`, `bank`, `other`) ; `name` VARCHAR(255) NN ; `tax_id` VARCHAR(32) N ; `phone`, `email`, `address` N ; `is_active` BOOLEAN NN ; horodatages ; I (`type`, `name`).
+`id` ; `type` VARCHAR(32) NN (`garage`, `insurer`, `leasing_company`, `bank`, `other`) ; `name` VARCHAR(255) NN ; `tax_id` VARCHAR(32) N ; `phone`, `email`, `address` N ; `is_active` BOOLEAN NN ; horodatages ; I (`type`, `name`). Réalisé en phase 3, lot L9 : super admin et admin seulement, aucune suppression, matricule fiscal sans format imposé.
 
 ---
 

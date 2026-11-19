@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company;
 use App\Settings\NotificationSettings;
 use App\Support\Environment\CheckResult;
 use App\Support\Environment\CheckStatus;
@@ -7,6 +8,7 @@ use App\Support\Environment\EnvironmentChecker;
 use App\Support\Environment\EnvironmentProbe;
 use App\Support\Scheduling\SchedulerHeartbeat;
 use Carbon\CarbonImmutable;
+use Database\Seeders\FiscalReferenceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Fixtures\Environment\FakeEnvironmentProbe;
 
@@ -37,6 +39,10 @@ beforeEach(function () {
         'mail.mailers.smtp.host' => 'mail.aviator.example',
         'mail.from.address' => 'noreply@aviator.example',
     ]);
+
+    // Paramètres fiscaux conformes : référentiel validé et mentions des factures saisies.
+    app(FiscalReferenceSeeder::class)->run();
+    Company::query()->forceCreate(['id' => Company::SINGLETON_ID, 'legal_name' => 'Aviator', 'invoice_legal_mentions' => 'Mentions validées']);
 
     $this->travelTo(CarbonImmutable::parse('2026-11-18 10:00:00', 'Africa/Tunis'));
     app(SchedulerHeartbeat::class)->beat();

@@ -24,6 +24,11 @@ enum Permission: string
 
     case ExportsAccounting = 'exports.accounting';
 
+    // Paramétrage (module A, phase 3).
+    case ReferenceDataManage = 'reference_data.manage';
+    case FiscalManage = 'fiscal.manage';
+    case SettingsManage = 'settings.manage';
+
     /**
      * Profils qui reçoivent cette permission par défaut.
      *
@@ -37,10 +42,13 @@ enum Permission: string
             self::CustomersAddressBook,
             self::CustomersExport,
             self::CustomersExportNames,
-            self::CustomersNotifyBulk => [Role::SuperAdmin],
+            self::CustomersNotifyBulk,
+            self::FiscalManage,
+            self::SettingsManage => [Role::SuperAdmin],
 
             self::AgenciesAll,
-            self::ExportsAccounting => [Role::SuperAdmin, Role::Admin],
+            self::ExportsAccounting,
+            self::ReferenceDataManage => [Role::SuperAdmin, Role::Admin],
 
             self::CustomersViewNames => [Role::SuperAdmin, Role::Admin, Role::AgencyUser],
         };
@@ -72,6 +80,9 @@ enum Permission: string
             self::CustomersViewNames => 'Voir les noms des clients dans les listes métier',
             self::CustomersNotifyBulk => 'Envoyer des notifications groupées aux clients',
             self::ExportsAccounting => 'Produire les exports pour l\'expert-comptable',
+            self::ReferenceDataManage => 'Modifier le paramétrage (société, agences, catégories, tarifs, options, fournisseurs)',
+            self::FiscalManage => 'Modifier les paramètres fiscaux et les mentions des factures',
+            self::SettingsManage => 'Modifier les réglages (réservation, tarification, facturation, approbations, notifications, sécurité)',
         };
     }
 }
