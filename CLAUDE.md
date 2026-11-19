@@ -14,6 +14,7 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 
 1. **Plan avant code**, validé quand la phase le demande.
 2. **Rien n'est « fait » sans test exécuté** : cite la commande et son résultat.
+   **Aucune affirmation « appliqué » ou « testé » dans la documentation** sans un test qui prouve le comportement réel. Un test qui déclenche lui-même l'événement attendu ne compte pas.
 3. **Aucune règle fiscale inventée** (TVA, timbre, mentions, numérotation) : seuls les documents de `docs/reference/regles_fiscales_validees/` font foi. Une règle fiscale est validée si elle y figure avec une **confirmation écrite du cabinet** ou une **attestation écrite de la direction d'Aviator**.
    **Référentiel fiscal versionné** : la version validée dans `regles_fiscales_validees/` ne se modifie jamais. Toute nouvelle version du référentiel exige une nouvelle confirmation signée du cabinet ; elle s'ajoute à côté de l'ancienne, avec sa propre confirmation.
 4. **Signaler plutôt que deviner** : question dans `docs/questions_ouvertes.md` + valeur par défaut paramétrable.
@@ -34,7 +35,7 @@ Le détail complet est dans la skill **`aviator-laravel`** : charge-la pour tout
 - Montants en `DECIMAL(15,3)`, calculs avec `brick/math`, jamais de `float`.
 - Règles métier dans `app/Domain/*`, appelées par Filament et par l'espace client ; jamais dans les ressources ou les vues.
 - Droits contrôlés côté serveur (policies) ; `AgencyScope` pour les utilisateurs d'agence.
-- Aucune lecture de données d'agence par `DB::table()` ou par du SQL brut, sauf dans `App\Domain\Statistics`, qui applique la portée explicitement (test d'architecture : `DB::table`, `DB::select` et `DB::raw` interdits dans `app/` hors de ce dossier).
+- Aucune lecture de données d'agence par `DB::table()` ou par du SQL brut, sauf dans `App\Domain\Statistics`, qui applique la portée explicitement (test d'architecture `tests/Arch/DatabaseAccessTest.php` : `DB::table`, `DB::select`, `DB::raw`, `DB::statement`, `DB::connection()->select…()`, `selectRaw`, `whereRaw`, `orderByRaw`, `havingRaw` et leurs variantes interdits dans `app/` hors de ce dossier ; seule autre exception déclarée : `EnvironmentProbe`, qui lit des variables techniques de MariaDB).
 - **Carnet d'adresses complet et exports clients : super admin uniquement** ; vérifier aussi recherche globale, sélecteurs, exports de tableaux.
 - Notifications : **push uniquement** (Web Push + `database`), sans donnée sensible dans le texte ; e-mail seulement pour la sécurité des comptes.
 - Code en anglais ; interface, messages et documentation en français.

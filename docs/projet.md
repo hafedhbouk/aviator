@@ -3,7 +3,7 @@
 > Lue par Claude Code au début de chaque session. Mettez-la à jour à chaque validation de phase.
 > Les valeurs `[À COMPLÉTER]` sont demandées au moment de la phase qui en a besoin.
 
-Dernière mise à jour : 18/11/2026
+Dernière mise à jour : 19/11/2026
 
 ## 1. Projet
 
@@ -26,7 +26,7 @@ Dernière mise à jour : 18/11/2026
 | PHP | 8.3 (maximum disponible chez Oxahost) |
 | Base de données | MariaDB 10.11.19 en production (confirmé par Oxahost le 17/11/2026) ; MariaDB 10.11 en local |
 | Poste de développement | Windows 11 + Laragon (PHP 8.3.16, MariaDB 10.11) ; dépôt dans `D:\aviator`, jonction `C:\laragon\www\aviator` → `D:\aviator` pour Laragon ; `https://aviator.test` — `docs/installation_poste_dev.md` |
-| Dépôt Git | [À COMPLÉTER] |
+| Dépôt Git | https://github.com/hafedhbouk/aviator (privé) ; `main` protégée, fusion par pull request après revue |
 | Hébergement | Oxahost Ultimate (mutualisé cPanel), Tunis — `docs/installation_hebergement_oxahost.md` |
 | Domaine | [À COMPLÉTER — question Q6] |
 | Recette | [À COMPLÉTER — par exemple `recette.<domaine>`], protégée par mot de passe |
@@ -37,7 +37,7 @@ Dernière mise à jour : 18/11/2026
 
 | Rôle | Nom | Valide |
 | --- | --- | --- |
-| Responsable technique et développeur | [À COMPLÉTER] | Toutes les phases ; déploiements |
+| Responsable technique et développeur | Hafedh | Toutes les phases ; déploiements |
 | Super admin (direction d'Aviator) | [À COMPLÉTER — Q2] | Phases 1, 7, 9, 10, 11 ; approbations |
 | Admin du siège (Djerba) | [À COMPLÉTER] | Phases 3, 4, 6 |
 | Expert-comptable | [À COMPLÉTER] | Taxes des factures (phase 6), format des exports (phase 8) |
@@ -56,8 +56,8 @@ Dernière mise à jour : 18/11/2026
 
 | Phase | Lot | Charge prévue (j) | Charge réelle (j) | Statut | Validée par | Date | Réserves |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1. Analyse et maquettes | 1 | 12 | | Validée avec réserves | [À COMPLÉTER] | 17/11/2026 | 1) Ateliers avec les 4 agences, à tenir pendant la phase 2 et avant la phase 4 ; 2) Q27 (carnet d'adresses) appliquée par défaut, à confirmer par la direction ; 3) Q70 : bascule du poste et des tests en MariaDB 10.11, à vérifier en phase 2. Rapport : `docs/rapports/phase_1.md` |
-| 2. Architecture et socle | 1 | 19 | 20,5 | **Validée avec réserves** | Hafedh | 18/11/2026 | Rapport : `docs/rapports/phase_2.md`. **Réserve n° 1** : installation en recette (domaine, Q6) et résultat d'`aviator:check-environment` joint, au plus tard avant la fin de la phase 3. Charge : 20,25 j (plafond) + 0,25 j accordés au-delà du plafond pour la levée de la réserve ; 1,25 j hors lots imputés à la demande d'évolution |
+| 1. Analyse et maquettes | 1 | 12 | | Validée avec réserves | Hafedh | 17/11/2026 | 1) Ateliers avec les 4 agences, à tenir pendant la phase 2 et avant la phase 4 ; 2) Q27 (carnet d'adresses) appliquée par défaut, à confirmer par la direction ; 3) Q70 : bascule du poste et des tests en MariaDB 10.11, à vérifier en phase 2. Rapport : `docs/rapports/phase_1.md` |
+| 2. Architecture et socle | 1 | 19 | 21,75 | **Validée avec réserves** | Hafedh | 18/11/2026 | Rapport : `docs/rapports/phase_2.md`. **Réserve n° 1** : installation en recette (domaine, Q6) et résultat d'`aviator:check-environment` joint, au plus tard avant la fin de la phase 3. Charge réelle : 20,25 j (lots 1 à 11) + **1,5 j de dette corrigée après revue** (lot correctif `fix/02-dette`, imputé à la phase 2, rapport §11), soit +14,5 % sur la référence, au-delà du plafond de 20,25 j. Prévu en plus : 0,25 j pour lever la réserve (non consommés) |
 | 3. Paramétrage et référentiels | 1 | 16 | | **Plan validé** (18/11/2026) ; à démarrer après la fusion de la phase 2 dans `main` | | | Projeté **19 j** (+18,75 %, seuil d'alerte 19,2 j) : reports de la phase 2 (0,25 j) et demande d'évolution du cabinet, part indispensable (2,75 j). Plan : `docs/plans/phase_3.md` |
 | 4. Parc, leasing et réservations | 1 | 39 | | | | | Projeté 41,75 j : reports de la phase 2 (`docs/plans/phase_4.md`) |
 | 5. Contrats et états des lieux | 1 | 30 | | | | | Projeté 30 j : `drivers` avancé en phase 4 (−0,5 j) ; dossier de dommage comme justificatif fiscal (+0,5 j, référentiel du cabinet) (`docs/plans/phase_5.md`) |
@@ -68,7 +68,7 @@ Dernière mise à jour : 18/11/2026
 | 10. Recette et mise en production du lot 1 | 1 | 19 | | | | | |
 | 11. Espace client | 2 | 45 | | | | | |
 | **Total** | | **290** | | | | | |
-| **Écart cumulé du lot 1** (au 18/11/2026) | 1 | **245** prévus | **267** projetés | **+22 j (+9,0 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 à 20,5 j (D25 ; levée de la réserve +0,25 j) ; demande d'évolution du cabinet et de la direction : part indispensable du cabinet, clôture mensuelle comprise (+14,5 j), numérotation D27 (+2 j : phase 6 1 j, phase 9 1 j), analyse hors lots de la phase 2 (+1,25 j). Sans multidevise (D26). Facturation électronique TTN : avenant séparé, hors lot 1. Mise à jour à chaque fin de phase |
+| **Écart cumulé du lot 1** (au 19/11/2026) | 1 | **245** prévus | **268,5** projetés | **+23,5 j (+9,6 %)** | | | Phases 3 à 10 : référence corrigée des reports chiffrés ; phase 1 comptée à sa référence (12 j, charge réelle à renseigner) ; phase 2 : 21,75 j réalisés (dont 1,5 j de dette corrigée après revue) + 0,25 j prévus pour lever la réserve ; demande d'évolution du cabinet et de la direction : part indispensable du cabinet, clôture mensuelle comprise (+14,5 j), numérotation D27 (+2 j : phase 6 1 j, phase 9 1 j), analyse hors lots de la phase 2 (+1,25 j). Sans multidevise (D26). Facturation électronique TTN : avenant séparé, hors lot 1. Mise à jour à chaque fin de phase |
 
 Statuts : À démarrer · En cours · En attente de validation · Validée · Validée avec réserves.
 
@@ -94,6 +94,7 @@ Statuts : À démarrer · En cours · En attente de validation · Validée · Va
 | 18/11/2026 | **Demande d'évolution du cabinet** (`docs/analyse_ecarts_cabinet.md`, validée avec décisions provisoires) : part indispensable (8,75 j) intégrée au lot 1, phases 3 (+2,25 j), 6 (+3,75 j) et 8 (+2,75 j) ; écart cumulé du lot 1 : +12,75 j (+5,2 %). En attente de la direction : clôture mensuelle déplacée en phase 9 (+3,5 j) ; multidevise minimale, option chiffrée à part (+1,75 j) selon Q78 ; exports quotidiens automatiques reportés (export manuel par période dans le lot 1). Facturation électronique TEIF / TTN : avenant séparé, hors lot 1 ; interface `ElectronicInvoicingProvider` (0,75 j) dans le lot 1. Synthèse pour la direction : `docs/demande_evolution_cabinet.md` | Responsable technique ; **à confirmer par la direction** |
 | 18/11/2026 | **Référentiel fiscal v1.0 du cabinet** : remplace les spécifications du 18/11 pour la conception ; statuts CONFIRMED / CONDITIONAL / PENDING_DOCUMENTATION (§8) ; 15 codes fiscaux, qualification selon la nature réelle avec justificatif pour l'exonéré et le hors champ, table `stamp_duty_rules`, numérotation `AVI-000001` sans remise à zéro, clôture mensuelle devenue exigence du cabinet. Part indispensable portée à 14,5 j ; écart cumulé du lot 1 : +18,5 j (+7,6 %). Confirmation PDF du 18/11 **non retenue** (modèle non rempli, sans nom ni signature) : aucune règle applicable en production en attendant la confirmation nominative | Responsable technique ; **à confirmer par la direction** |
 | 18/11/2026 | **Référentiel fiscal v1.0 validé** : confirmation du cabinet conservée par Aviator, attestée par Faouzi Bannour, directeur général, le 18/11/2026 (`docs/reference/regles_fiscales_validees/`). Référentiel copié sans modification dans `regles_fiscales_validees/`, avec un README (source, fichiers, SHA-256). Règles du référentiel notées CONFIRMED : applicables ; CONDITIONAL et PENDING_DOCUMENTATION inchangées. Règle 3 de `CLAUDE.md` : validation par confirmation écrite du cabinet ou attestation écrite de la direction. Rapport de configuration fiscale à signer par la direction avant la mise en production (phase 10) | Direction ; responsable technique |
+| 19/11/2026 | **Dette de la phase 2 corrigée après revue** (branche `fix/02-dette`, imputée à la phase 2 : 1,5 j) : règle D19 appliquée aux pages de réinitialisation et de profil ; blocages de connexion journalisés ; test d'architecture du SQL brut étendu ; route `/` redirigée ; migrations `agency_user` fusionnées ; `build-release.sh` exécuté de bout en bout. Règle ajoutée à `CLAUDE.md` : aucune affirmation « appliqué » ou « testé » sans un test du comportement réel. Lot 1 : 268,5 j (+9,6 %) | Hafedh (responsable technique) |
 | 18/11/2026 | **Phase 2 validée avec réserves** (réserve n° 1 : installation en recette avant la fin de la phase 3) ; **plan de la phase 3 validé** ; 1,25 j hors lots imputés à la demande d'évolution du cabinet et de la direction ; 0,25 j accordés au-delà du plafond pour lever la réserve ; cahier des charges aligné (A-07, RG-07, Q11). Lot 1 : 267 j (+9,0 %) | Hafedh (responsable technique) |
 | 18/11/2026 | **Arbitrages D27** : réglage initial au format du référentiel validé (`AVI-{SEQUENCE}`, `AV-{SEQUENCE}`) ; format avec l'année prévu mais désactivé jusqu'à une confirmation écrite du cabinet (sinon, la production démarre avec le format validé) ; courriel de la direction à confirmer jusqu'à la confirmation nominative de Faouzi Bannour ; écran de numérotation en phase 9, commande Artisan en phase 6 ; factures complémentaires en série `AVI-` par défaut. Phase 6 : 37 j (+19,4 %) ; phase 9 : 43 j (+13,2 %) ; lot 1 : 265,5 j (+8,4 %) | Responsable technique |
 | 18/11/2026 | **D27 : numérotation des factures et des avoirs** (Q30) : séries distinctes `AVI-{YEAR}-{SEQUENCE}` et `AV-{YEAR}-{SEQUENCE}`, compteurs continus et indépendants, remise à zéro verrouillée, format modifiable par le super admin. Phase 6 : +1,75 j, soit +21,8 % (au-delà du seuil) ; lot 1 : 265,25 j (+8,3 %). **À arbitrer** : (1) le format avec l'année diffère du format recommandé par le référentiel validé (`AVI-000001`, §4.1), et le référentiel (§4.2) comme le courriel exigent la confirmation du cabinet pour les modalités de séquencement avant la mise en production ; (2) le courriel est signé « La Direction », sans nom ni fonction | Direction ; responsable technique |

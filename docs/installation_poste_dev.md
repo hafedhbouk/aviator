@@ -193,6 +193,7 @@ L'ancienne skill `tunisia-car-rental-erpnext` (dans `C:\Users\<vous>\.claude\ski
 | MariaDB ne démarre pas après le changement de version | Dossier de données de MySQL 8.4 réutilisé : laisser Laragon en créer un nouveau, puis recréer les bases (§2.2) |
 | `Unknown collation: 'utf8mb4_0900_ai_ci'` | Script ou dump issu de MySQL 8 : remplacer par `utf8mb4_unicode_ci` |
 | Les tests passent sur SQLite au lieu de MariaDB | Retirer `DB_CONNECTION` et `DB_DATABASE` de `phpunit.xml` : ces variables priment sur `.env.testing` |
+| « Tests arrêtés : environnement « local »… » ou « …base « aviator_dev »… » ; cookie « C:/Program Files/Git/ » | Le terminal exporte les variables de `.env` (par exemple après `set -a; source .env`) : elles priment sur `.env.testing`, et Git Bash déforme celles qui commencent par `/` (`SESSION_PATH`). Ne jamais charger `.env` dans le terminal ; ouvrir un nouveau terminal, puis relancer Claude Code depuis celui-ci. Le garde-fou de `tests/TestCase.php` arrête la suite avant toute écriture ; `build-release.sh` retire lui-même toutes les variables nommées dans `.env.example` |
 | Erreur `gmp` ou `sodium` lors de l'installation d'un paquet | Activer l'extension, redémarrer Laragon |
 | `aviator.test` ne répond pas | Laragon → Reload ; vérifier que le dossier `public/` existe (après la phase 2) |
 | Notifications push muettes | HTTPS local activé, navigateur autorisé ; pour l'iPhone, tester sur la recette |

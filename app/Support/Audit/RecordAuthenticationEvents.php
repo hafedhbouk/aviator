@@ -6,15 +6,19 @@ namespace App\Support\Audit;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Failed;
-use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Journal de sécurité des connexions (J-04) : réussites, échecs, blocages,
  * déconnexions, réinitialisations de mot de passe. Jamais de mot de passe.
+ *
+ * Les blocages ne passent pas par un événement Laravel : Filament n'en déclenche
+ * aucun quand il refuse une tentative. La page de connexion (App\Filament\Auth\Login)
+ * appelle throttled() à chaque tentative refusée.
  */
 final class RecordAuthenticationEvents
 {
@@ -23,7 +27,6 @@ final class RecordAuthenticationEvents
         $events->listen(Login::class, [$this, 'login']);
         $events->listen(Logout::class, [$this, 'logout']);
         $events->listen(Failed::class, [$this, 'failed']);
-        $events->listen(Lockout::class, [$this, 'lockout']);
         $events->listen(PasswordReset::class, [$this, 'passwordReset']);
     }
 
@@ -46,13 +49,28 @@ final class RecordAuthenticationEvents
         ]);
     }
 
-    public function lockout(Lockout $event): void
+    /**
+     * Tentative de connexion refusée par la limite de Filament. La première d'un
+     * blocage est inscrite en login_lockout, les suivantes en login_throttled, tant
+     * que le blocage dure (même adresse IP).
+     */
+    public function throttled(?string $email, int $secondsUntilAvailable): void
     {
-        $email = $event->request->input('email');
+        $startsLockout = Cache::add(
+            'aviator:login-lockout:'.sha1((string) request()->ip()),
+            true,
+            max(1, $secondsUntilAvailable),
+        );
 
-        $this->record('login_lockout', 'Connexions bloquées après trop d\'échecs', null, [
-            'email' => is_string($email) ? mb_strtolower($email) : null,
-        ]);
+        $this->record(
+            $startsLockout ? 'login_lockout' : 'login_throttled',
+            $startsLockout ? 'Connexions bloquées après trop de tentatives' : 'Tentative de connexion refusée pendant un blocage',
+            null,
+            [
+                'email' => $email === null ? null : mb_strtolower($email),
+                'retry_after_seconds' => $secondsUntilAvailable,
+            ],
+        );
     }
 
     public function passwordReset(PasswordReset $event): void

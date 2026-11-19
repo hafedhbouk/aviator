@@ -29,12 +29,12 @@ git checkout phase/02-architecture-socle && git pull
 scripts/build-release.sh phase/02-architecture-socle
 ```
 
-Le script prend une copie de travail temporaire de la branche, lance `composer check` (mêmes contrôles que la CI), installe les dépendances de production (`composer install --no-dev`, plateforme PHP 8.3), compile les assets et produit :
+Le script prend une copie de travail de la branche, lance `composer check` (mêmes contrôles que la CI), installe les dépendances de production (`composer install --no-dev`, plateforme PHP 8.3), compile les assets et produit, dans `D:\aviator-builds` (variable `AVIATOR_BUILD_DIR` ; dossier à exclure de l'antivirus du poste) :
 
-- `dist/aviator-<version>.tar.gz` : sans `.env`, sans tests, sans `node_modules`, sans `.git`, avec la structure vide de `storage/` ;
-- `dist/aviator-<version>.tar.gz.sha256` : son empreinte.
+- `aviator-<version>.tar.gz` : sans `.env`, sans tests, sans `node_modules`, sans `.git`, avec la structure vide de `storage/` ;
+- `aviator-<version>.tar.gz.sha256` : son empreinte.
 
-Le dossier de travail du poste n'est pas modifié. Si un contrôle échoue, aucune archive n'est produite.
+Le dossier de travail du dépôt n'est pas modifié. Si un contrôle échoue, aucune archive n'est produite. La durée de chaque étape est affichée.
 
 Préparez aussi, dans le gestionnaire de mots de passe d'Aviator, une fiche « Recette » qui recevra : le mot de passe de la base, celui du compte e-mail, celui du compte FTP, `APP_KEY` et `AVIATOR_BLIND_INDEX_KEY` (étape 5).
 

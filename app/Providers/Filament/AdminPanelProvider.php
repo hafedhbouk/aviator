@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\EditProfile;
+use App\Filament\Auth\Login;
+use App\Filament\Auth\ResetPassword;
 use App\Http\Middleware\EnsurePrivilegedTwoFactor;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -29,9 +32,11 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('Aviator')
-            ->login()
-            ->passwordReset()
-            ->profile(isSimple: false)
+            // Pages d'authentification d'Aviator : règles D19 sur le mot de passe et
+            // journalisation des blocages de connexion (app/Filament/Auth).
+            ->login(Login::class)
+            ->passwordReset(resetAction: ResetPassword::class)
+            ->profile(EditProfile::class, isSimple: false)
             // 2FA par application (TOTP) avec codes de récupération. « isRequired » enregistre la
             // page d'activation ; EnsurePrivilegedTwoFactor ne l'impose qu'au super admin et à l'admin (D9).
             ->multiFactorAuthentication(

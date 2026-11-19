@@ -8,13 +8,7 @@ use App\Models\User;
 use App\Support\Authorization\Role;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
-use Illuminate\Auth\Events\Failed;
-use Illuminate\Auth\Events\Lockout;
-use Illuminate\Auth\Events\Login;
-use Illuminate\Auth\Events\Logout;
-use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
 use Livewire\Livewire;
 use Spatie\Activitylog\Models\Activity;
 
@@ -122,35 +116,8 @@ it('n\'écrit rien quand rien n\'a changé', function () {
 
 // --- Journal de sécurité des connexions (J-04) --------------------------------
 
-it('journalise les connexions, déconnexions et réinitialisations de mot de passe', function () {
-    $user = userWithProfile(Role::AgencyUser);
-
-    event(new Login('web', $user, false));
-    event(new Logout('web', $user));
-    event(new PasswordReset($user));
-
-    $events = Activity::query()->where('log_name', 'security')->where('causer_id', $user->id)->pluck('event')->all();
-
-    expect($events)->toContain('login', 'logout', 'password_reset');
-});
-
-it('journalise un échec de connexion sans le mot de passe essayé', function () {
-    $user = userWithProfile(Role::Admin);
-
-    event(new Failed('web', $user, ['email' => strtoupper($user->email), 'password' => 'Mauvais#Mot-2026']));
-
-    $activity = Activity::query()->where('log_name', 'security')->where('event', 'login_failed')->sole();
-
-    expect($activity->properties['email'])->toBe(mb_strtolower($user->email))
-        ->and((string) json_encode($activity->properties))->not->toContain('Mauvais#Mot-2026');
-});
-
-it('journalise un blocage après trop d\'échecs', function () {
-    event(new Lockout(Request::create('/admin/login', 'POST', ['email' => 'inconnu@example.test'])));
-
-    expect(Activity::query()->where('log_name', 'security')->where('event', 'login_lockout')->value('properties')['email'])
-        ->toBe('inconnu@example.test');
-});
+// Connexions, déconnexions, échecs, blocages et réinitialisations : vrais parcours
+// par les pages du back-office, dans tests/Feature/Auth/AuthenticationFlowsTest.php.
 
 // --- Page du journal ----------------------------------------------------------
 

@@ -677,7 +677,7 @@ Toutes les valeurs par défaut viennent de `docs/questions_ouvertes.md`. Groupes
 | `fleet:check-status` | Chaque jour à 03:00 | Signale les écarts entre statut et documents (§7) |
 | `stats:aggregate` | Chaque nuit à 02:00 | Mois en cours, plus les mois marqués « à recalculer » |
 | `storage:check-usage` | Chaque jour | Alerte au-delà de 80 % |
-| Sauvegarde de la base | Chaque nuit | Selon Q71 : `spatie/laravel-backup` ou export PHP, **stockage en Tunisie uniquement** |
+| Sauvegarde de la base | Chaque nuit, et avant chaque installation | Pas de tâche dans l'application : `exec` est désactivée chez Oxahost (D14), `spatie/laravel-backup` est retiré. Sauvegardes JetBackup d'Oxahost (quotidiennes) et `mysqldump` par `install-release.sh` avant chaque installation (D25). **Stockage en Tunisie uniquement** |
 
 ---
 

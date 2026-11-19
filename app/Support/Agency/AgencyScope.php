@@ -40,14 +40,7 @@ final class AgencyScope implements Scope
             return;
         }
 
-        $agencyIds = $user->authorizedAgencyIds();
-
-        if ($agencyIds === []) {
-            $builder->whereRaw('1 = 0');
-
-            return;
-        }
-
-        $builder->whereIn($model->qualifyColumn('agency_id'), $agencyIds);
+        // Sans agence autorisée, whereIn([]) ne renvoie aucune ligne (Laravel produit « 0 = 1 »).
+        $builder->whereIn($model->qualifyColumn('agency_id'), $user->authorizedAgencyIds());
     }
 }

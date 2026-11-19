@@ -28,7 +28,7 @@ scripts/build-release.sh <réf>           bash install-release.sh <env> <archive
   composer check (contrôles de la CI)      empreinte SHA-256, sauvegarde de la base,
   composer install --no-dev (PHP 8.3)      maintenance, releases/<version>,
   npm run build                            liens .env et storage/ vers shared/,
-  dist/aviator-<version>.tar.gz            migrate --force, sync-permissions, optimize,
+  aviator-builds/aviator-<version>.tar.gz  migrate --force, sync-permissions, optimize,
   + .sha256                                bascule de current, remise en ligne,
         │                                  check-environment, 3 versions conservées
         └── FTPS ou gestionnaire de fichiers ──┘
@@ -91,7 +91,7 @@ scripts/build-release.sh vX.Y.Z         # production : étiquette existante uniq
 
 Le script s'arrête si `composer check` échoue : aucune archive n'est alors produite.
 
-**2. Envoyer l'archive** : `dist/aviator-<version>.tar.gz` **et** `dist/aviator-<version>.tar.gz.sha256` dans `~/deploiement/`, par FTPS (binaire) ou par le gestionnaire de fichiers de cPanel.
+**2. Envoyer l'archive** : `D:\aviator-builds\aviator-<version>.tar.gz` **et** `aviator-<version>.tar.gz.sha256` (même dossier, variable `AVIATOR_BUILD_DIR`) dans `~/deploiement/`, par FTPS (binaire) ou par le gestionnaire de fichiers de cPanel.
 
 **3. Dans le terminal web de cPanel** :
 
