@@ -81,7 +81,12 @@ Le planificateur de l'application traite aussi la file d'attente (`queue:work --
 
 Remplacez `<env>` par `recette` ou `prod`. **Production** : uniquement une étiquette `vX.Y.Z`, après accord explicite, avec une CI verte.
 
-**1. Construire l'archive** : workflow GitHub *Actions → Release → Run workflow* sur la branche (recette), ou poussée de l'étiquette `vX.Y.Z` (production). Télécharger l'artefact `aviator-<version>` (conservé 30 jours), le décompresser et vérifier `sha256sum --check aviator-<version>.tar.gz.sha256` (détail : `docs/installation_recette.md`, étape 0). Le workflow s'arrête si `composer check` échoue : aucune archive n'est alors publiée.
+**1. Construire l'archive** avec le workflow GitHub « Release ». Le workflow s'arrête si `composer check` échoue : rien n'est alors publié.
+
+- **Recette (branche)** : *Actions → Release → Run workflow* sur la branche. L'archive et son `.sha256` sont publiés comme **artefact** `aviator-<version>`, conservé **30 jours** : le télécharger (fichier `.zip`) et le décompresser (détail : `docs/installation_recette.md`, étape 0).
+- **Production (étiquette)** : pousser l'étiquette, par exemple `git tag -a v1.0.0 -m "v1.0.0" && git push origin v1.0.0`. Le workflow démarre seul. En plus de l'artefact, il crée la **GitHub Release** `v1.0.0`, à laquelle sont attachés `aviator-v1.0.0.tar.gz` et `aviator-v1.0.0.tar.gz.sha256` (empreinte reprise dans les notes), **sans limite de durée** : télécharger les deux fichiers depuis la page *Releases* du dépôt. Seul ce job de publication a le droit d'écrire dans le dépôt (`contents: write`), avec le jeton automatique de l'exécution ; aucun secret n'est enregistré. Un lancement manuel sur une étiquette ne produit qu'un artefact. La Release d'une étiquette ne se crée qu'une fois : pour reconstruire une version publiée, créer une nouvelle étiquette (`v1.0.1`).
+
+Vérifier l'empreinte sur le poste avant l'envoi : `sha256sum --check aviator-<version>.tar.gz.sha256` doit répondre `OK`.
 
 En secours, sur le poste (Git Bash) :
 

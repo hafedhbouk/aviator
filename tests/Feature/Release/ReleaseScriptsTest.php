@@ -214,6 +214,10 @@ it('décrit un workflow « Release » manuel et sur étiquette, sans secret, arc
         ->not->toContain('secrets.')
         // La référence saisie n'est jamais interpolée dans un script (injection).
         ->not->toMatch('/run:.*\$\{\{\s*inputs\./')
+        // Écriture dans le dépôt : un seul job, réservé aux étiquettes poussées.
+        ->and(substr_count($release, 'contents: write'))->toBe(1)
+        ->and($release)->toMatch("/  publication:\n(?:.*\n)*?    if: github\.event_name == 'push' && startsWith\(github\.ref, 'refs\/tags\/v'\)\n(?:.*\n)*?    permissions:\n      contents: write\n/")
+        ->toContain('gh release create "$TAG" aviator-*.tar.gz aviator-*.tar.gz.sha256', '--verify-tag', 'GH_TOKEN: ${{ github.token }}')
         ->and($ci)->toContain('bash scripts/ci-env-testing.sh')
         ->not->toContain('secrets.')
         ->not->toMatch('/^\s+DB_DATABASE:/m');

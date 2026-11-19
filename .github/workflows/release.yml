@@ -5,10 +5,17 @@ name: Release
 # de production, assets, contrôle du contenu, archive et empreinte SHA-256.
 # L'archive est ensuite téléchargée puis envoyée par FTPS (docs/installation_recette.md).
 # build-release.sh reste utilisable sur le poste, en secours.
+#
+# - Branche (lancement manuel) : artefact conservé 30 jours.
+# - Étiquette vX.Y.Z poussée (production) : artefact, et GitHub Release de l'étiquette
+#   avec l'archive et son .sha256 (job « publication », seul à écrire dans le dépôt).
 
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    # TEMPORAIRE : premier passage sur la branche, pour que GitHub enregistre le workflow
+    # (le lancement manuel exige sinon sa présence sur main). Retiré au commit suivant.
+    branches: [fix/02-build-ci]
   workflow_dispatch:
     inputs:
       ref:
@@ -28,6 +35,8 @@ jobs:
     name: Archive de version (PHP 8.3, MariaDB 10.11)
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    outputs:
+      name: ${{ steps.archive.outputs.name }}
 
     services:
       mariadb:
@@ -109,3 +118,43 @@ jobs:
           retention-days: 30
           compression-level: 0
           if-no-files-found: error
+
+  publication:
+    name: GitHub Release (étiquettes vX.Y.Z seulement)
+    needs: archive
+    # Étiquette poussée seulement : un lancement manuel, même sur une étiquette, ne
+    # produit qu'un artefact.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Récupérer l'archive et son empreinte
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.archive.outputs.name }}
+          path: release
+
+      - name: Créer la GitHub Release de l'étiquette
+        env:
+          # Jeton automatique de l'exécution (aucun secret enregistré), limité à ce job.
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cd release
+          sha256sum --check aviator-*.tar.gz.sha256
+          {
+            echo "Archive de version $TAG (D25), construite par le workflow Release."
+            echo
+            echo "Installation : docs/installation_hebergement_oxahost.md, annexe A."
+            echo
+            echo "SHA-256 :"
+            echo
+            echo '```'
+            cat aviator-*.tar.gz.sha256
+            echo '```'
+          } > notes.md
+          gh release create "$TAG" aviator-*.tar.gz aviator-*.tar.gz.sha256 \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --notes-file notes.md
