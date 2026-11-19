@@ -167,11 +167,11 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 
 ### `payment_methods`
 
-`id` ; `code` VARCHAR(32) NN U (`cash`, `cheque`, `card`, `transfer`, `bill_of_exchange`) ; `name` VARCHAR(100) NN ; `requires_reference` BOOLEAN NN ; `is_active` BOOLEAN NN ; horodatages.
+`id` ; `code` VARCHAR(32) NN U (`cash`, `cheque`, `card`, `transfer`, `bill_of_exchange`) ; `name` VARCHAR(100) NN ; `requires_reference` BOOLEAN NN ; `is_active` BOOLEAN NN ; horodatages. Réalisé en phase 3, lot L7 : code fixé à la création, aucune suppression ; `PaymentMethodSeeder` (référence exigée sauf pour les espèces). Conditions de paiement : réglage `billing.payment_terms_days` (0 = comptant, Q89).
 
 ### `suppliers`
 
-`id` ; `type` VARCHAR(32) NN (`garage`, `insurer`, `leasing_company`, `bank`, `other`) ; `name` VARCHAR(255) NN ; `tax_id` VARCHAR(32) N ; `phone`, `email`, `address` N ; `is_active` BOOLEAN NN ; horodatages ; I (`type`, `name`).
+`id` ; `type` VARCHAR(32) NN (`garage`, `insurer`, `leasing_company`, `bank`, `other`) ; `name` VARCHAR(255) NN ; `tax_id` VARCHAR(32) N ; `phone`, `email`, `address` N ; `is_active` BOOLEAN NN ; horodatages ; I (`type`, `name`). Réalisé en phase 3, lot L9 : super admin et admin seulement, aucune suppression, matricule fiscal sans format imposé.
 
 ---
 

@@ -128,6 +128,8 @@ Hors production, ces cas donnent un AVERTISSEMENT. Une règle CONDITIONAL est ad
 | L5. Options | A-05, liées à un code fiscal ; option sans code impossible à activer | 1 |
 | L6. Paramètres fiscaux | §3 : tables, seeder, `TaxRuleResolver`, `TaxCalculator`, écrans (super admin en écriture, admin en lecture), transitions de statut journalisées, rapport de configuration, garde-fou. Détail : base 1,5 + demande d'évolution 2,75 (codes et natures 0,75 ; versions 0,5 ; rapport 0,5 ; garde-fou 0,25 ; timbre 0,75) | 4,25 |
 | L5. Options | 1 | 0,75 | 10,5 | 12 | Options liées à un code fiscal choisi ; activation refusée sans code applicable ni prix ; options du cahier créées inactives et sans prix, « livraison » sans code (Q85) ; test « assurance » sur le libellé |
+| L7. Facturation et paiements | 0,75 | 0,5 | 11 | 12,75 | Modes de paiement (référence exigée ou non, code fixé), conditions de paiement en réglage `billing.payment_terms_days` (Q89, nouvelle) |
+| L9. Fournisseurs (avancé avant L8) | 0,75 | 0,5 | 11,5 | 13,5 | Fiche simple (G-05), super admin et admin |
 | L7. Facturation et paiements | A-07 : conditions et modes de paiement (référence exigée ou non) | 0,75 |
 | L8. Réglages | A-06, A-09, approbations, sécurité (Q76) : pages de réglages pour le super admin | 2,25 |
 | L9. Fournisseurs | G-05 | 0,75 |
