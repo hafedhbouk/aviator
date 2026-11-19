@@ -139,7 +139,7 @@ Le permis et les dates d'obtention vont dans `drivers` (phase 5) : le client par
 
 ### `vehicle_categories`
 
-`id` ; `code` VARCHAR(16) NN U ; `name` VARCHAR(100) NN ; `description` TEXT N ; `deposit_amount` DECIMAL(15,3) N (Q14) ; `min_driver_age` TINYINT UNSIGNED N (Q42) ; `min_license_years` TINYINT UNSIGNED N (Q42) ; `included_km_per_day` INT UNSIGNED N (Q43) ; `extra_km_amount` DECIMAL(15,3) N ; `insurance_excess_amount` DECIMAL(15,3) N (Q45) ; `preparation_buffer_minutes` SMALLINT UNSIGNED N (Q41) ; `sort_order` SMALLINT NN défaut 0 ; `is_active` BOOLEAN NN défaut 1 ; horodatages.
+`id` ; `code` VARCHAR(16) NN U ; `name` VARCHAR(100) NN ; `description` TEXT N ; `deposit_amount` DECIMAL(15,3) N (Q14) ; `min_driver_age` TINYINT UNSIGNED N (Q42) ; `min_license_years` TINYINT UNSIGNED N (Q42) ; `included_km_per_day` INT UNSIGNED N (Q43) ; `extra_km_amount` DECIMAL(15,3) N ; `insurance_excess_amount` DECIMAL(15,3) N (Q45) ; `preparation_buffer_minutes` SMALLINT UNSIGNED N (Q41) ; `sort_order` SMALLINT NN défaut 0 ; `is_active` BOOLEAN NN défaut 1 ; horodatages. Vide = valeur générale (`reservations.min_driver_age` 21, `reservations.min_license_years` 2, `reservations.preparation_buffer_minutes` 60 : `App\Settings\ReservationSettings`) ou « non fixé » (caution, kilométrage illimité, prix du km, franchise sans plafond) ; valeurs effectives : `App\Domain\Setup\CategoryRules`. Aucune catégorie supprimée (désactivation). Réalisé en phase 3, lot L3.
 
 ### `seasons`
 
