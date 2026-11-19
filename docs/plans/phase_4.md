@@ -108,6 +108,8 @@ Captures : `docs/plans/phase_4_prototype/` (données fictives).
 2. Un clic sur un événement sans lien ni modèle signé provoque une exception côté serveur. Contournement : les blocs « Occupé » ne sont pas cliquables ; au lot L12, tout bloc détaillé porte un lien.
 3. Le calendrier affiche l'heure du navigateur ; le paquet convertit les heures côté serveur à partir du décalage envoyé par le navigateur. Tunis est à UTC+1 toute l'année : un poste réglé sur un autre fuseau verrait des heures décalées. Test prévu au lot L12 avec un navigateur sur un autre fuseau.
 
+**D35 validée le 19/11/2026 avec conditions** (`docs/decisions.md`) : version figée à 3.2.2, tests de garde des contournements et tickets (`docs/rapports/tickets_guava_calendar.md`), heure de Tunis quel que soit le navigateur, requête sous 200 ms en local et remesure en recette ; intégrées au lot L12 (§7).
+
 **Recommandation (D35)** : retenir **`guava/calendar`**. Les huit critères obligatoires sont tenus. Seul le temps de la requête de données reste à confirmer en recette, sur un vrai serveur. Le repli (frise Livewire maison) n'est pas nécessaire ; le jour d'aléas réservé au repli (+1 j) reste disponible.
 
 ## 4. Décisions de ce plan
@@ -154,6 +156,17 @@ Délai de préparation inclus (la fin + 60 min touche le départ suivant : refus
 2. **Correction** (D38) : `SaveSeason` sérialisé par un verrou de ligne en base (`named_locks`), comme le reste du domaine ; `Cache::lock` retiré.
 3. Le même test doit alors donner : une saison enregistrée, l'autre refusée pour chevauchement. Variante « verrou tenu » comme en §5.1.
 
+**Résultat (lot L1, 19/11/2026)** :
+
+| Test (`tests/Feature/Concurrency/SeasonConcurrencyTest.php`) | Code de la phase 3 (`Cache::lock`) | Après D38 (`DatabaseLock`) |
+| --- | --- | --- |
+| Deux saisies simultanées qui se chevauchent | Passé, **par hasard** : les deux processus ne se sont pas croisés ; ce test seul ne prouve rien | Passé |
+| « Verrou tenu » : le premier tient le verrou, le second doit attendre puis être refusé | **Échec** : « La seconde saisie n'a pas attendu le verrou de la première. » Le verrou de cache (`array` en test) n'est pas partagé entre processus | **Passé** (3 exécutions sur 3) : le second processus finit après la validation du premier et reçoit « elle chevauche la saison Été A » |
+
+Correction : table `named_locks`, `App\Support\Locking\DatabaseLock` (ligne verrouillée jusqu'à la fin de la transaction), `SaveSeason` sous ce verrou avec une lecture verrouillante du chevauchement ; test d'architecture : aucun verrou de cache dans `app/`. En production, `CACHE_STORE=database` rendait le verrou de cache effectif entre processus ; la saisie n'était donc pas exposée en recette, mais la protection dépendait d'un réglage et n'était pas prouvée par les tests.
+
+**Constat annexe, corrigé** : `DatabaseTruncation` (tests de concurrence) vidait aussi la table `settings`, que `RefreshDatabase` ne recrée pas. Tout test lancé après un test de concurrence pouvait échouer sur `MissingSettings`, selon l'ordre d'exécution (reproduit avec `SequenceConcurrencyTest` de la phase 2). La suite complète passait grâce à l'ordre des fichiers. `settings` est désormais exclue de la troncature (`tests/TestCase.php`).
+
 ## 6. Scénarios d'acceptation
 
 | Scénario | Test | Niveau |
@@ -181,7 +194,7 @@ Délai de préparation inclus (la fin + 60 min touche le départ suivant : refus
 | L9. Disponibilité | `vehicle_blocks`, `AvailabilityQuery` (C-01, capacité Q36, projection sans donnée client pour les autres agences), `VehicleLock`, `BlockRegistry` ; tests §5.1 et §5.2 | 4,5 |
 | L10. Devis | `BillableDurationCalculator` (Q32), `QuoteCalculator` → `PriceQuote` figé (grille, saison par jour loué, agence, options ; remise sous le seuil seulement : D36) ; HT ; TTC affiché seulement avec des règles applicables (`TaxCalculator` de la phase 3) | 3 |
 | L11. Réservations | Migrations `reservations`, `reservation_options` ; numéro `RES` par `SequenceAllocator` ; actions `Create`, `Modify`, `Confirm`, `Cancel`, `AssignVehicle`, `ExpireReservations`, `MarkNoShow` ; statuts C-08 et Q31 ; assistant comptoir en 5 étapes (P1) ; liste, filtres, portée par agence | 6 |
-| L12. Planning | Intégration de l'option retenue en L0 ; projection serveur ; filtres agence et catégorie | 3 |
+| L12. Planning | `guava/calendar` 3.2.2 (D35) sur les vraies données ; projection serveur ; filtres agence et catégorie ; prototype et données fictives supprimés. **Conditions de D35** : (1) un test par contournement du paquet, qui échoue si une mise à jour change son comportement (sous-lignes, blocs non cliquables, fuseau) ; tickets 2 et 3 reproduits avant publication ; (2) heures toujours à l'heure de Tunis, essai avec un navigateur sur un autre fuseau, conversion côté serveur si nécessaire ; (3) requête des données sous 200 ms en local (index adaptés, fenêtre de dates stricte, aucune requête N+1, compte des requêtes testé), remesurée en recette ; au-delà de 300 ms en recette : signalement avant L15 | 3 |
 | L13. Sélecteur d'agence active | §2 | 0,25 |
 | L14. Droits, audit et tests transverses | Matrice par profil sur les nouveaux écrans ; scénario 12 par type de document ; recherche globale et sélecteurs (aucune fuite du carnet, D13) ; tests d'architecture (aucun SQL brut, aucune écriture de `vehicles.status` hors du service) | 1,25 |
 | L15. Préparation de l'atelier | Données de démonstration fictives (`DemoFleetSeeder`, jamais en production), déroulé, fiche de recueil (§9) | 1 |
@@ -240,6 +253,8 @@ Budget 41,75 j, seuil d'alerte 46,8 j.
 | --- | ---: | ---: | ---: | ---: | --- |
 | Plan | — | 0,25 | 0,25 | — | Ce document ; D33 et D34 validées dans `docs/decisions.md` et `docs/projet.md` (compté dans L16) |
 | L0. Prototype du planning | 1,25 | 1,25 | 1,5 | 1,25 | `guava/calendar` 3.2.2, projection « qui voit quoi » dans le domaine (`PlanningProjection`, réutilisée en L12), 8 tests, mesures dans le navigateur, 3 défauts du paquet contournés. Temps passé aussi sur l'environnement de mesure : MariaDB arrêtée, hôte `aviator.test` de Laragon inopérant (HTTP 404, HTTPS en erreur), OPcache absent en ligne de commande. Recommandation D35 : `guava/calendar`. **Arrêt pour validation** |
+| Conditions de D35 | — | 0,25 | 1,75 | 1,25 | D35 validée avec conditions : version figée à 3.2.2, tickets pour le mainteneur (`docs/rapports/tickets_guava_calendar.md`), conditions reportées au lot L12 et dans `docs/compatibilite_paquets.md`. Vérification d'`aviator.test` : HTTP et HTTPS répondent, certificat valide ; OPcache désactivé dans `php.ini` (ligne 833). Pris sur les aléas |
+| L1. Verrous en base | 0,25 | 0,5 | 2,25 | 1,5 | Test d'abord (« verrou tenu » en échec sur `Cache::lock`), puis `named_locks`, `DatabaseLock`, `SaveSeason` corrigé, test d'architecture ; piège de troncature des réglages corrigé dans `tests/TestCase.php` (+0,25 j). Écart cumulé : +0,75 j, pris sur les aléas (reste 1,75 j) |
 
 ## 12. Ce dont j'ai besoin
 

@@ -85,6 +85,15 @@ Index (`user_id`, `starts_on`, `ends_on`). **Remplacements à durée limitée (Q
 | `last_value` | BIGINT UNSIGNED | NN, défaut 0 | Incrémenté sous `SELECT … FOR UPDATE` (RG-02, RG-07) |
 | `created_at`, `updated_at` | TIMESTAMP | N | |
 
+### `named_locks` — P4 (lot L1, D38)
+
+| Colonne | Type | Contraintes | Remarque |
+| --- | --- | --- | --- |
+| `name` | VARCHAR(64) | PK | Nom du verrou, par exemple `setup:seasons` ; ligne créée à la première utilisation |
+| `created_at` | TIMESTAMP | N | |
+
+Verrous de sérialisation en base : `App\Support\Locking\DatabaseLock` verrouille la ligne par `SELECT … FOR UPDATE` jusqu'à la fin de la transaction. Aucune donnée métier. Les verrous de cache sont interdits dans `app/` (test d'architecture `tests/Arch/LockingTest.php`).
+
 ### Tables des paquets — P2
 
 | Table | Origine | Remarque |

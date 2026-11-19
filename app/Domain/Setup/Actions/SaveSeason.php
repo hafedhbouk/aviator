@@ -7,23 +7,24 @@ namespace App\Domain\Setup\Actions;
 use App\Domain\Setup\Exceptions\SetupException;
 use App\Models\Season;
 use App\Models\User;
+use App\Support\Locking\DatabaseLock;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 /**
  * Crée ou modifie une saison datée (A-04), bornes incluses, avec les règles suivantes.
  *
  * - Super admin et admin du siège seulement (SeasonPolicy).
- * - Aucun chevauchement avec une autre saison : contrôle sous verrou (verrou de
- *   cache atomique, sur la base en production), pour que deux saisies simultanées
- *   ne passent pas toutes les deux.
+ * - Aucun chevauchement avec une autre saison : contrôle et écriture sous le verrou
+ *   en base « setup:seasons » (D38), tenu jusqu'à la validation de la transaction ;
+ *   deux saisies simultanées ne passent pas toutes les deux (test à deux processus).
  * - Modification journalisée (audit).
  */
 final class SaveSeason
 {
     public const LOCK = 'setup:seasons';
+
+    public function __construct(private readonly DatabaseLock $lock) {}
 
     /**
      * @param  array<string, mixed>  $data  name, starts_on, ends_on (AAAA-MM-JJ)
@@ -52,11 +53,14 @@ final class SaveSeason
             throw SetupException::invalidSeasonDates();
         }
 
-        return Cache::lock(self::LOCK, 10)->block(5, fn (): Season => DB::transaction(function () use ($season, $values, $start, $end): Season {
+        return $this->lock->run(self::LOCK, function () use ($season, $values, $start, $end): Season {
+            // Lecture verrouillante : elle voit la dernière version validée, même si la
+            // transaction appelante avait déjà lu avant de prendre le verrou.
             $overlapping = Season::query()
                 ->where('starts_on', '<=', $end->toDateString())
                 ->where('ends_on', '>=', $start->toDateString())
                 ->when($season !== null, fn ($query) => $query->whereKeyNot($season?->getKey()))
+                ->lockForUpdate()
                 ->first();
 
             if ($overlapping !== null) {
@@ -68,6 +72,6 @@ final class SaveSeason
             $season->save();
 
             return $season;
-        }));
+        });
     }
 }
