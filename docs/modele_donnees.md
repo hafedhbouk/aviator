@@ -219,7 +219,7 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 
 | Table | Colonnes principales | Contraintes clés |
 | --- | --- | --- |
-| `vehicle_status_logs` | `vehicle_id` FK, `from_status`, `to_status` VARCHAR(32), `cause_type`/`cause_id` (polymorphe), `user_id` FK N, `occurred_at` DATETIME | I (`vehicle_id`, `occurred_at`) ; ajout seul |
+| `vehicle_status_logs` | `vehicle_id` FK, `from_status`, `to_status` VARCHAR(32), `cause_type`/`cause_id` (polymorphe), `user_id` FK N, `occurred_at` DATETIME | I (`vehicle_id`, `occurred_at`) ; ajout seul (modification et suppression refusées par le modèle) ; colonne `reason` VARCHAR(255) N ajoutée ; réalisé au lot L5 |
 | `vehicle_mileage_logs` | `vehicle_id` FK, `mileage` INT UNSIGNED, `source_type`/`source_id`, `is_correction` BOOLEAN, `reason` VARCHAR(255) N, `user_id` FK, `recorded_at` DATETIME | Correction : motif obligatoire (contrôle applicatif) |
 | `vehicle_documents` | `vehicle_id` FK, `type` (`insurance`, `technical_inspection`, `road_tax`, `registration`), `supplier_id` FK N, `reference` VARCHAR(64) N, `valid_from` DATE N, `valid_until` DATE N, `amount` DECIMAL(15,3) N, `file_path` N (privé), `created_by` FK `users` N | I (`vehicle_id`, `type`, `valid_until`) ; réalisé au lot L2 ; échéance obligatoire sauf carte grise ; aucune suppression (historique des échéances) |
 | `vehicle_blocks` | `vehicle_id` FK, `starts_at`, `ends_at` DATETIME (délai de préparation inclus), `source_type`/`source_id`, `active` BOOLEAN | **I (`vehicle_id`, `active`, `starts_at`, `ends_at`)** ; contrôle RG-01 sous verrou |
