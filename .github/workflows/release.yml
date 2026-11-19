@@ -1,0 +1,111 @@
+name: Release
+
+# Archive de version (D25) construite par scripts/build-release.sh sur un serveur
+# GitHub : copie de travail de la référence, composer check (MariaDB 10.11), dépendances
+# de production, assets, contrôle du contenu, archive et empreinte SHA-256.
+# L'archive est ensuite téléchargée puis envoyée par FTPS (docs/installation_recette.md).
+# build-release.sh reste utilisable sur le poste, en secours.
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branche ou étiquette vX.Y.Z à construire (vide : la référence choisie dans « Use workflow from »)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.ref || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    name: Archive de version (PHP 8.3, MariaDB 10.11)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          # Conteneur jetable : aucun secret, mot de passe root vide.
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+          MARIADB_DATABASE: aviator_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      # Référence passée à build-release.sh : jamais interpolée directement dans un script.
+      RELEASE_REF: ${{ inputs.ref || github.ref_name }}
+
+    steps:
+      - name: Récupérer le code (historique et étiquettes)
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Référence à construire
+        run: |
+          git rev-parse --verify --quiet "${RELEASE_REF}^{commit}" > /dev/null \
+            || git branch --track "$RELEASE_REF" "origin/$RELEASE_REF"
+          echo "Construction de $RELEASE_REF ($(git rev-parse --short "$RELEASE_REF"))"
+          echo "AVIATOR_BUILD_DIR=$RUNNER_TEMP/aviator-builds" >> "$GITHUB_ENV"
+
+      - name: Installer PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, ctype, curl, dom, fileinfo, gd, gmp, intl, mbstring, pdo_mysql, sodium, zip, exif
+          coverage: none
+          tools: composer:v2
+
+      - name: Node 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Cache Composer
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/composer
+          key: composer-release-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Base de test en utf8mb4_unicode_ci
+        run: mysql --host=127.0.0.1 --user=root -e "ALTER DATABASE aviator_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; SELECT VERSION();"
+
+      - name: Fichier .env.testing de la CI
+        run: bash scripts/ci-env-testing.sh
+
+      - name: Construire l'archive (scripts/build-release.sh)
+        run: bash scripts/build-release.sh "$RELEASE_REF"
+
+      - name: Nom de l'archive
+        id: archive
+        run: |
+          archive="$(cd "$AVIATOR_BUILD_DIR" && ls aviator-*.tar.gz)"
+          (cd "$AVIATOR_BUILD_DIR" && sha256sum --check "$archive.sha256")
+          echo "name=${archive%.tar.gz}" >> "$GITHUB_OUTPUT"
+
+      - name: Publier l'archive et son empreinte (30 jours)
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.archive.outputs.name }}
+          path: |
+            ${{ env.AVIATOR_BUILD_DIR }}/aviator-*.tar.gz
+            ${{ env.AVIATOR_BUILD_DIR }}/aviator-*.tar.gz.sha256
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error

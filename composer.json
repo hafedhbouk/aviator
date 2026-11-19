@@ -58,7 +58,7 @@
         ],
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",
-            "@php artisan test"
+            "bash scripts/clean-env.sh php artisan test"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
@@ -79,6 +79,11 @@
         ],
         "check": [
             "Composer\\Config::disableProcessTimeout",
+            "bash scripts/clean-env.sh composer run-script --timeout=0 check-steps"
+        ],
+        "check-steps": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"if (getenv('AVIATOR_CLEAN_ENV') === '1') { exit(0); } fwrite(STDERR, 'Lancez composer check : les controles passent par scripts/clean-env.sh.' . PHP_EOL); exit(1);\"",
             "@php -r \"@unlink('storage/framework/cache/pint.cache');\"",
             "@php vendor/bin/pint --test --cache-file=storage/framework/cache/pint.cache",
             "@php vendor/bin/phpstan clear-result-cache --quiet",

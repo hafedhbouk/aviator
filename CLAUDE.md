@@ -57,6 +57,8 @@ composer check   # contrôles de la CI, sans aucun cache : Pint (test), Larastan
 
 - `composer check` est **la** commande de contrôle : la CI GitHub l'exécute telle quelle, le poste et la CI ne peuvent donc pas diverger. Elle supprime le cache de Pint, vide celui de Larastan et celui de la configuration avant de lancer les contrôles.
 - Lance `composer check` **avant chaque commit** et cite son résultat (nombre de tests, statut de chaque outil) dans le compte rendu.
-- Un contrôle isolé reste possible pendant le développement (`php artisan test --filter=…`), mais ne vaut jamais validation.
+- **Lance toujours les tests par `composer check` ou `scripts/clean-env.sh php artisan test`, jamais directement.** `scripts/clean-env.sh` retire de l'environnement les variables nommées dans `.env.example` et `.env` (noms seulement, aucune valeur affichée) : une variable héritée (Claude Code charge `.env`) primerait sur `.env.testing` et viserait la base de développement. Le garde-fou de `tests/TestCase.php` (environnement `testing`, base en `_test`) reste en place derrière. `composer check` et `scripts/build-release.sh` passent par ce script.
+- Un contrôle isolé reste possible pendant le développement (`scripts/clean-env.sh php artisan test --filter=…`), mais ne vaut jamais validation.
+- Archive de version : workflow GitHub « Release » (manuel ou étiquette `vX.Y.Z`, artefact conservé 30 jours) ; `scripts/build-release.sh` sur le poste en secours.
 
 Branches : `phase/NN-nom` ; commits `feat:` / `fix:` / `test:` / `docs:` / `chore:`.
