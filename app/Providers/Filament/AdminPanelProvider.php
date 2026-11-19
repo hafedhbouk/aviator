@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Auth\EditProfile;
 use App\Filament\Auth\Login;
 use App\Filament\Auth\ResetPassword;
+use App\Http\Controllers\PrintFiscalConfigurationReport;
 use App\Http\Middleware\EnsurePrivilegedTwoFactor;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -21,6 +22,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -69,6 +71,12 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            // Routes hors pages Filament : la 2FA y est imposée explicitement (D9).
+            ->authenticatedRoutes(function (): void {
+                Route::get('fiscal/rapport/imprimer', PrintFiscalConfigurationReport::class)
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('fiscal-report.print');
+            });
     }
 }

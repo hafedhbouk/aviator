@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Environment;
 
+use App\Domain\Tax\FiscalGuard;
 use App\Settings\NotificationSettings;
 use App\Support\Scheduling\SchedulerHeartbeat;
 use Throwable;
@@ -57,6 +58,7 @@ final class EnvironmentChecker
             ...$this->scheduler(),
             ...$this->keys(),
             ...$this->application(),
+            ...$this->fiscal(),
             ...$this->filesystem(),
             ...$this->mail(),
         ];
@@ -230,6 +232,36 @@ final class EnvironmentChecker
         $results[] = CheckResult::ok('Clés VAPID (notifications push)', 'Non requises avant la phase 9');
 
         return $results;
+    }
+
+    /**
+     * Garde-fou fiscal (plan de la phase 3, §3.5) : ERREUR en production, AVERTISSEMENT
+     * ailleurs. Les règles en cause sont citées par leur code seulement.
+     *
+     * @return list<CheckResult>
+     */
+    private function fiscal(): array
+    {
+        $check = 'Règles fiscales';
+        $production = app()->environment('production');
+
+        try {
+            $problems = app(FiscalGuard::class)->problems();
+        } catch (Throwable) {
+            $problems = null;
+        }
+
+        if ($problems === []) {
+            return [CheckResult::ok($check, 'Référence validée, aucune règle en attente de pièce active, mentions des factures renseignées')];
+        }
+
+        [$finding, $advice] = $problems === null
+            ? ['Paramètres fiscaux illisibles', 'Lancer les migrations, puis « php artisan db:seed --class=FiscalReferenceSeeder --force ».']
+            : [ucfirst(implode(' ; ', $problems)), 'Pas de mise en production : compléter les paramètres fiscaux (référentiel validé, règles, mentions des factures sur la fiche société).'];
+
+        return [$production
+            ? CheckResult::error($check, $finding, $advice)
+            : CheckResult::warning($check, $finding, $advice)];
     }
 
     /**
