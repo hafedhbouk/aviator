@@ -130,6 +130,7 @@ Hors production, ces cas donnent un AVERTISSEMENT. Une règle CONDITIONAL est ad
 | L5. Options | 1 | 0,75 | 10,5 | 12 | Options liées à un code fiscal choisi ; activation refusée sans code applicable ni prix ; options du cahier créées inactives et sans prix, « livraison » sans code (Q85) ; test « assurance » sur le libellé |
 | L7. Facturation et paiements | 0,75 | 0,5 | 11 | 12,75 | Modes de paiement (référence exigée ou non, code fixé), conditions de paiement en réglage `billing.payment_terms_days` (Q89, nouvelle) |
 | L9. Fournisseurs (avancé avant L8) | 0,75 | 0,5 | 11,5 | 13,5 | Fiche simple (G-05), super admin et admin |
+| L8. Réglages | 2,25 | 1,75 | 13,25 | 15,75 | Six pages pour le super admin (réservation, tarification, facturation, approbations, notifications A-09, sécurité Q76) ; `UpdateSettings` (catalogue des clés, validation, journal avant/après) ; valeurs vides pour A-06 et A-09 non décidées (Q90, nouvelle). **Constat** : aucun fichier `lang/fr`, les messages de validation de Laravel s'affichent en clés brutes (`validation.required`) depuis la phase 2 ; correction prévue en L10 |
 | L7. Facturation et paiements | A-07 : conditions et modes de paiement (référence exigée ou non) | 0,75 |
 | L8. Réglages | A-06, A-09, approbations, sécurité (Q76) : pages de réglages pour le super admin | 2,25 |
 | L9. Fournisseurs | G-05 | 0,75 |
