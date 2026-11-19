@@ -70,4 +70,39 @@ final class SetupException extends RuntimeException
     {
         return new self("L'agence a déjà un lieu nommé « {$name} ».");
     }
+
+    public static function invalidRateLines(string $reason): self
+    {
+        return new self("Tranches de durée refusées : {$reason}.");
+    }
+
+    public static function invalidSeasonDates(): self
+    {
+        return new self('Saison refusée : la date de fin précède la date de début.');
+    }
+
+    public static function seasonOverlaps(string $other): self
+    {
+        return new self("Saison refusée : elle chevauche la saison {$other}.");
+    }
+
+    public static function seasonInUse(): self
+    {
+        return new self('Saison utilisée par une grille tarifaire : elle ne peut pas être supprimée.');
+    }
+
+    public static function invalidRatePlanValidity(): self
+    {
+        return new self('Grille refusée : la fin de validité précède son début.');
+    }
+
+    public static function ratePlanOverlaps(): self
+    {
+        return new self('Grille refusée : une grille active existe déjà pour cette catégorie, cette saison et cette agence sur la même période. Fermez-la (fin de validité) ou désactivez-la.');
+    }
+
+    public static function inactiveReference(string $what): self
+    {
+        return new self("Grille refusée : {$what} inactive.");
+    }
 }
