@@ -63,13 +63,15 @@ function vehicleData(array $overrides = []): array
 
 // --- Fiche et règles -----------------------------------------------------------
 
-it('crée un véhicule disponible, dans son agence, à 0 km, avec des montants au millime', function () {
+it('crée un véhicule dans son agence, à 0 km, indisponible tant qu\'il n\'a pas ses documents (D41)', function () {
     $vehicle = app(SaveVehicle::class)->handle(null, vehicleData(), $this->admin);
 
     expect($vehicle->internal_code)->toBe('V-001')
         ->and($vehicle->plate_number)->toBe('123 TU 4567')
         ->and($vehicle->vin)->toBe('VF1ABC1234567890')
-        ->and($vehicle->status)->toBe(VehicleStatus::Available)
+        ->and($vehicle->status)->toBe(VehicleStatus::Unavailable)
+        ->and($vehicle->statusLogs()->orderBy('id')->pluck('to_status')->all())
+        ->toBe([VehicleStatus::Available, VehicleStatus::Unavailable])
         ->and($vehicle->mileage)->toBe(0)
         ->and($vehicle->current_agency_id)->toBe($this->sfax->id)
         ->and($vehicle->financing_mode)->toBe(FinancingMode::Leasing)
@@ -81,7 +83,7 @@ it('crée un véhicule disponible, dans son agence, à 0 km, avec des montants a
 it('ignore le statut et le kilométrage envoyés dans le formulaire', function () {
     $vehicle = app(SaveVehicle::class)->handle(null, vehicleData(['status' => 'retired', 'mileage' => '99999']), $this->admin);
 
-    expect($vehicle->fresh()?->status)->toBe(VehicleStatus::Available)
+    expect($vehicle->fresh()?->status)->not->toBe(VehicleStatus::Retired)
         ->and($vehicle->fresh()?->mileage)->toBe(0);
 });
 

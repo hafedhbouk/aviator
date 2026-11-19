@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Fleet\StatusConsistencyCheck;
 use App\Support\Scheduling\QueueDrainer;
 use App\Support\Scheduling\SchedulerHeartbeat;
 use Illuminate\Support\Facades\Schedule;
@@ -21,6 +22,11 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::call(fn (SchedulerHeartbeat $heartbeat) => $heartbeat->beat())
     ->name('scheduler-heartbeat')
     ->everyMinute();
+
+// Statut des véhicules selon leurs documents obligatoires (B-09, lot L5 ; fleet:check-status).
+Schedule::call(fn (StatusConsistencyCheck $check) => $check->run())
+    ->name('fleet-check-status')
+    ->dailyAt('06:00');
 
 Schedule::call(fn (QueueDrainer $drainer) => $drainer->drain())
     ->name('queue-worker')

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Fleet\Actions;
 
+use App\Domain\Fleet\DocumentStatusSync;
 use App\Domain\Fleet\Exceptions\FleetException;
 use App\Domain\Fleet\PlateNumber;
+use App\Domain\Fleet\VehicleStatusService;
 use App\Enums\FinancingMode;
 use App\Enums\FuelType;
 use App\Enums\Transmission;
@@ -44,6 +46,11 @@ final class SaveVehicle
         'initial_contribution_amount' => 'apport initial',
     ];
 
+    public function __construct(
+        private readonly VehicleStatusService $statuses,
+        private readonly DocumentStatusSync $documents,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -59,7 +66,7 @@ final class SaveVehicle
 
         $values = $this->validated($data, $vehicle);
 
-        return DB::transaction(function () use ($vehicle, $values): Vehicle {
+        return DB::transaction(function () use ($vehicle, $values, $actor): Vehicle {
             $category = VehicleCategory::query()->lockForUpdate()->findOrFail($values['vehicle_category_id']);
             if (! $category->is_active && $category->id !== $vehicle?->vehicle_category_id) {
                 throw FleetException::inactiveCategory();
@@ -70,6 +77,8 @@ final class SaveVehicle
                 throw FleetException::inactiveAgency();
             }
 
+            $creating = $vehicle === null;
+
             if ($vehicle === null) {
                 $vehicle = new Vehicle;
                 $vehicle->current_agency_id = $agency->id;
@@ -79,6 +88,15 @@ final class SaveVehicle
             $vehicle->save();
 
             // Valeurs par défaut posées par la base à la création (statut, kilométrage).
+            $vehicle->refresh();
+
+            if ($creating) {
+                // Historique dès la création, puis statut selon les documents (D41) :
+                // sans assurance ni visite technique valides, le véhicule est indisponible.
+                $this->statuses->recordCreation($vehicle, $actor);
+                $this->documents->sync($vehicle, $actor);
+            }
+
             return $vehicle->refresh();
         });
     }

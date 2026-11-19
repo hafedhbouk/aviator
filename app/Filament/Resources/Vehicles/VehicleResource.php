@@ -7,6 +7,7 @@ use App\Filament\Resources\Vehicles\Pages\EditVehicle;
 use App\Filament\Resources\Vehicles\Pages\ListVehicles;
 use App\Filament\Resources\Vehicles\Pages\ViewVehicle;
 use App\Filament\Resources\Vehicles\RelationManagers\DocumentsRelationManager;
+use App\Filament\Resources\Vehicles\RelationManagers\StatusLogsRelationManager;
 use App\Filament\Resources\Vehicles\Schemas\VehicleForm;
 use App\Filament\Resources\Vehicles\Tables\VehiclesTable;
 use App\Models\Vehicle;
@@ -57,6 +58,7 @@ class VehicleResource extends Resource
     {
         return [
             DocumentsRelationManager::class,
+            StatusLogsRelationManager::class,
         ];
     }
 

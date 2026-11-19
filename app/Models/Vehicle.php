@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Fleet\VehicleStatusService;
 use App\Enums\FinancingMode;
 use App\Enums\FuelType;
 use App\Enums\Transmission;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 /**
  * Véhicule du parc (B-01 à B-05). Modifié uniquement par
@@ -68,6 +70,15 @@ class Vehicle extends Model
     protected static function booted(): void
     {
         static::addGlobalScope(new AgencyScope('current_agency_id'));
+
+        // Statut écrit uniquement par VehicleStatusService (B-09, architecture §7).
+        static::saving(function (Vehicle $vehicle): void {
+            $touched = $vehicle->exists ? $vehicle->isDirty('status') : $vehicle->getAttribute('status') !== null;
+
+            if ($touched && ! VehicleStatusService::isWriting()) {
+                throw new LogicException('Le statut d\'un véhicule ne s\'écrit que par VehicleStatusService.');
+            }
+        });
     }
 
     /**
@@ -134,5 +145,13 @@ class Vehicle extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(VehicleDocument::class);
+    }
+
+    /**
+     * @return HasMany<VehicleStatusLog, $this>
+     */
+    public function statusLogs(): HasMany
+    {
+        return $this->hasMany(VehicleStatusLog::class);
     }
 }

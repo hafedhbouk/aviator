@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Fleet\Actions;
 
+use App\Domain\Fleet\DocumentStatusSync;
 use App\Domain\Fleet\Exceptions\FleetException;
 use App\Enums\VehicleDocumentType;
 use App\Enums\VehicleStatus;
@@ -31,6 +32,8 @@ use InvalidArgumentException;
  */
 final class SaveVehicleDocument
 {
+    public function __construct(private readonly DocumentStatusSync $documents) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -60,6 +63,10 @@ final class SaveVehicleDocument
             }
 
             $document->save();
+
+            // Un document ajouté ou corrigé peut rendre le véhicule de nouveau
+            // disponible, ou indisponible (DocumentStatusSync, lot L5).
+            $this->documents->sync($vehicle, $actor);
 
             return $document;
         });
