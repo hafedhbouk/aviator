@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Availability\Actions\CloseReservation;
+use App\Domain\Fleet\Alerts\DueDateAlerts;
 use App\Domain\Fleet\ReservedStatusSync;
 use App\Domain\Fleet\StatusConsistencyCheck;
 use App\Support\Scheduling\QueueDrainer;
@@ -29,6 +30,11 @@ Schedule::call(fn (SchedulerHeartbeat $heartbeat) => $heartbeat->beat())
 Schedule::call(fn (StatusConsistencyCheck $check) => $check->run())
     ->name('fleet-check-status')
     ->dailyAt('06:00');
+
+// Alertes avant échéance : assurance, visite technique, fin de leasing (B-07, B-13, lot L7).
+Schedule::call(fn (DueDateAlerts $alerts) => $alerts->run())
+    ->name('fleet-alerts')
+    ->dailyAt('06:05');
 
 // Expiration des brouillons et réservations en attente (C-09, lot L11).
 Schedule::call(fn (CloseReservation $reservations) => $reservations->expireDue())

@@ -50,6 +50,10 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Sky,
             ])
+            // Centre de notifications (alertes B-07, B-13, limite de recherches D24) ;
+            // le push s'y ajoute en phase 9. Rafraîchi chaque minute (mutualisé).
+            ->databaseNotifications()
+            ->databaseNotificationsPollingInterval('60s')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
