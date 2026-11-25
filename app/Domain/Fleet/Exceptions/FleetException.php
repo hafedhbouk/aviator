@@ -65,6 +65,36 @@ final class FleetException extends RuntimeException
         return new self('Correction inutile : le kilométrage est déjà de '.self::km($mileage).' km.');
     }
 
+    public static function financingModeMismatch(string $vehicleMode, string $type): self
+    {
+        return new self("Le véhicule est financé « {$vehicleMode} » sur sa fiche : un financement « {$type} » ne lui correspond pas. Corrigez d'abord la fiche.");
+    }
+
+    public static function financingAlreadyOpen(): self
+    {
+        return new self('Ce véhicule a déjà un financement en cours : clôturez-le d\'abord.');
+    }
+
+    public static function financingClosed(): self
+    {
+        return new self('Ce financement est clôturé : il ne se modifie plus.');
+    }
+
+    public static function financingHasPaidInstallments(): self
+    {
+        return new self('Des échéances sont déjà pointées : le financement ne se modifie plus.');
+    }
+
+    public static function invalidOutcome(string $outcome, string $type): self
+    {
+        return new self("Issue « {$outcome} » impossible pour un financement « {$type} ».");
+    }
+
+    public static function invalidPaymentDate(): self
+    {
+        return new self('Date de paiement invalide : elle ne peut pas être dans le futur.');
+    }
+
     private static function km(int $value): string
     {
         return number_format($value, 0, ',', ' ');
