@@ -425,7 +425,7 @@ LIMIT 1
 Séquence de chaque action d'occupation, dans une transaction :
 
 1. `SELECT … FROM vehicles WHERE id = ? FOR UPDATE` (et la ligne de la catégorie pour une réservation sans véhicule).
-2. Contrôles : statut et documents du véhicule, `CustomerRiskGate`, intersection.
+2. Contrôles : statut et documents du véhicule, `CustomerRiskGate`, intersection. **La lecture de l'intersection est verrouillante** (`LOCK IN SHARE MODE`) : en `REPEATABLE READ`, une transaction qui a déjà lu avant de prendre le verrou du véhicule verrait sinon un instantané antérieur et laisserait passer une double réservation (prouvé par le test « instantané ancien », lot L9).
 3. Écriture du document et du `vehicle_block`.
 4. Validation de la transaction. La deuxième saisie simultanée attend le verrou, puis voit la première occupation.
 
