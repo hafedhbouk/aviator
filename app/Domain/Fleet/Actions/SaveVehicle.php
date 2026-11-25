@@ -33,8 +33,10 @@ use InvalidArgumentException;
  * - Catégorie et agence de rattachement actives. À la création, le véhicule se trouve
  *   dans son agence de rattachement ; sa localisation change ensuite avec les
  *   mouvements (retours, transferts : Q3), jamais par ce formulaire.
- * - Ni le statut (VehicleStatusService, lot L5) ni le kilométrage (RecordMileage,
- *   lot L4) ne sont modifiables ici. Un véhicule sorti du parc n'est plus modifiable.
+ * - Ni le statut (VehicleStatusService) ni le kilométrage (RecordMileage,
+ *   CorrectMileage) ne sont modifiables ici ; à la création seulement, un relevé
+ *   initial facultatif (`initial_mileage`) ouvre l'historique du kilométrage.
+ *   Un véhicule sorti du parc n'est plus modifiable.
  * - Montants au millime, positifs ou nuls, jamais de float. Données de gestion,
  *   sans calcul d'amortissement (B-02).
  * - Aucune suppression. Modification journalisée (audit).
@@ -49,6 +51,7 @@ final class SaveVehicle
     public function __construct(
         private readonly VehicleStatusService $statuses,
         private readonly DocumentStatusSync $documents,
+        private readonly RecordMileage $mileage,
     ) {}
 
     /**
@@ -65,8 +68,9 @@ final class SaveVehicle
         }
 
         $values = $this->validated($data, $vehicle);
+        $initialMileage = $vehicle === null ? $this->initialMileage($data['initial_mileage'] ?? null) : null;
 
-        return DB::transaction(function () use ($vehicle, $values, $actor): Vehicle {
+        return DB::transaction(function () use ($vehicle, $values, $actor, $initialMileage): Vehicle {
             $category = VehicleCategory::query()->lockForUpdate()->findOrFail($values['vehicle_category_id']);
             if (! $category->is_active && $category->id !== $vehicle?->vehicle_category_id) {
                 throw FleetException::inactiveCategory();
@@ -95,10 +99,34 @@ final class SaveVehicle
                 // sans assurance ni visite technique valides, le véhicule est indisponible.
                 $this->statuses->recordCreation($vehicle, $actor);
                 $this->documents->sync($vehicle, $actor);
+
+                // Relevé initial facultatif (B-03), premier relevé de l'historique.
+                if ($initialMileage !== null) {
+                    $this->mileage->handle($vehicle, $initialMileage, $actor, reason: 'Relevé initial');
+                }
             }
 
             return $vehicle->refresh();
         });
+    }
+
+    private function initialMileage(mixed $value): ?int
+    {
+        $text = self::text($value);
+
+        if ($text === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/[\s\x{00A0}\x{202F}]+/u', '', $text) ?? '';
+
+        if (preg_match('/^\d{1,7}$/', $digits) !== 1 || (int) $digits > RecordMileage::MAX_MILEAGE) {
+            throw ValidationException::withMessages([
+                'initial_mileage' => 'Kilométrage initial invalide : nombre entier de 0 à 2 000 000 km.',
+            ]);
+        }
+
+        return (int) $digits;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Fleet\MileageLedger;
 use App\Domain\Fleet\VehicleStatusService;
 use App\Enums\FinancingMode;
 use App\Enums\FuelType;
@@ -78,6 +79,11 @@ class Vehicle extends Model
             if ($touched && ! VehicleStatusService::isWriting()) {
                 throw new LogicException('Le statut d\'un véhicule ne s\'écrit que par VehicleStatusService.');
             }
+
+            // Kilométrage écrit uniquement par MileageLedger, avec son relevé (B-03).
+            if ($vehicle->exists && $vehicle->isDirty('mileage') && ! MileageLedger::isWriting()) {
+                throw new LogicException('Le kilométrage d\'un véhicule ne s\'écrit que par un relevé (RecordMileage, CorrectMileage).');
+            }
         });
     }
 
@@ -153,5 +159,13 @@ class Vehicle extends Model
     public function statusLogs(): HasMany
     {
         return $this->hasMany(VehicleStatusLog::class);
+    }
+
+    /**
+     * @return HasMany<VehicleMileageLog, $this>
+     */
+    public function mileageLogs(): HasMany
+    {
+        return $this->hasMany(VehicleMileageLog::class);
     }
 }

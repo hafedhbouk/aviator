@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Vehicles\Pages;
 
+use App\Domain\Fleet\Actions\CorrectMileage;
+use App\Domain\Fleet\Actions\RecordMileage;
 use App\Domain\Fleet\Actions\RetireVehicle;
 use App\Domain\Fleet\Exceptions\FleetException;
 use App\Domain\Fleet\Exceptions\IllegalVehicleTransition;
@@ -15,6 +17,8 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Exceptions\Halt;
@@ -29,6 +33,33 @@ class ViewVehicle extends ViewRecord
         return [
             EditAction::make()
                 ->visible(fn (Vehicle $record): bool => $record->status !== VehicleStatus::Retired && (auth()->user()?->can('update', $record) ?? false)),
+            Action::make('recordMileage')
+                ->label('Relever le kilométrage')
+                ->icon(Heroicon::OutlinedPlusCircle)
+                ->visible(fn (Vehicle $record): bool => $record->status !== VehicleStatus::Retired && (auth()->user()?->can('update', $record) ?? false))
+                ->schema(fn (Vehicle $record): array => [
+                    TextInput::make('mileage')->label('Kilométrage (km)')->required()->integer()
+                        ->minValue($record->mileage)->maxValue(RecordMileage::MAX_MILEAGE)
+                        ->helperText('Dernier relevé : '.number_format($record->mileage, 0, ',', ' ').' km. Une baisse passe par une correction.'),
+                ])
+                ->action(function (Vehicle $record, array $data): void {
+                    $this->mileageAction(fn (User $actor) => app(RecordMileage::class)->handle($record, (int) $data['mileage'], $actor));
+                }),
+            Action::make('correctMileage')
+                ->label('Corriger le kilométrage')
+                ->icon(Heroicon::OutlinedPencilSquare)
+                ->color('warning')
+                ->visible(fn (Vehicle $record): bool => $record->status !== VehicleStatus::Retired && (auth()->user()?->can('update', $record) ?? false))
+                ->modalDescription('Correction tracée : la valeur précédente et le motif sont conservés dans l\'historique.')
+                ->schema([
+                    TextInput::make('mileage')->label('Kilométrage corrigé (km)')->required()->integer()
+                        ->minValue(0)->maxValue(RecordMileage::MAX_MILEAGE),
+                    Textarea::make('reason')->label('Motif')->required()->minLength(CorrectMileage::MIN_REASON_LENGTH)->maxLength(255)
+                        ->placeholder('Erreur de saisie au retour du contrat…'),
+                ])
+                ->action(function (Vehicle $record, array $data): void {
+                    $this->mileageAction(fn (User $actor) => app(CorrectMileage::class)->handle($record, (int) $data['mileage'], (string) $data['reason'], $actor));
+                }),
             Action::make('retire')
                 ->label('Sortir du parc')
                 ->icon(Heroicon::OutlinedArchiveBoxArrowDown)
@@ -58,5 +89,26 @@ class ViewVehicle extends ViewRecord
                     $this->refreshFormData(['status_label']);
                 }),
         ];
+    }
+
+    /**
+     * @param  callable(User): mixed  $write
+     */
+    private function mileageAction(callable $write): void
+    {
+        /** @var User $actor */
+        $actor = auth()->user();
+
+        try {
+            $write($actor);
+        } catch (FleetException $exception) {
+            Notification::make()->danger()->title($exception->getMessage())->send();
+
+            throw new Halt;
+        }
+
+        Notification::make()->success()->title('Kilométrage enregistré.')->send();
+        $this->record->refresh();
+        $this->refreshFormData(['mileage_label']);
     }
 }

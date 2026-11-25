@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Vehicles\Schemas;
 
+use App\Domain\Fleet\Actions\RecordMileage;
 use App\Enums\FinancingMode;
 use App\Enums\FuelType;
 use App\Enums\Transmission;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 
 /**
@@ -65,6 +67,10 @@ class VehicleForm
                             ->formatStateUsing(fn (?Vehicle $record): string => $record === null ? '—' : number_format($record->mileage, 0, ',', ' ').' km')
                             ->disabled()->dehydrated(false)
                             ->visibleOn(['view', 'edit']),
+                        TextInput::make('initial_mileage')->label('Kilométrage initial (km)')
+                            ->integer()->minValue(0)->maxValue(RecordMileage::MAX_MILEAGE)
+                            ->helperText('Facultatif : premier relevé. Le kilométrage ne se modifie ensuite que par un relevé ou une correction motivée.')
+                            ->visibleOn('create'),
                     ]),
                 Section::make('Acquisition')->columnSpanFull()
                     ->description('Données de gestion, sans calcul d\'amortissement (B-02). Le contrat de leasing ou de crédit se saisit à part.')
@@ -81,6 +87,11 @@ class VehicleForm
                         TextInput::make('planned_holding_months')->label('Durée de détention prévue (mois)')->integer()
                             ->minValue(1)->maxValue(240)->helperText('Sert à la rentabilité (Q19).'),
                     ]),
+                Section::make('Historique')->columnSpanFull()
+                    ->description('Statuts, kilométrage et documents, du plus récent au plus ancien (B-06).')
+                    ->collapsible()
+                    ->schema([View::make('filament.vehicles.history')])
+                    ->visibleOn('view'),
             ]);
     }
 
