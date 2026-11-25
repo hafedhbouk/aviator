@@ -8,6 +8,14 @@ Phase 2, lot 10, décision **D25** (déploiement par archive). À exécuter par 
 
 Notations : `<domaine>` (Q6), `<cpaneluser>` (identifiant cPanel), `<version>` (nom de l'archive, par exemple `phase-02-architecture-socle-5788747`).
 
+**Pour Aviator : `<domaine>` = `aviator.tn`** (Q6, 25/11/2026). La recette répondra donc sur `https://recette.aviator.tn/admin`, et l'adresse d'envoi sera `noreply@aviator.tn`.
+
+**Prérequis avant l'étape 1** :
+
+1. L'hébergement Oxahost Ultimate est commandé et le compte cPanel est ouvert.
+2. Le domaine `aviator.tn` est rattaché à ce compte : soit ses serveurs DNS sont ceux d'Oxahost, soit un enregistrement `A` de `recette.aviator.tn` pointe vers l'adresse IP du serveur (indiquée dans cPanel). Sans cela, le certificat (étape 8, AutoSSL) ne peut pas être émis. Vérification depuis le poste : `nslookup recette.aviator.tn` doit renvoyer l'adresse du serveur.
+3. Branche à installer pour la phase 4 : `phase/04-parc-leasing-reservations` (paramétrage de la phase 3 et parc). Le prototype du planning n'est jamais accessible en recette.
+
 Arborescence créée sur le serveur :
 
 ```text

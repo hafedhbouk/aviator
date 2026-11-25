@@ -20,6 +20,8 @@ L'atelier de fin de phase (§9) se tient **en recette**, avec le paramétrage r�
 
 **Échéances validées le 19/11/2026** : recette installée **avant la fin du lot L9** (disponibilité), saisie du paramétrage terminée **avant le lot L15** (préparation de l'atelier). Je le rappellerai à chaque fin de lot tant que ce n'est pas fait. La réserve n° 1 de la **phase 1** (ateliers avec les 4 agences, prévus avant la phase 4) est levée par ce même atelier.
 
+**Point au 25/11/2026 (fin du lot L9)** : échéance de la recette **dépassée**, recette non installée. Q6 est répondue : domaine `aviator.tn`, recette sur `recette.aviator.tn` (`docs/installation_recette.md`, prérequis DNS ajoutés). **Nouvelle échéance proposée** : recette installée **avant la fin du lot L11**, pour que le planning (L12) y soit mesuré (condition 3 de D35), et pour laisser la saisie du paramétrage se faire avant L15. Si elle glisse encore, la saisie, la mesure du planning et l'atelier glissent avec elle : la phase se clôturerait alors avec réserve et atelier reporté (§10). Le développement n'en dépend pas d'ici là.
+
 ## 1. Périmètre
 
 ### Dans la phase (P1 d'abord)
