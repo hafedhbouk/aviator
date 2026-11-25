@@ -26,7 +26,19 @@ final class DepartureGuard
      */
     public function missingOn(Vehicle $vehicle, CarbonImmutable $date): array
     {
-        $documents = $this->requiredDocuments($vehicle);
+        return self::missingAmong($this->requiredDocuments($vehicle), $date);
+    }
+
+    /**
+     * Même règle, sur des documents déjà chargés (recherche de disponibilité, sans
+     * requête par véhicule).
+     *
+     * @param  Collection<int, VehicleDocument>  $documents
+     * @return list<VehicleDocumentType>
+     */
+    public static function missingAmong(Collection $documents, CarbonImmutable $date): array
+    {
+        $date = $date->timezone((string) config('app.timezone'));
         $missing = [];
 
         foreach (self::required() as $type) {
