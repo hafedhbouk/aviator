@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Console\Commands\Concerns\GuardsProduction;
 use App\Models\Customer;
+use App\Models\Driver;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
@@ -43,12 +44,24 @@ class RehashBlindIndexCommand extends Command
             }
         });
 
+        $drivers = 0;
+
+        Driver::query()->chunkById(200, function (Collection $chunk) use (&$drivers): void {
+            /** @var Collection<int, Driver> $chunk */
+            foreach ($chunk as $driver) {
+                $driver->refreshSearchKeys();
+                $driver->timestamps = false;
+                $driver->saveQuietly();
+                $drivers++;
+            }
+        });
+
         activity('security')
             ->event('blind_index_rehashed')
-            ->withProperties(['customers' => $count])
+            ->withProperties(['customers' => $count, 'drivers' => $drivers])
             ->log('Empreintes de recherche recalculées');
 
-        $this->components->info("Empreintes recalculées : {$count} client(s).");
+        $this->components->info("Empreintes recalculées : {$count} client(s), {$drivers} conducteur(s).");
 
         return self::SUCCESS;
     }

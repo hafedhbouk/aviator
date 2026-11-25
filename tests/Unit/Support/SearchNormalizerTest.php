@@ -21,8 +21,8 @@ it('normalise un identifiant en lettres et chiffres majuscules', function (strin
 it('normalise un téléphone avec l\'indicatif tunisien par défaut', function (string $input, string $expected) {
     expect(SearchNormalizer::phone($input))->toBe($expected);
 })->with([
-    'national' => ['98 765 432', '21698765432'],
-    'international +' => ['+216 98 765 432', '21698765432'],
-    'international 00' => ['00216 98-765-432', '21698765432'],
-    'étranger' => ['+33 6 12 34 56 78', '33612345678'],
+    'national' => ['98 765 432', '+21698765432'],
+    'international +' => ['+216 98 765 432', '+21698765432'],
+    'international 00' => ['00216 98-765-432', '+21698765432'],
+    'étranger' => ['+33 6 12 34 56 78', '+33612345678'],
 ]);

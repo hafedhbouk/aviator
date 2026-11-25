@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Console\Commands\Concerns\GuardsProduction;
 use App\Models\Customer;
+use App\Models\Driver;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -34,6 +35,7 @@ class ReencryptSecretsCommand extends Command
      */
     public const ENCRYPTED_COLUMNS = [
         Customer::class => ['id_document_number'],
+        Driver::class => ['license_number', 'id_document_number'],
         User::class => ['app_authentication_secret', 'app_authentication_recovery_codes'],
     ];
 

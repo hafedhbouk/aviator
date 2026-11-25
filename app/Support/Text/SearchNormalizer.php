@@ -31,6 +31,19 @@ final class SearchNormalizer
     }
 
     /**
+     * Clé du nom complet, mots triés : « Ben Salah Mohamed » et « Mohamed Ben Salah »
+     * donnent la même clé (D24 : nom complet, dans n'importe quel ordre). Aucune
+     * recherche partielle : tous les mots doivent être présents, et seulement eux.
+     */
+    public static function nameKey(string $value): string
+    {
+        $tokens = array_filter(explode(' ', self::name($value)), fn (string $token): bool => $token !== '');
+        sort($tokens);
+
+        return implode(' ', $tokens);
+    }
+
+    /**
      * Identifiant (pièce d'identité, permis) : lettres et chiffres seulement, en majuscules.
      */
     public static function identifier(string $value): string
@@ -39,7 +52,8 @@ final class SearchNormalizer
     }
 
     /**
-     * Téléphone : chiffres seuls, avec indicatif (216 par défaut pour un numéro à 8 chiffres).
+     * Téléphone au format international « +216XXXXXXXX » (D24) : chiffres seuls,
+     * indicatif tunisien ajouté à un numéro national de 8 chiffres, « 00 » remplacé par « + ».
      */
     public static function phone(string $value): string
     {
@@ -53,6 +67,6 @@ final class SearchNormalizer
             $digits = self::DEFAULT_COUNTRY_CODE.$digits;
         }
 
-        return $digits;
+        return $digits === '' ? '' : '+'.$digits;
     }
 }
