@@ -37,6 +37,9 @@ class ReservationSettings extends Settings
     /** Restitution dans une autre agence (Q3 : non). */
     public bool $allow_one_way;
 
+    /** Q28 : statut « Réservé » quand le départ d'une réservation affectée est à moins de N heures (24). */
+    public int $reserved_status_window_hours;
+
     public static function group(): string
     {
         return 'reservations';

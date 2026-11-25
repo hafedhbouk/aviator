@@ -34,13 +34,14 @@ final class AvailabilityQuery
     /**
      * @return list<array{vehicle_id: int, label: string, category_id: int, buffer_minutes: int, missing_documents: list<VehicleDocumentType>}>
      */
-    public function vehicles(int $agencyId, ?int $categoryId, Period $period): array
+    public function vehicles(int $agencyId, ?int $categoryId, Period $period, bool $locking = false): array
     {
         $vehicles = Vehicle::query()->withoutGlobalScopes()
             ->where('current_agency_id', $agencyId)
             ->whereIn('status', [VehicleStatus::Available->value, VehicleStatus::Reserved->value, VehicleStatus::Rented->value, VehicleStatus::Unavailable->value])
             ->when($categoryId !== null, fn ($query) => $query->where('vehicle_category_id', $categoryId))
             ->orderBy('plate_number')
+            ->when($locking, fn ($query) => $query->sharedLock())
             ->get();
 
         if ($vehicles->isEmpty()) {
@@ -52,7 +53,7 @@ final class AvailabilityQuery
             ->get()
             ->mapWithKeys(fn (VehicleCategory $category): array => [$category->id => CategoryRules::for($category)->preparationBufferMinutes]);
 
-        $blocked = $this->blockedVehicleIds($vehicles->all(), $buffers->all(), $period);
+        $blocked = $this->blockedVehicleIds($vehicles->all(), $buffers->all(), $period, $locking);
         $unavailableForDocuments = $this->unavailableForDocuments($vehicles->where('status', VehicleStatus::Unavailable)->pluck('id')->all());
 
         $documents = VehicleDocument::query()
@@ -91,7 +92,7 @@ final class AvailabilityQuery
      * @param  array<int, int>  $buffers
      * @return list<int>
      */
-    private function blockedVehicleIds(array $vehicles, array $buffers, Period $period): array
+    private function blockedVehicleIds(array $vehicles, array $buffers, Period $period, bool $locking): array
     {
         $byCategory = [];
         foreach ($vehicles as $vehicle) {
@@ -108,6 +109,7 @@ final class AvailabilityQuery
                 ->where('active', true)
                 ->where('starts_at', '<', $endsAt)
                 ->where('ends_at', '>', $period->startsAt)
+                ->when($locking, fn ($query) => $query->sharedLock())
                 ->distinct()
                 ->pluck('vehicle_id')
                 ->map(fn (mixed $id): int => (int) $id)

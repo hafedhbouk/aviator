@@ -36,6 +36,7 @@ final class SettingsCatalog
                 'draft_expiry_hours' => ['rules' => ['nullable', 'integer', 'between:1,720'], 'cast' => '?int'],
                 'no_show_after_minutes' => ['rules' => ['required', 'integer', 'between:0,1440'], 'cast' => 'int'],
                 'allow_one_way' => ['rules' => ['boolean'], 'cast' => 'bool'],
+                'reserved_status_window_hours' => ['rules' => ['required', 'integer', 'between:0,168'], 'cast' => 'int'],
             ],
             PricingSettings::class => [
                 'day_mode' => ['rules' => ['required', 'in:'.implode(',', array_keys(PricingSettings::DAY_MODES))], 'cast' => 'string'],

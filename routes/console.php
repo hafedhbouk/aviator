@@ -1,5 +1,7 @@
 <?php
 
+use App\Domain\Availability\Actions\CloseReservation;
+use App\Domain\Fleet\ReservedStatusSync;
 use App\Domain\Fleet\StatusConsistencyCheck;
 use App\Support\Scheduling\QueueDrainer;
 use App\Support\Scheduling\SchedulerHeartbeat;
@@ -27,6 +29,16 @@ Schedule::call(fn (SchedulerHeartbeat $heartbeat) => $heartbeat->beat())
 Schedule::call(fn (StatusConsistencyCheck $check) => $check->run())
     ->name('fleet-check-status')
     ->dailyAt('06:00');
+
+// Expiration des brouillons et réservations en attente (C-09, lot L11).
+Schedule::call(fn (CloseReservation $reservations) => $reservations->expireDue())
+    ->name('reservations-expire')
+    ->everyFiveMinutes();
+
+// Statut « Réservé » avant le départ (Q28, lot L11).
+Schedule::call(fn (ReservedStatusSync $reserved) => $reserved->syncAll())
+    ->name('fleet-reserved-window')
+    ->hourly();
 
 Schedule::call(fn (QueueDrainer $drainer) => $drainer->drain())
     ->name('queue-worker')
