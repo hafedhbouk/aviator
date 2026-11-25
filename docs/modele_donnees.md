@@ -241,7 +241,7 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 
 ## 5. Réservations, contrats et états des lieux (phases 4 et 5)
 
-### `reservations` (phase 4)
+### `reservations` (phase 4) — réalisé au lot L11
 
 | Colonne | Type | Contraintes | Remarque |
 | --- | --- | --- | --- |
@@ -267,6 +267,8 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 | `created_at`, `updated_at` | TIMESTAMP | N | |
 
 `reservation_options` : `reservation_id` FK CASCADE, `option_id` FK, `quantity` SMALLINT, `unit_amount` DECIMAL(15,3), `total_amount` DECIMAL(15,3) ; U (`reservation_id`, `option_id`).
+
+**Réalisé au lot L11 de la phase 4.** Écarts au tableau ci-dessus : `cancelled_at` DATETIME N ajouté ; `discount_approval_id` et `override_approval_id` sans clé étrangère jusqu'à `approval_requests` (phase 5, D36) ; index (`agency_id`, `status`, `starts_at`) ajouté. Numéro `RES-AAAA-NNNNN` attribué dans la transaction de création (aucun numéro consommé par un refus). Toute écriture passe par `SaveReservation`, `AssignVehicle` et `CloseReservation`, sous verrou de la catégorie puis du véhicule (`ReservationHold`). Le réglage `reservations.reserved_status_window_hours` (Q28, 24 h) est ajouté.
 
 ### `contracts` (phase 5)
 
