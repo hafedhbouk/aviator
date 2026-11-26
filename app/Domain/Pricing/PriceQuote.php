@@ -36,7 +36,14 @@ final readonly class PriceQuote
         public ?TaxBreakdown $taxes,
         public ?string $taxNotice,
         public CarbonImmutable $computedAt,
+        public bool $discountRequiresApproval = false,
     ) {}
+
+    /** Montant avant remise (location et options). */
+    public function subtotal(): Money
+    {
+        return $this->rentalAmount->plus($this->optionsAmount);
+    }
 
     public function billableDays(): int
     {
@@ -75,6 +82,7 @@ final readonly class PriceQuote
             ], $this->options),
             'options_amount' => $this->optionsAmount->toDecimalString(),
             'discount_amount' => $this->discountAmount->toDecimalString(),
+            'discount_requires_approval' => $this->discountRequiresApproval,
             'total_excluding_tax' => $this->totalExcludingTax->toDecimalString(),
             'taxes' => $this->taxes === null ? null : [
                 'total_vat' => $this->taxes->totalVat->toDecimalString(),

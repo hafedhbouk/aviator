@@ -39,6 +39,6 @@ final class QuoteUnavailable extends RuntimeException
 
     public static function discountAboveThreshold(string $threshold): self
     {
-        return new self("Remise refusée : elle dépasse le seuil de {$threshold} % accordé sans approbation. L'approbation par le super admin arrive en phase 5 (D36).");
+        return new self("Remise refusée : elle dépasse le seuil de {$threshold} % accordé sans approbation du super admin.");
     }
 }

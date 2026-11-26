@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reservations\Pages;
 
+use App\Domain\Approvals\Actions\RequestApproval;
 use App\Domain\Availability\Actions\SaveReservation;
 use App\Domain\Availability\Exceptions\InvalidPeriod;
 use App\Domain\Availability\Period;
@@ -25,6 +26,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
@@ -93,12 +95,16 @@ class CreateReservation extends CreateRecord
                         ->modalDescription('Pièce d\'identité ou permis obligatoire (D40). Un document déjà connu renvoie à la fiche existante.')
                         ->action(fn (array $data, Set $set) => $this->createCustomer($data, $set)),
                 ]),
-                Select::make('customer_id')->label('Client')->required()
+                Select::make('customer_id')->label('Client')->required()->live()
                     ->options(fn (): array => collect($this->customerResults)->mapWithKeys(fn (array $c): array => [
-                        $c['customer_id'] => $c['name'].($c['blacklisted'] ? ' — réservation impossible' : ($c['watched'] ? ' — vigilance' : '')),
+                        $c['customer_id'] => $c['name'].($c['blacklisted'] ? ' — dérogation du super admin requise' : ($c['watched'] ? ' — vigilance' : '')),
                     ])->all())
-                    ->disableOptionWhen(fn (string $value): bool => (bool) (collect($this->customerResults)->firstWhere('customer_id', (int) $value)['blacklisted'] ?? false))
                     ->placeholder('Recherchez ou créez le client'),
+                Textarea::make('override_reason')->label('Motif de la demande de dérogation (obligatoire)')
+                    ->visible(fn (Get $get): bool => $this->isBlacklisted($get('customer_id')))
+                    ->required(fn (Get $get): bool => $this->isBlacklisted($get('customer_id')))
+                    ->minLength(RequestApproval::MIN_REASON_LENGTH)->maxLength(1000)
+                    ->helperText('Client sur liste noire : la réservation est enregistrée en brouillon et la demande part au super admin. Elle ne pourra être confirmée qu\'après son approbation.'),
             ]),
             Step::make('Période')->columns(2)->schema([
                 Select::make('agency_id')->label('Agence de départ et de retour')->required()->live()
@@ -124,12 +130,18 @@ class CreateReservation extends CreateRecord
                         TextInput::make('quantity')->label('Quantité')->integer()->minValue(1)->maxValue(10)->default(1)->required(),
                     ]),
                 AmountField::make('discount_amount')->label('Remise HT')->live(onBlur: true)
-                    ->helperText('Au-delà du seuil fixé par le super admin, la remise est refusée (approbation en phase 5).'),
+                    ->helperText('Au-delà du seuil fixé par le super admin, la remise lui est soumise : la réservation est enregistrée, le départ attend son approbation.'),
+                Textarea::make('discount_reason')->label('Motif de la remise (obligatoire au-delà du seuil)')
+                    ->visible(fn (Get $get): bool => $this->discountNeedsApproval($get))
+                    ->required(fn (Get $get): bool => $this->discountNeedsApproval($get))
+                    ->minLength(RequestApproval::MIN_REASON_LENGTH)->maxLength(1000),
                 TextEntry::make('quote_preview')->label('Devis')->state(fn (Get $get): string => $this->quotePreview($get)),
             ]),
             Step::make('Validation')->schema([
                 Radio::make('status')->label('Enregistrer comme')->required()->default(ReservationStatus::Confirmed->value)
-                    ->options([ReservationStatus::Confirmed->value => 'Réservation confirmée', ReservationStatus::Draft->value => 'Brouillon (devis, sans véhicule retenu)']),
+                    ->options(fn (Get $get): array => $this->isBlacklisted($get('customer_id'))
+                        ? [ReservationStatus::Draft->value => 'Brouillon, en attente de la dérogation du super admin']
+                        : [ReservationStatus::Confirmed->value => 'Réservation confirmée', ReservationStatus::Draft->value => 'Brouillon (devis, sans véhicule retenu)']),
                 TextEntry::make('final_quote')->label('Devis')->state(fn (Get $get): string => $this->quotePreview($get)),
             ]),
         ];
@@ -178,6 +190,10 @@ class CreateReservation extends CreateRecord
         $data['options'] = self::optionQuantities($data['option_lines'] ?? []);
         unset($data['option_lines']);
 
+        if ($this->isBlacklisted($data['customer_id'] ?? null)) {
+            $data['status'] = ReservationStatus::Draft->value;
+        }
+
         return ReservationScreens::run(fn () => app(SaveReservation::class)->handle(null, $data, $actor));
     }
 
@@ -192,7 +208,7 @@ class CreateReservation extends CreateRecord
             (string) $get('search_value'),
         ));
 
-        $set('customer_id', count($this->customerResults) === 1 && ! $this->customerResults[0]['blacklisted'] ? $this->customerResults[0]['customer_id'] : null);
+        $set('customer_id', count($this->customerResults) === 1 ? $this->customerResults[0]['customer_id'] : null);
 
         Notification::make()
             ->title($this->customerResults === [] ? 'Aucun client trouvé : vérifiez la saisie ou créez le client.' : count($this->customerResults).' client(s) trouvé(s).')
@@ -219,14 +235,13 @@ class CreateReservation extends CreateRecord
             'rentals' => 0,
         ]];
 
+        $set('customer_id', $customer->id);
+
         if ($result['blacklisted']) {
-            $set('customer_id', null);
-            Notification::make()->danger()->title('Client déjà connu : réservation impossible. Contactez le super admin.')->persistent()->send();
+            Notification::make()->danger()->title('Client déjà connu, sur liste noire : brouillon seulement, avec une demande de dérogation motivée au super admin.')->persistent()->send();
 
             return;
         }
-
-        $set('customer_id', $customer->id);
 
         Notification::make()
             ->title($result['created'] ? 'Client créé.' : 'Client déjà connu : sa fiche existante est retenue.')
@@ -253,6 +268,7 @@ class CreateReservation extends CreateRecord
                 Period::between($startsAt, $endsAt),
                 self::optionQuantities((array) ($get('option_lines') ?? [])),
                 AmountInput::parse($get('discount_amount')),
+                allowApproval: true,
             );
         } catch (QuoteUnavailable|InvalidPeriod|InvalidArgumentException $exception) {
             return $exception->getMessage();
@@ -261,11 +277,45 @@ class CreateReservation extends CreateRecord
         }
 
         $text = "{$quote->billableDays()} jour(s) : location {$quote->rentalAmount->format()}, options {$quote->optionsAmount->format()}, "
-            ."remise {$quote->discountAmount->format()}, total HT {$quote->totalExcludingTax->format()}.";
+            ."remise {$quote->discountAmount->format()}".($quote->discountRequiresApproval ? ' (soumise au super admin)' : '')
+            .", total HT {$quote->totalExcludingTax->format()}.";
 
         return $quote->taxes === null
             ? "{$text} {$quote->taxNotice}"
             : "{$text} TTC {$quote->taxes->totalIncludingTax->format()}, net à payer (timbre compris) {$quote->taxes->netToPay->format()}.";
+    }
+
+    private function isBlacklisted(mixed $customerId): bool
+    {
+        return is_numeric($customerId)
+            && (bool) (collect($this->customerResults)->firstWhere('customer_id', (int) $customerId)['blacklisted'] ?? false);
+    }
+
+    /**
+     * Affichage seulement : le domaine refait le calcul et le contrôle à l'enregistrement.
+     */
+    private function discountNeedsApproval(Get $get): bool
+    {
+        try {
+            $discount = AmountInput::parse($get('discount_amount'));
+            $agencyId = $get('agency_id');
+            $categoryId = $get('vehicle_category_id');
+
+            if ($discount === null || $discount->isZero() || ! is_numeric($agencyId) || ! is_numeric($categoryId)) {
+                return false;
+            }
+
+            return app(QuoteCalculator::class)->quote(
+                (int) $categoryId,
+                (int) $agencyId,
+                Period::between((string) $get('starts_at'), (string) $get('ends_at')),
+                self::optionQuantities((array) ($get('option_lines') ?? [])),
+                $discount,
+                allowApproval: true,
+            )->discountRequiresApproval;
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**

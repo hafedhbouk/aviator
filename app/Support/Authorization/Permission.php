@@ -32,6 +32,9 @@ enum Permission: string
     // Parc et leasing (module B, phase 4).
     case FleetManage = 'fleet.manage';
 
+    // Approbations (RG-10, RG-15, phase 5, D46) : super admin seul, sans délégation (Q52).
+    case ApprovalsDecide = 'approvals.decide';
+
     /**
      * Profils qui reçoivent cette permission par défaut.
      *
@@ -47,7 +50,8 @@ enum Permission: string
             self::CustomersExportNames,
             self::CustomersNotifyBulk,
             self::FiscalManage,
-            self::SettingsManage => [Role::SuperAdmin],
+            self::SettingsManage,
+            self::ApprovalsDecide => [Role::SuperAdmin],
 
             self::AgenciesAll,
             self::ExportsAccounting,
@@ -88,6 +92,7 @@ enum Permission: string
             self::FiscalManage => 'Modifier les paramètres fiscaux et les mentions des factures',
             self::SettingsManage => 'Modifier les réglages (réservation, tarification, facturation, approbations, notifications, sécurité)',
             self::FleetManage => 'Gérer le parc : véhicules, documents, kilométrage, financements',
+            self::ApprovalsDecide => 'Approuver ou refuser les demandes (remises, dérogations)',
         };
     }
 }

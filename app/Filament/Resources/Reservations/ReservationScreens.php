@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reservations;
 
+use App\Domain\Approvals\Exceptions\ApprovalException;
 use App\Domain\Availability\AvailabilityQuery;
 use App\Domain\Availability\Exceptions\InvalidPeriod;
 use App\Domain\Availability\Exceptions\ReservationException;
@@ -27,7 +28,7 @@ final class ReservationScreens
     /** Refus métier affichables tels quels, sans donnée client. */
     private const BUSINESS_REFUSALS = [
         ReservationException::class, VehicleUnavailable::class, VehicleNotRentable::class, QuoteUnavailable::class,
-        CustomerBlocked::class, InvalidPeriod::class, CrmException::class,
+        CustomerBlocked::class, InvalidPeriod::class, CrmException::class, ApprovalException::class,
     ];
 
     /**

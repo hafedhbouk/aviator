@@ -35,6 +35,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array<string, mixed> $quote
  * @property Money $estimated_total_amount
  * @property Money $discount_amount
+ * @property int|null $discount_approval_id
+ * @property int|null $override_approval_id
  * @property CarbonImmutable|null $expires_at
  * @property string|null $cancellation_reason
  * @property CarbonImmutable|null $cancelled_at
@@ -102,6 +104,26 @@ class Reservation extends Model
     public function options(): HasMany
     {
         return $this->hasMany(ReservationOption::class);
+    }
+
+    /**
+     * Demande d'approbation de la remise (RG-10, D46).
+     *
+     * @return BelongsTo<ApprovalRequest, $this>
+     */
+    public function discountApproval(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalRequest::class, 'discount_approval_id')->withoutGlobalScopes();
+    }
+
+    /**
+     * Demande de dérogation à la liste noire (RG-15, D46).
+     *
+     * @return BelongsTo<ApprovalRequest, $this>
+     */
+    public function overrideApproval(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalRequest::class, 'override_approval_id')->withoutGlobalScopes();
     }
 
     /**

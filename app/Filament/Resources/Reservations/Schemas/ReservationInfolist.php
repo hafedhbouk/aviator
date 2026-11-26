@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reservations\Schemas;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\ReservationStatus;
 use App\Models\Reservation;
 use App\Support\Money\Money;
@@ -37,6 +38,14 @@ class ReservationInfolist
                         ->visible(fn (Reservation $record): bool => $record->status === ReservationStatus::Cancelled),
                     TextEntry::make('expires_at')->label('Expire le')->formatStateUsing($at)
                         ->visible(fn (Reservation $record): bool => $record->expires_at !== null),
+                    TextEntry::make('discountApproval.status')->label('Remise : approbation')->badge()
+                        ->formatStateUsing(fn (ApprovalStatus $state): string => $state->label())
+                        ->color(fn (ApprovalStatus $state): string => $state->color())
+                        ->visible(fn (Reservation $record): bool => $record->discount_approval_id !== null),
+                    TextEntry::make('overrideApproval.status')->label('Dérogation à la liste noire')->badge()
+                        ->formatStateUsing(fn (ApprovalStatus $state): string => $state->label())
+                        ->color(fn (ApprovalStatus $state): string => $state->color())
+                        ->visible(fn (Reservation $record): bool => $record->override_approval_id !== null),
                 ]),
                 Section::make('Devis figé')->columnSpanFull()->columns(4)->schema([
                     TextEntry::make('quote.billable_days')->label('Jours facturés'),

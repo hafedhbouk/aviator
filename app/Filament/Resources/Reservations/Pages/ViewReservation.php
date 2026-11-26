@@ -35,6 +35,18 @@ class ViewReservation extends ViewRecord
             && (auth()->user()?->can('update', $record) ?? false);
 
         return [
+            Action::make('confirm')
+                ->label('Confirmer')
+                ->icon(Heroicon::OutlinedCheckCircle)
+                ->color('success')
+                ->visible(fn (Reservation $record): bool => $record->status === ReservationStatus::Draft
+                    && (auth()->user()?->can('update', $record) ?? false))
+                ->requiresConfirmation()
+                ->modalDescription('La disponibilité est contrôlée de nouveau et le devis recalculé. Un client sur liste noire exige la dérogation approuvée du super admin.')
+                ->action(fn (Reservation $record) => $this->perform(
+                    fn (User $actor) => app(SaveReservation::class)->handle($record, ['status' => ReservationStatus::Confirmed->value], $actor),
+                    'Réservation confirmée.',
+                )),
             Action::make('reschedule')
                 ->label('Modifier les dates')
                 ->icon(Heroicon::OutlinedCalendarDays)
