@@ -59,6 +59,21 @@ final class ContractException extends RuntimeException
         return new self('Un conducteur principal est obligatoire avant le départ.');
     }
 
+    public static function mileageBelow(int $minimum, string $reference): self
+    {
+        return new self('Kilométrage refusé : il ne peut pas être inférieur au '.$reference.' ('.number_format($minimum, 0, ',', ' ').' km).');
+    }
+
+    public static function inspectionIncomplete(string $missing): self
+    {
+        return new self("État des lieux incomplet : {$missing}.");
+    }
+
+    public static function overrideNotApproved(): self
+    {
+        return new self('Départ impossible : la dérogation du super admin pour ce client n\'est pas approuvée.');
+    }
+
     public static function startInPast(): self
     {
         return new self('Le départ d\'un contrat ne peut pas être dans le passé.');

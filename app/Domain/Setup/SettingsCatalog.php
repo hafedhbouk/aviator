@@ -6,6 +6,7 @@ namespace App\Domain\Setup;
 
 use App\Settings\ApprovalSettings;
 use App\Settings\BillingSettings;
+use App\Settings\InspectionSettings;
 use App\Settings\NotificationSettings;
 use App\Settings\PricingSettings;
 use App\Settings\ReservationSettings;
@@ -56,6 +57,9 @@ final class SettingsCatalog
             NotificationSettings::class => [
                 'send_urgent_in_request' => ['rules' => ['boolean'], 'cast' => 'bool'],
                 'alerts' => ['rules' => ['required', 'array'], 'cast' => 'alerts'],
+            ],
+            InspectionSettings::class => [
+                'max_photos' => ['rules' => ['required', 'integer', 'between:1,40'], 'cast' => 'int'],
             ],
             SecuritySettings::class => [
                 'require_2fa_for_agency_users' => ['rules' => ['boolean'], 'cast' => 'bool'],

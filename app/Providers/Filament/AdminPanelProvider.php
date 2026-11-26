@@ -6,6 +6,7 @@ use App\Filament\Auth\EditProfile;
 use App\Filament\Auth\Login;
 use App\Filament\Auth\ResetPassword;
 use App\Filament\Pages\SwitchAgency;
+use App\Http\Controllers\InspectionFileController;
 use App\Http\Controllers\PrintFiscalConfigurationReport;
 use App\Http\Controllers\VehicleDocumentFileController;
 use App\Http\Middleware\EnsurePrivilegedTwoFactor;
@@ -99,6 +100,14 @@ class AdminPanelProvider extends PanelProvider
                     ->whereNumber('document')
                     ->middleware(EnsurePrivilegedTwoFactor::class)
                     ->name('private-files.vehicle-document');
+                Route::get('fichiers/etats-des-lieux/photos/{photo}', [InspectionFileController::class, 'photo'])
+                    ->whereNumber('photo')
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('private-files.inspection-photo');
+                Route::get('fichiers/etats-des-lieux/{inspection}/signature', [InspectionFileController::class, 'signature'])
+                    ->whereNumber('inspection')
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('private-files.inspection-signature');
             });
     }
 }

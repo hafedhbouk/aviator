@@ -174,6 +174,14 @@ class Contract extends Model
     }
 
     /**
+     * @return HasMany<Inspection, $this>
+     */
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(Inspection::class);
+    }
+
+    /**
      * @return BelongsTo<ApprovalRequest, $this>
      */
     public function discountApproval(): BelongsTo
