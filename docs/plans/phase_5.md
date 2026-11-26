@@ -147,4 +147,6 @@ Marge : 1,75 j sous le budget de 30 j ; seuil d'alerte à 36 j. Je signale tout 
 
 | L4. Conditions km et carburant | 0,75 | 0,5 | 8,25 | `vehicles.fuel_tank_liters`, `vehicle_categories.late_hour_amount`, `pricing.fuel_liter_amount` et `pricing.fuel_service_amount` (vides par défaut) ; retard à l'heure refusé tant qu'une catégorie active n'a pas de tarif horaire (D51) ; conditions figées sur le contrat, y compris la franchise de la catégorie (utile au plafond des dommages, lot L8) |
 
-Budget 30 j ; seuil d'alerte 36 j. Prévu restant : 19,5 j.
+| L5. États des lieux (domaine) | 2,5 | 2,25 | 10,5 | `inspections`, `inspection_damages`, `inspection_photos` ; `RecordInspection` (dommages du dernier retour repris, kilométrage contrôlé, RG-04 au retour, photos ré-encodées par GD sans métadonnées, signature PNG, client absent au retour, Q73) ; `StartRental` (état des lieux complet, remise et dérogation approuvées, conducteurs, documents valides, kilométrage, véhicule « Loué », état des lieux figé) ; `InspectionFileController` ; réglage `inspections.max_photos` et sa page. L'exemplaire signé en PDF (colonnes prévues) arrive au lot L11 |
+
+Budget 30 j ; seuil d'alerte 36 j. Prévu restant : 17 j.

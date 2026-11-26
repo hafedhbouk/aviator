@@ -283,9 +283,9 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 | `contract_options` | `contract_id` FK CASCADE, `option_id` FK, `quantity`, `unit_amount`, `total_amount` | |
 | `contract_extensions` | `contract_id` FK, `previous_ends_at`, `new_ends_at` DATETIME, `created_by` FK | Contrôle de disponibilité tracé (D-07) |
 | `contract_amendments` | `contract_id` FK, `reason` TEXT, `changes` JSON, `created_by` FK | D-11 |
-| `inspections` | `contract_id` FK, `type` (`departure`, `return`), `mileage` INT UNSIGNED, `fuel_eighths` TINYINT UNSIGNED (0 à 8), `signature_path` N (privé), `notes` TEXT N, `validated_at` DATETIME N, `validated_by` FK N | **U (`contract_id`, `type`)** ; RG-04 au retour |
-| `inspection_damages` | `inspection_id` FK CASCADE, `zone` VARCHAR(32), `x`, `y` DECIMAL(5,2), `description`, `severity`, `is_new` BOOLEAN | |
-| `inspection_photos` | `inspection_id` FK CASCADE, `path`, `size_bytes` INT UNSIGNED, `sha256` CHAR(64), `taken_at` DATETIME N | Disque `private` |
+| `inspections` | **Réalisé au lot L5** ; écarts : `signature_sha256` CHAR(64) N, `customer_absent_reason` N, `returned_at_declared` DATETIME N (Q73), `signed_pdf_path` et `signed_pdf_sha256` N (D43, lot L11), `created_by` FK N ; validé, il n'est plus modifiable et ne se supprime jamais (modèle). `contract_id` FK, `type` (`departure`, `return`), `mileage` INT UNSIGNED, `fuel_eighths` TINYINT UNSIGNED (0 à 8), `signature_path` N (privé), `notes` TEXT N, `validated_at` DATETIME N, `validated_by` FK N | **U (`contract_id`, `type`)** ; RG-04 au retour |
+| `inspection_damages` | **Réalisé au lot L5** ; `zone` parmi les 13 zones du schéma (`VehicleZone`), `severity` (`minor`, `moderate`, `major`), `carried_from_id` FK N (dommage repris du dernier retour). `inspection_id` FK CASCADE, `zone` VARCHAR(32), `x`, `y` DECIMAL(5,2), `description`, `severity`, `is_new` BOOLEAN | |
+| `inspection_photos` | **Réalisé au lot L5** ; `width`, `height` SMALLINT, `created_by` FK N ; JPEG ré-encodé (D44). `inspection_id` FK CASCADE, `path`, `size_bytes` INT UNSIGNED, `sha256` CHAR(64), `taken_at` DATETIME N | Disque `private` |
 
 ---
 
