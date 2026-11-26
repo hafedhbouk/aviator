@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\Rental\Actions;
 
 use App\Domain\Approvals\ApprovalGate;
+use App\Domain\Availability\BlockRegistry;
+use App\Domain\Availability\Period;
 use App\Domain\Crm\CustomerRiskGate;
 use App\Domain\Fleet\Actions\RecordMileage;
 use App\Domain\Fleet\VehicleStatusService;
 use App\Domain\Rental\ContractDrivers;
 use App\Domain\Rental\Exceptions\ContractException;
+use App\Domain\Setup\CategoryRules;
 use App\Enums\ContractStatus;
 use App\Enums\InspectionType;
 use App\Enums\VehicleStatus;
@@ -19,6 +22,7 @@ use App\Models\Inspection;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\VehicleCategory;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -47,6 +51,7 @@ final class StartRental
         private readonly ContractDrivers $drivers,
         private readonly RecordMileage $mileage,
         private readonly VehicleStatusService $statuses,
+        private readonly BlockRegistry $blocks,
     ) {}
 
     public function handle(Contract $contract, User $actor, ?CarbonImmutable $departedAt = null): Contract
@@ -70,6 +75,13 @@ final class StartRental
             $this->approvals->assertDiscountCleared($locked->discount_amount, $locked->discount_approval_id);
             $this->assertOverride($locked);
             $this->drivers->assertReadyForDeparture($locked, $departedAt);
+
+            // Départ en avance : l'occupation est avancée sous le verrou du véhicule (refusée
+            // si l'avance chevauche une autre occupation, délai de préparation compris).
+            if ($departedAt->lessThan($locked->starts_at)) {
+                $buffer = CategoryRules::for(VehicleCategory::query()->findOrFail($locked->vehicle_category_id))->preparationBufferMinutes;
+                $this->blocks->occupy($locked->vehicle_id, new Period($departedAt, $locked->ends_at), $locked, $locked->agency_id, $buffer);
+            }
 
             $vehicle = Vehicle::query()->withoutGlobalScopes()->findOrFail($locked->vehicle_id);
             $this->mileage->handle($vehicle, (int) $inspection->mileage, $actor, $inspection, $departedAt, "Départ du contrat {$locked->number}");

@@ -6,6 +6,7 @@ use App\Domain\Rental\Actions\CancelContract;
 use App\Domain\Rental\Actions\RemoveContractDriver;
 use App\Domain\Rental\Actions\SaveContractDriver;
 use App\Enums\ContractStatus;
+use App\Enums\InspectionType;
 use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Reservations\ReservationScreens;
 use App\Models\Contract;
@@ -38,6 +39,20 @@ class ViewContract extends ViewRecord
             && (auth()->user()?->can('update', $record) ?? false);
 
         return [
+            Action::make('departureInspection')
+                ->label('État des lieux de départ')
+                ->icon(Heroicon::OutlinedClipboardDocumentCheck)
+                ->color('primary')
+                ->visible(fn (Contract $record): bool => $record->status === ContractStatus::Draft && (auth()->user()?->can('update', $record) ?? false)
+                    || $record->inspections()->where('type', InspectionType::Departure->value)->exists())
+                ->url(fn (Contract $record): string => ContractResource::getUrl('inspect', ['record' => $record, 'type' => InspectionType::Departure->value])),
+            Action::make('returnInspection')
+                ->label('État des lieux de retour')
+                ->icon(Heroicon::OutlinedClipboardDocumentCheck)
+                ->color('primary')
+                ->visible(fn (Contract $record): bool => $record->status === ContractStatus::Active && (auth()->user()?->can('update', $record) ?? false)
+                    || $record->inspections()->where('type', InspectionType::Return->value)->exists())
+                ->url(fn (Contract $record): string => ContractResource::getUrl('inspect', ['record' => $record, 'type' => InspectionType::Return->value])),
             Action::make('addDriver')
                 ->label('Ajouter un conducteur')
                 ->icon(Heroicon::OutlinedIdentification)

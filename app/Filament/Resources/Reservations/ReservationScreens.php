@@ -47,16 +47,28 @@ final class ReservationScreens
         try {
             return $action();
         } catch (Throwable $exception) {
-            foreach (self::BUSINESS_REFUSALS as $refusal) {
-                if ($exception instanceof $refusal) {
-                    Notification::make()->danger()->title($exception->getMessage())->persistent()->send();
+            if (self::isRefusal($exception)) {
+                Notification::make()->danger()->title($exception->getMessage())->persistent()->send();
 
-                    throw (new Halt)->rollBackDatabaseTransaction();
-                }
+                throw (new Halt)->rollBackDatabaseTransaction();
             }
 
             throw $exception;
         }
+    }
+
+    /**
+     * Refus métier affichable tel quel (message sans donnée client).
+     */
+    public static function isRefusal(Throwable $exception): bool
+    {
+        foreach (self::BUSINESS_REFUSALS as $refusal) {
+            if ($exception instanceof $refusal) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

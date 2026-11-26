@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Contracts;
 
+use App\Filament\Resources\Contracts\Pages\InspectContract;
 use App\Filament\Resources\Contracts\Pages\ListContracts;
 use App\Filament\Resources\Contracts\Pages\ViewContract;
 use App\Filament\Resources\Contracts\Schemas\ContractInfolist;
@@ -58,6 +59,7 @@ class ContractResource extends Resource
         return [
             'index' => ListContracts::route('/'),
             'view' => ViewContract::route('/{record}'),
+            'inspect' => InspectContract::route('/{record}/etat-des-lieux/{type}'),
         ];
     }
 }

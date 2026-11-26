@@ -2,6 +2,7 @@
 
 use App\Domain\Approvals\Actions\DecideApproval;
 use App\Domain\Approvals\Exceptions\ApprovalException;
+use App\Domain\Availability\Exceptions\VehicleUnavailable;
 use App\Domain\Crm\Actions\AddRecommendation;
 use App\Domain\Fleet\Exceptions\VehicleNotRentable;
 use App\Domain\Rental\Actions\CancelContract;
@@ -23,6 +24,7 @@ use App\Models\Inspection;
 use App\Models\InspectionDamage;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\VehicleBlock;
 use App\Models\VehicleCategory;
 use App\Models\VehicleDocument;
 use App\Settings\InspectionSettings;
@@ -31,6 +33,7 @@ use App\Support\Files\PrivateFiles;
 use App\Support\Sequences\SequenceAllocator;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -238,6 +241,30 @@ it('enregistre la signature dessinée et refuse une signature illisible', functi
 });
 
 // --- Départ ----------------------------------------------------------------------------------
+
+it('avance l\'occupation du véhicule pour un départ en avance, et le refuse s\'il chevauche une autre occupation', function () {
+    primaryDriver($this->contract);
+    completeDeparture($this->contract);
+    $source = (new Contract)->getMorphClass();
+
+    // Occupation fictive d'un autre document jusqu'à 08:00 + 60 min de préparation.
+    DB::table('vehicle_blocks')->insert([
+        'vehicle_id' => $this->vehicle->id, 'agency_id' => $this->sfax->id, 'source_type' => 'App\\Models\\Reservation', 'source_id' => 999999,
+        'starts_at' => '2027-03-08 09:00:00', 'ends_at' => '2027-03-10 09:00:00', 'buffer_minutes' => 60, 'active' => true,
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+
+    // Départ à 08:30 au lieu de 09:00 : l'avance chevauche l'autre occupation.
+    expect(fn () => app(StartRental::class)->handle($this->contract, $this->agent))->toThrow(VehicleUnavailable::class)
+        ->and($this->contract->fresh()?->status)->toBe(ContractStatus::Draft);
+
+    DB::table('vehicle_blocks')->where('source_id', 999999)->update(['active' => false]);
+    app(StartRental::class)->handle($this->contract, $this->agent);
+
+    $block = VehicleBlock::query()->where('source_type', $source)->where('source_id', $this->contract->id)->where('active', true)->sole();
+
+    expect($block->starts_at->equalTo(CarbonImmutable::parse('2027-03-10 08:30')))->toBeTrue();
+});
 
 it('valide le départ : contrat en cours, véhicule loué, kilométrage relevé, état des lieux figé', function () {
     primaryDriver($this->contract);
