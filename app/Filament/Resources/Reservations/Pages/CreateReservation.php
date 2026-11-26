@@ -10,11 +10,14 @@ use App\Domain\Crm\Actions\CreateCounterCustomer;
 use App\Domain\Crm\CustomerSearch;
 use App\Domain\Pricing\Exceptions\QuoteUnavailable;
 use App\Domain\Pricing\QuoteCalculator;
+use App\Domain\Rental\Actions\OpenContract;
 use App\Enums\ReservationStatus;
 use App\Filament\Forms\AmountField;
+use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Filament\Resources\Reservations\ReservationScreens;
 use App\Models\Agency;
+use App\Models\Contract;
 use App\Models\Option;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -53,6 +56,21 @@ class CreateReservation extends CreateRecord
     use HasWizard;
 
     protected static string $resource = ReservationResource::class;
+
+    /** Choix « Louer maintenant » de l'étape Validation : contrat au comptoir, sans réservation. */
+    public const RENT_NOW = 'rent_now';
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->record instanceof Contract
+            ? ContractResource::getUrl('view', ['record' => $this->record])
+            : ReservationResource::getUrl('view', ['record' => $this->record]);
+    }
+
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return $this->record instanceof Contract ? "Contrat {$this->record->number} créé." : 'Réservation enregistrée.';
+    }
 
     /**
      * Résultats de la dernière recherche de client (D24 : 10 au plus, sans coordonnée).
@@ -141,7 +159,8 @@ class CreateReservation extends CreateRecord
                 Radio::make('status')->label('Enregistrer comme')->required()->default(ReservationStatus::Confirmed->value)
                     ->options(fn (Get $get): array => $this->isBlacklisted($get('customer_id'))
                         ? [ReservationStatus::Draft->value => 'Brouillon, en attente de la dérogation du super admin']
-                        : [ReservationStatus::Confirmed->value => 'Réservation confirmée', ReservationStatus::Draft->value => 'Brouillon (devis, sans véhicule retenu)']),
+                        : [ReservationStatus::Confirmed->value => 'Réservation confirmée', ReservationStatus::Draft->value => 'Brouillon (devis, sans véhicule retenu)']
+                            + (is_numeric($get('vehicle_id')) ? [self::RENT_NOW => 'Louer maintenant : contrat immédiat, sans réservation'] : [])),
                 TextEntry::make('final_quote')->label('Devis')->state(fn (Get $get): string => $this->quotePreview($get)),
             ]),
         ];
@@ -189,6 +208,13 @@ class CreateReservation extends CreateRecord
 
         $data['options'] = self::optionQuantities($data['option_lines'] ?? []);
         unset($data['option_lines']);
+
+        // « Louer maintenant » (parcours P1, étape 6 bis) : contrat au comptoir (RG-03).
+        if (($data['status'] ?? null) === self::RENT_NOW) {
+            unset($data['status']);
+
+            return ReservationScreens::run(fn () => app(OpenContract::class)->atCounter($data, $actor));
+        }
 
         if ($this->isBlacklisted($data['customer_id'] ?? null)) {
             $data['status'] = ReservationStatus::Draft->value;

@@ -6,8 +6,10 @@ namespace App\Domain\Approvals;
 
 use App\Enums\ApprovalStatus;
 use App\Filament\Resources\ApprovalRequests\ApprovalRequestResource;
+use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\ApprovalRequest;
+use App\Models\Contract;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Support\Authorization\Permission;
@@ -58,6 +60,10 @@ final class ApprovalNotifier
         if ($request->subject_type === (new Reservation)->getMorphClass()) {
             $notification->actions([
                 Action::make('open')->label('Ouvrir la réservation')->url(ReservationResource::getUrl('view', ['record' => $request->subject_id])),
+            ]);
+        } elseif ($request->subject_type === (new Contract)->getMorphClass()) {
+            $notification->actions([
+                Action::make('open')->label('Ouvrir le contrat')->url(ContractResource::getUrl('view', ['record' => $request->subject_id])),
             ]);
         }
 

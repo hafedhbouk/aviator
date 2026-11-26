@@ -6,8 +6,10 @@ use App\Domain\Crm\CustomerRiskGate;
 use App\Enums\ApprovalStatus;
 use App\Enums\ApprovalType;
 use App\Enums\ReservationStatus;
+use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\ApprovalRequest;
+use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Reservation;
 use App\Support\Money\Money;
@@ -41,8 +43,11 @@ class ApprovalRequestInfolist
                     TextEntry::make('requester.name')->label('Demandeur'),
                     TextEntry::make('created_at')->label('Demandée le')->formatStateUsing($at),
                     TextEntry::make('payload.document_number')->label('Document')
-                        ->url(fn (ApprovalRequest $record): ?string => $record->subject instanceof Reservation
-                            ? ReservationResource::getUrl('view', ['record' => $record->subject_id]) : null),
+                        ->url(fn (ApprovalRequest $record): ?string => match (true) {
+                            $record->subject instanceof Reservation => ReservationResource::getUrl('view', ['record' => $record->subject_id]),
+                            $record->subject instanceof Contract => ContractResource::getUrl('view', ['record' => $record->subject_id]),
+                            default => null,
+                        }),
                     TextEntry::make('payload.starts_at')->label('Départ')
                         ->formatStateUsing(fn ($state): string => is_string($state) ? CarbonImmutable::parse($state)->timezone((string) config('app.timezone'))->format('d/m/Y H:i') : '—'),
                     TextEntry::make('payload.ends_at')->label('Retour')
@@ -84,6 +89,8 @@ class ApprovalRequestInfolist
     {
         $subject = $record->subject;
 
-        return $subject instanceof Reservation ? Customer::query()->withoutGlobalScopes()->find($subject->customer_id) : null;
+        return $subject instanceof Reservation || $subject instanceof Contract
+            ? Customer::query()->withoutGlobalScopes()->find($subject->customer_id)
+            : null;
     }
 }

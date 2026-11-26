@@ -5,9 +5,12 @@ namespace App\Filament\Resources\Reservations\Pages;
 use App\Domain\Availability\Actions\AssignVehicle;
 use App\Domain\Availability\Actions\CloseReservation;
 use App\Domain\Availability\Actions\SaveReservation;
+use App\Domain\Rental\Actions\OpenContract;
 use App\Enums\ReservationStatus;
+use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Filament\Resources\Reservations\ReservationScreens;
+use App\Models\Contract;
 use App\Models\Reservation;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -35,6 +38,36 @@ class ViewReservation extends ViewRecord
             && (auth()->user()?->can('update', $record) ?? false);
 
         return [
+            Action::make('openContract')
+                ->label('Créer le contrat')
+                ->icon(Heroicon::OutlinedDocumentText)
+                ->color('primary')
+                ->visible($confirmed)
+                ->schema(fn (Reservation $record): array => $record->vehicle_id !== null ? [] : [
+                    Select::make('vehicle_id')->label('Véhicule disponible')->required()
+                        ->options(fn (): array => ReservationScreens::vehicleOptions(
+                            $record->agency_id,
+                            $record->vehicle_category_id,
+                            $record->starts_at->timezone((string) config('app.timezone'))->format('Y-m-d H:i'),
+                            $record->ends_at->timezone((string) config('app.timezone'))->format('Y-m-d H:i'),
+                        )),
+                ])
+                ->requiresConfirmation(fn (Reservation $record): bool => $record->vehicle_id !== null)
+                ->modalDescription('Devis, options et remise sont repris tels quels ; la réservation devient « convertie ».')
+                ->action(function (Reservation $record, array $data): void {
+                    /** @var User $actor */
+                    $actor = auth()->user();
+
+                    /** @var Contract $contract */
+                    $contract = ReservationScreens::run(fn () => app(OpenContract::class)->fromReservation(
+                        $record,
+                        is_numeric($data['vehicle_id'] ?? null) ? (int) $data['vehicle_id'] : null,
+                        $actor,
+                    ));
+
+                    Notification::make()->success()->title("Contrat {$contract->number} créé.")->send();
+                    $this->redirect(ContractResource::getUrl('view', ['record' => $contract]));
+                }),
             Action::make('confirm')
                 ->label('Confirmer')
                 ->icon(Heroicon::OutlinedCheckCircle)

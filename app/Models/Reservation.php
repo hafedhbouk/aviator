@@ -17,7 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Réservation (module C). Document de l'agence de départ (RG-13, BelongsToAgency),
  * numéroté `RES-AAAA-NNNNN` (Q49) et jamais supprimé (HasSequenceNumber, RG-11) :
  * il s'annule. Écrit uniquement par les actions de App\Domain\Availability\Actions,
- * sous verrou de la catégorie et du véhicule (RG-01, RG-02, Q36).
+ * sous verrou de la catégorie et du véhicule (RG-01, RG-02, Q36), et par
+ * App\Domain\Rental\Actions\OpenContract pour sa conversion en contrat.
  *
  * @property int $id
  * @property string $number

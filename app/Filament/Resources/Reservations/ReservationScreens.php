@@ -12,6 +12,7 @@ use App\Domain\Crm\Exceptions\CrmException;
 use App\Domain\Crm\Exceptions\CustomerBlocked;
 use App\Domain\Fleet\Exceptions\VehicleNotRentable;
 use App\Domain\Pricing\Exceptions\QuoteUnavailable;
+use App\Domain\Rental\Exceptions\ContractException;
 use App\Enums\VehicleDocumentType;
 use Closure;
 use Filament\Notifications\Notification;
@@ -28,7 +29,7 @@ final class ReservationScreens
     /** Refus métier affichables tels quels, sans donnée client. */
     private const BUSINESS_REFUSALS = [
         ReservationException::class, VehicleUnavailable::class, VehicleNotRentable::class, QuoteUnavailable::class,
-        CustomerBlocked::class, InvalidPeriod::class, CrmException::class, ApprovalException::class,
+        CustomerBlocked::class, InvalidPeriod::class, CrmException::class, ApprovalException::class, ContractException::class,
     ];
 
     /**

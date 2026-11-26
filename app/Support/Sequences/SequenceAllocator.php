@@ -49,6 +49,18 @@ final class SequenceAllocator
     }
 
     /**
+     * Crée d'avance le compteur de la période, **avant** d'ouvrir la transaction du
+     * document. À appeler quand cette transaction peut déjà tenir le verrou d'un autre
+     * compteur : le verrou de ligne de MariaDB couvre aussi l'intervalle qui précède la
+     * clé verrouillée, et la création d'un compteur dont la clé tombe dans cet intervalle
+     * attendrait la fin de la transaction (délai de verrou dépassé, erreur 1205).
+     */
+    public function prepare(SequenceDefinition $definition, ?CarbonInterface $at = null): void
+    {
+        $this->ensureCounterExists($definition->keyFor($at ?? CarbonImmutable::now()));
+    }
+
+    /**
      * Crée le compteur s'il n'existe pas encore (premier numéro d'une période).
      *
      * La création passe par une connexion distincte, en validation automatique : elle

@@ -6,10 +6,14 @@ namespace App\Domain\Approvals;
 
 use App\Domain\Availability\Actions\CloseReservation;
 use App\Domain\Availability\Actions\SaveReservation;
+use App\Domain\Rental\Actions\CancelContract;
+use App\Domain\Rental\Actions\RemoveContractDiscount;
 use App\Enums\ApprovalStatus;
 use App\Enums\ApprovalType;
+use App\Enums\ContractStatus;
 use App\Enums\ReservationStatus;
 use App\Models\ApprovalRequest;
+use App\Models\Contract;
 use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -41,19 +45,27 @@ final class ApprovalEffects
 
         $subject = $request->subject;
 
-        if (! $subject instanceof Reservation) {
-            return null;
+        // Réservation déjà convertie : l'effet porte sur son contrat en brouillon.
+        if ($subject instanceof Reservation && $subject->status === ReservationStatus::Converted) {
+            $subject = Contract::query()->withoutGlobalScopes()->where('reservation_id', $subject->id)->first() ?? $subject;
         }
 
         try {
-            match ($request->type) {
-                ApprovalType::Discount => $this->removeDiscount($subject, $decider),
-                ApprovalType::BlacklistOverride => $this->cancelDraft($subject, $decider),
-            };
+            if ($subject instanceof Reservation) {
+                match ($request->type) {
+                    ApprovalType::Discount => $this->removeDiscount($subject, $decider),
+                    ApprovalType::BlacklistOverride => $this->cancelDraft($subject, $decider),
+                };
+            } elseif ($subject instanceof Contract) {
+                match ($request->type) {
+                    ApprovalType::Discount => $this->removeContractDiscount($subject, $decider),
+                    ApprovalType::BlacklistOverride => $this->cancelContract($subject, $decider),
+                };
+            }
         } catch (Throwable $exception) {
             Log::warning('Effet d\'une décision d\'approbation non appliqué', ['approval_request_id' => $request->id, 'error' => $exception->getMessage()]);
 
-            return 'La réservation n\'a pas pu être mise à jour automatiquement : corrigez-la avant le départ.';
+            return 'Le document n\'a pas pu être mis à jour automatiquement : corrigez-le avant le départ.';
         }
 
         return null;
@@ -66,6 +78,24 @@ final class ApprovalEffects
         }
 
         app(SaveReservation::class)->handle($reservation, ['discount_amount' => '0'], $decider);
+    }
+
+    private function removeContractDiscount(Contract $contract, User $decider): void
+    {
+        if ($contract->status !== ContractStatus::Draft) {
+            return;
+        }
+
+        app(RemoveContractDiscount::class)->handle($contract, $decider);
+    }
+
+    private function cancelContract(Contract $contract, User $decider): void
+    {
+        if ($contract->status !== ContractStatus::Draft) {
+            return;
+        }
+
+        app(CancelContract::class)->handle($contract, 'Dérogation à la liste noire refusée par le super admin.', $decider);
     }
 
     private function cancelDraft(Reservation $reservation, User $decider): void
