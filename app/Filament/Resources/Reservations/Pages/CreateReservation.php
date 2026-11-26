@@ -16,6 +16,7 @@ use App\Filament\Resources\Reservations\ReservationScreens;
 use App\Models\Agency;
 use App\Models\Option;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\VehicleCategory;
 use App\Support\Agency\CurrentAgency;
 use App\Support\Money\AmountInput;
@@ -132,6 +133,38 @@ class CreateReservation extends CreateRecord
                 TextEntry::make('final_quote')->label('Devis')->state(fn (Get $get): string => $this->quotePreview($get)),
             ]),
         ];
+    }
+
+    /**
+     * Préremplissage depuis le planning (parcours P2, étape 4) : véhicule et date de la
+     * case cliquée. Seul un véhicule visible depuis le planning est repris ; tout est
+     * contrôlé de nouveau par le domaine à l'enregistrement.
+     */
+    protected function afterFill(): void
+    {
+        $vehicleId = request()->query('vehicle');
+        $starts = request()->query('starts');
+        $state = [];
+
+        if (is_numeric($vehicleId)) {
+            $vehicle = Vehicle::query()->withoutGlobalScopes()->find((int) $vehicleId);
+
+            if ($vehicle !== null && array_key_exists($vehicle->current_agency_id, $this->agencyOptions())) {
+                $state += [
+                    'vehicle_id' => $vehicle->id,
+                    'agency_id' => $vehicle->current_agency_id,
+                    'vehicle_category_id' => $vehicle->vehicle_category_id,
+                ];
+            }
+        }
+
+        if (is_string($starts) && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $starts) === 1) {
+            $state['starts_at'] = $starts.':00';
+        }
+
+        if ($state !== []) {
+            $this->form->fill(array_merge($this->form->getRawState(), $state));
+        }
     }
 
     /**
