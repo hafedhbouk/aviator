@@ -141,4 +141,6 @@ Marge : 1,75 j sous le budget de 30 j ; seuil d'alerte à 36 j. Je signale tout 
 | L0. Plan et questions | 0,5 | 0,5 | 1 | |
 | L1. Approbations | 3 | 2,5 | 3,5 | Domaine `Approvals`, écran du super admin, branchement sur les réservations (remise, dérogation), action « Confirmer » d'un brouillon (manquait en phase 4) ; double décision testée sur deux processus (échoue sans le verrou : essai fait) |
 
-Budget 30 j ; seuil d'alerte 36 j. Prévu restant : 24,75 j.
+| L2. Contrats | 3,5 | 3 | 6,5 | Contrat depuis une réservation ou au comptoir (« Louer maintenant » dans l'assistant), conditions figées, annulation du brouillon, effets des refus d'approbation sur le contrat, véhicule « Réservé » jusqu'au départ ; conversion simultanée testée sur deux processus. Correctif de `SequenceAllocator` : `prepare()` crée un compteur avant la transaction (sinon délai de verrou dépassé quand une transaction tient déjà le verrou d'un autre compteur) |
+
+Budget 30 j ; seuil d'alerte 36 j. Prévu restant : 21,25 j.
