@@ -14,8 +14,11 @@ use App\Enums\ContractStatus;
 use App\Enums\ReservationStatus;
 use App\Models\ApprovalRequest;
 use App\Models\Contract;
+use App\Models\ContractExtension;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Support\Money\Money;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -56,6 +59,10 @@ final class ApprovalEffects
                     ApprovalType::Discount => $this->removeDiscount($subject, $decider),
                     ApprovalType::BlacklistOverride => $this->cancelDraft($subject, $decider),
                 };
+            } elseif ($subject instanceof ContractExtension) {
+                if ($request->type === ApprovalType::Discount) {
+                    $this->removeExtensionDiscount($subject);
+                }
             } elseif ($subject instanceof Contract) {
                 match ($request->type) {
                     ApprovalType::Discount => $this->removeContractDiscount($subject, $decider),
@@ -78,6 +85,33 @@ final class ApprovalEffects
         }
 
         app(SaveReservation::class)->handle($reservation, ['discount_amount' => '0'], $decider);
+    }
+
+    /**
+     * Remise d'une prolongation refusée : retirée de la prolongation et du contrat, sous
+     * verrou du contrat (Q93).
+     */
+    private function removeExtensionDiscount(ContractExtension $extension): void
+    {
+        DB::transaction(function () use ($extension): void {
+            $contract = Contract::query()->withoutGlobalScopes()->lockForUpdate()->findOrFail($extension->contract_id);
+            $locked = ContractExtension::query()->lockForUpdate()->findOrFail($extension->id);
+
+            if ($locked->discount_amount->isZero()) {
+                return;
+            }
+
+            $contract->fill([
+                'discount_amount' => $contract->discount_amount->minus($locked->discount_amount),
+                'total_amount' => $contract->total_amount->plus($locked->discount_amount),
+            ])->save();
+
+            $locked->fill([
+                'total_amount' => $locked->total_amount->plus($locked->discount_amount),
+                'discount_amount' => Money::zero(),
+                'discount_approval_id' => null,
+            ])->save();
+        });
     }
 
     private function removeContractDiscount(Contract $contract, User $decider): void

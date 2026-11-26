@@ -3,10 +3,12 @@
 namespace App\Filament\Resources\Contracts\Pages;
 
 use App\Domain\Rental\Actions\CancelContract;
+use App\Domain\Rental\Actions\ExtendContract;
 use App\Domain\Rental\Actions\RemoveContractDriver;
 use App\Domain\Rental\Actions\SaveContractDriver;
 use App\Enums\ContractStatus;
 use App\Enums\InspectionType;
+use App\Filament\Forms\AmountField;
 use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Reservations\ReservationScreens;
 use App\Models\Contract;
@@ -14,6 +16,7 @@ use App\Models\Driver;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -53,6 +56,30 @@ class ViewContract extends ViewRecord
                 ->visible(fn (Contract $record): bool => $record->status === ContractStatus::Active && (auth()->user()?->can('update', $record) ?? false)
                     || $record->inspections()->where('type', InspectionType::Return->value)->exists())
                 ->url(fn (Contract $record): string => ContractResource::getUrl('inspect', ['record' => $record, 'type' => InspectionType::Return->value])),
+            Action::make('extend')
+                ->label('Prolonger')
+                ->icon(Heroicon::OutlinedCalendarDays)
+                ->visible(fn (Contract $record): bool => $record->status === ContractStatus::Active && (auth()->user()?->can('update', $record) ?? false))
+                ->schema([
+                    DateTimePicker::make('ends_at')->label('Nouvelle date de retour')->seconds(false)->required(),
+                    AmountField::make('discount_amount')->label('Remise HT sur la prolongation'),
+                    Textarea::make('discount_reason')->label('Motif de la remise (obligatoire au-delà du seuil)')->maxLength(1000),
+                ])
+                ->modalDescription('Disponibilité contrôlée sur la nouvelle période, délai de préparation compris ; jours ajoutés au tarif journalier du contrat.')
+                ->action(function (Contract $record, array $data): void {
+                    /** @var User $actor */
+                    $actor = auth()->user();
+
+                    $extension = ReservationScreens::run(fn () => app(ExtendContract::class)->handle($record, $data, $actor));
+
+                    Notification::make()->success()->title(sprintf(
+                        'Contrat prolongé jusqu\'au %s : %d jour(s) ajouté(s), %s HT.',
+                        $extension->new_ends_at->timezone((string) config('app.timezone'))->format('d/m/Y H:i'),
+                        $extension->added_days,
+                        $extension->total_amount->format(),
+                    ))->send();
+                    $this->record->refresh();
+                }),
             Action::make('addDriver')
                 ->label('Ajouter un conducteur')
                 ->icon(Heroicon::OutlinedIdentification)

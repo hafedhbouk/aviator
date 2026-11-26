@@ -10,6 +10,7 @@ use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\ApprovalRequest;
 use App\Models\Contract;
+use App\Models\ContractExtension;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Support\Authorization\Permission;
@@ -64,6 +65,11 @@ final class ApprovalNotifier
         } elseif ($request->subject_type === (new Contract)->getMorphClass()) {
             $notification->actions([
                 Action::make('open')->label('Ouvrir le contrat')->url(ContractResource::getUrl('view', ['record' => $request->subject_id])),
+            ]);
+        } elseif ($request->subject_type === (new ContractExtension)->getMorphClass()) {
+            $contractId = ContractExtension::query()->whereKey($request->subject_id)->value('contract_id');
+            $notification->actions([
+                Action::make('open')->label('Ouvrir le contrat')->url(ContractResource::getUrl('view', ['record' => $contractId])),
             ]);
         }
 

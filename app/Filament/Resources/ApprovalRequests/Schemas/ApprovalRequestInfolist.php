@@ -10,6 +10,7 @@ use App\Filament\Resources\Contracts\ContractResource;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\ApprovalRequest;
 use App\Models\Contract;
+use App\Models\ContractExtension;
 use App\Models\Customer;
 use App\Models\Reservation;
 use App\Support\Money\Money;
@@ -46,6 +47,7 @@ class ApprovalRequestInfolist
                         ->url(fn (ApprovalRequest $record): ?string => match (true) {
                             $record->subject instanceof Reservation => ReservationResource::getUrl('view', ['record' => $record->subject_id]),
                             $record->subject instanceof Contract => ContractResource::getUrl('view', ['record' => $record->subject_id]),
+                            $record->subject instanceof ContractExtension => ContractResource::getUrl('view', ['record' => $record->subject->contract_id]),
                             default => null,
                         }),
                     TextEntry::make('payload.starts_at')->label('Départ')
@@ -88,6 +90,10 @@ class ApprovalRequestInfolist
     private static function customer(ApprovalRequest $record): ?Customer
     {
         $subject = $record->subject;
+
+        if ($subject instanceof ContractExtension) {
+            $subject = Contract::query()->withoutGlobalScopes()->find($subject->contract_id);
+        }
 
         return $subject instanceof Reservation || $subject instanceof Contract
             ? Customer::query()->withoutGlobalScopes()->find($subject->customer_id)

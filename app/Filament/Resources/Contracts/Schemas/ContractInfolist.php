@@ -6,6 +6,7 @@ use App\Enums\ApprovalStatus;
 use App\Enums\ContractStatus;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\Contract;
+use App\Models\ContractExtension;
 use App\Models\Driver;
 use App\Support\Money\Money;
 use Filament\Infolists\Components\TextEntry;
@@ -62,6 +63,19 @@ class ContractInfolist
                                 .($warnings === [] ? '' : ' — '.implode(' ', $warnings));
                         })->all()),
                 ]),
+                Section::make('Prolongations')->columnSpanFull()
+                    ->visible(fn (Contract $record): bool => $record->extensions()->exists())
+                    ->schema([
+                        TextEntry::make('extensions_list')->label('Prolongations (contrôle de disponibilité tracé)')->listWithLineBreaks()->bulleted()
+                            ->state(fn (Contract $record): array => $record->extensions()->get()->map(fn (ContractExtension $extension): string => sprintf(
+                                'Du %s au %s : %d jour(s), %s HT%s',
+                                $extension->previous_ends_at->timezone((string) config('app.timezone'))->format('d/m/Y H:i'),
+                                $extension->new_ends_at->timezone((string) config('app.timezone'))->format('d/m/Y H:i'),
+                                $extension->added_days,
+                                $extension->total_amount->format(),
+                                $extension->discount_amount->isZero() ? '' : ' (remise '.$extension->discount_amount->format().')',
+                            ))->all()),
+                    ]),
                 Section::make('Conditions')->columnSpanFull()->columns(4)->schema([
                     TextEntry::make('mileage')->label('Kilométrage')
                         ->state(fn (Contract $record): string => $record->hasUnlimitedMileage()

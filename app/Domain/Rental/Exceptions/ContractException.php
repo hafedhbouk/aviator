@@ -74,6 +74,16 @@ final class ContractException extends RuntimeException
         return new self('Départ impossible : la dérogation du super admin pour ce client n\'est pas approuvée.');
     }
 
+    public static function extensionNotLater(string $current): self
+    {
+        return new self("La nouvelle date de retour doit être postérieure au retour prévu ({$current}).");
+    }
+
+    public static function extensionDiscountTooHigh(): self
+    {
+        return new self('Remise refusée : elle dépasse le montant de la prolongation.');
+    }
+
     public static function startInPast(): self
     {
         return new self('Le départ d\'un contrat ne peut pas être dans le passé.');

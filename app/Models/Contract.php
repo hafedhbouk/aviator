@@ -174,6 +174,14 @@ class Contract extends Model
     }
 
     /**
+     * @return HasMany<ContractExtension, $this>
+     */
+    public function extensions(): HasMany
+    {
+        return $this->hasMany(ContractExtension::class)->orderBy('id');
+    }
+
+    /**
      * @return HasMany<Inspection, $this>
      */
     public function inspections(): HasMany

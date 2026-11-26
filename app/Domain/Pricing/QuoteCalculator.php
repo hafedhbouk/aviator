@@ -192,6 +192,15 @@ final class QuoteCalculator
         throw QuoteUnavailable::discountAboveThreshold($this->thresholdLabel());
     }
 
+    /**
+     * Remise au-delà du seuil accordé sans approbation (RG-10), sur une base donnée :
+     * prolongation d'un contrat (Q93), par exemple.
+     */
+    public function discountNeedsApproval(Money $discount, Money $base): bool
+    {
+        return $this->assertDiscount($discount, $base, allowApproval: true);
+    }
+
     /** Seuil affiché sans zéros inutiles (« 10 », « 7,5 »). */
     public function thresholdLabel(): string
     {
