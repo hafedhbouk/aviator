@@ -143,4 +143,6 @@ Marge : 1,75 j sous le budget de 30 j ; seuil d'alerte à 36 j. Je signale tout 
 
 | L2. Contrats | 3,5 | 3 | 6,5 | Contrat depuis une réservation ou au comptoir (« Louer maintenant » dans l'assistant), conditions figées, annulation du brouillon, effets des refus d'approbation sur le contrat, véhicule « Réservé » jusqu'au départ ; conversion simultanée testée sur deux processus. Correctif de `SequenceAllocator` : `prepare()` crée un compteur avant la transaction (sinon délai de verrou dépassé quand une transaction tient déjà le verrou d'un autre compteur) |
 
-Budget 30 j ; seuil d'alerte 36 j. Prévu restant : 21,25 j.
+| L3. Conducteurs | 1,5 | 1,25 | 7,75 | `DriverEligibility` (âge et ancienneté du permis au départ, permis valide jusqu'au retour, permis étranger et date de fin non renseignée signalés), `SaveContractDriver` et `RemoveContractDriver` (brouillon seulement, un seul conducteur principal), liste noire contrôlée par l'empreinte du permis et de la pièce (Q48), `ContractDrivers::assertReadyForDeparture` pour le lot L5 ; écran du contrat |
+
+Budget 30 j ; seuil d'alerte 36 j. Prévu restant : 20 j.
