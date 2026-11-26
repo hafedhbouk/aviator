@@ -9,6 +9,7 @@ use App\Enums\RecommendationLevel;
 use App\Enums\RecommendationStatus;
 use App\Models\Customer;
 use App\Models\CustomerRecommendation;
+use App\Models\Driver;
 
 /**
  * Niveau de risque d'un client, valable dans **toutes** les agences (K-10, K-11,
@@ -37,6 +38,28 @@ final class CustomerRiskGate
     public function isWatched(Customer $customer): bool
     {
         return $this->levelOf($customer) === RecommendationLevel::Watch;
+    }
+
+    /**
+     * Conducteur rattaché à un client sur liste noire (Q48), autre que `$except` : même
+     * permis ou même pièce d'identité qu'un conducteur ou une fiche client sur liste
+     * noire, par empreinte (jamais par le nom).
+     */
+    public function isDriverBlacklisted(Driver $driver, ?int $except = null): bool
+    {
+        $customerIds = Driver::query()
+            ->where('license_hash', $driver->license_hash)
+            ->when($driver->id_document_hash !== null, fn ($query) => $query->orWhere('id_document_hash', $driver->id_document_hash))
+            ->pluck('customer_id');
+
+        if ($driver->id_document_hash !== null) {
+            $customerIds = $customerIds->merge(Customer::query()->withoutGlobalScopes()->where('id_document_hash', $driver->id_document_hash)->pluck('id'));
+        }
+
+        return Customer::query()->withoutGlobalScopes()
+            ->whereIn('id', $customerIds->push($driver->customer_id)->unique()->reject(fn ($id): bool => $id === $except)->values())
+            ->get()
+            ->contains(fn (Customer $customer): bool => $this->isBlacklisted($customer));
     }
 
     /**

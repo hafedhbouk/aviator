@@ -6,6 +6,7 @@ use App\Enums\ApprovalStatus;
 use App\Enums\ContractStatus;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\Contract;
+use App\Models\Driver;
 use App\Support\Money\Money;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -47,6 +48,19 @@ class ContractInfolist
                         ->visible(fn (Contract $record): bool => $record->status === ContractStatus::Cancelled),
                     $approval('discountApproval', 'Remise : approbation'),
                     $approval('overrideApproval', 'Dérogation à la liste noire'),
+                ]),
+                Section::make('Conducteurs')->columnSpanFull()->schema([
+                    TextEntry::make('drivers_list')->label('Conducteurs autorisés')->listWithLineBreaks()->bulleted()
+                        ->placeholder('Aucun conducteur : un conducteur principal est obligatoire avant le départ.')
+                        ->state(fn (Contract $record): array => $record->drivers()->get()->map(function (Driver $driver): string {
+                            $pivot = $driver->getRelationValue('pivot');
+                            $checks = json_decode((string) $pivot?->getAttribute('checks'), true);
+                            $warnings = is_array($checks) && is_array($checks['warnings'] ?? null) ? $checks['warnings'] : [];
+
+                            return "{$driver->first_name} {$driver->last_name}"
+                                .((bool) $pivot?->getAttribute('is_primary') ? ' — conducteur principal' : '')
+                                .($warnings === [] ? '' : ' — '.implode(' ', $warnings));
+                        })->all()),
                 ]),
                 Section::make('Conditions')->columnSpanFull()->columns(4)->schema([
                     TextEntry::make('mileage')->label('Kilométrage')

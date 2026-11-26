@@ -36,6 +36,29 @@ final class ContractException extends RuntimeException
         return new self("Motif obligatoire ({$min} caractères au moins).");
     }
 
+    /**
+     * @param  list<string>  $reasons
+     */
+    public static function driverRefused(string $driver, array $reasons): self
+    {
+        return new self("Conducteur {$driver} refusé : ".implode(' ; ', $reasons).'.');
+    }
+
+    public static function driverBlocked(): self
+    {
+        return new self('Conducteur refusé pour ce contrat. Contactez le super admin.');
+    }
+
+    public static function driverNotOfCustomer(): self
+    {
+        return new self('Ce conducteur n\'appartient pas au client du contrat.');
+    }
+
+    public static function primaryDriverRequired(): self
+    {
+        return new self('Un conducteur principal est obligatoire avant le départ.');
+    }
+
     public static function startInPast(): self
     {
         return new self('Le départ d\'un contrat ne peut pas être dans le passé.');
