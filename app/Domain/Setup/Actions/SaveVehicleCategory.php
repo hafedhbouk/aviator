@@ -31,6 +31,7 @@ final class SaveVehicleCategory
         'deposit_amount' => 'caution',
         'extra_km_amount' => 'prix du km supplémentaire',
         'insurance_excess_amount' => 'franchise',
+        'late_hour_amount' => 'tarif horaire du retard',
     ];
 
     /**

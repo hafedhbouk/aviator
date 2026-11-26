@@ -475,6 +475,9 @@ class DevSampleDataSeeder extends Seeder
                         } + mt_rand(0, 6000)),
                         'financing_mode' => $mode, 'planned_holding_months' => (string) (in_array($categoryCode, ['PRE', 'SUV'], true) ? 48 : 36),
                         'initial_mileage' => (string) $mileage,
+                        'fuel_tank_liters' => (string) match ($categoryCode) {
+                            'ECO' => 35, 'CIT' => 45, 'BER' => 50, 'SUV' => 55, 'PRE' => 66, default => 75
+                        },
                     ], $this->actor);
                     $this->count('Véhicules');
 

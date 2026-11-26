@@ -154,6 +154,7 @@ final class SaveVehicle
             'acquisition_supplier_id' => $text('acquisition_supplier_id'),
             'financing_mode' => $text('financing_mode'),
             'planned_holding_months' => $text('planned_holding_months'),
+            'fuel_tank_liters' => $text('fuel_tank_liters'),
         ];
 
         $validated = Validator::make($values, [
@@ -172,6 +173,7 @@ final class SaveVehicle
             'acquisition_supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
             'financing_mode' => ['required', Rule::enum(FinancingMode::class)],
             'planned_holding_months' => ['nullable', 'integer', 'between:1,240'],
+            'fuel_tank_liters' => ['nullable', 'integer', 'between:1,300'],
         ], [
             'internal_code.regex' => 'Le code interne compte 2 à 16 lettres, chiffres, « _ » ou « - ».',
             'vin.regex' => 'Le numéro de châssis compte 5 à 32 lettres ou chiffres.',
@@ -191,9 +193,10 @@ final class SaveVehicle
             'acquisition_supplier_id' => 'fournisseur',
             'financing_mode' => 'mode de financement',
             'planned_holding_months' => 'durée de détention prévue',
+            'fuel_tank_liters' => 'capacité du réservoir',
         ])->validate();
 
-        foreach (['vehicle_category_id', 'year', 'agency_id', 'acquisition_supplier_id', 'planned_holding_months'] as $key) {
+        foreach (['vehicle_category_id', 'year', 'agency_id', 'acquisition_supplier_id', 'planned_holding_months', 'fuel_tank_liters'] as $key) {
             $validated[$key] = $validated[$key] === null ? null : (int) $validated[$key];
         }
 

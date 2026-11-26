@@ -52,6 +52,7 @@ use LogicException;
  * @property FinancingMode $financing_mode
  * @property Money|null $initial_contribution_amount
  * @property int|null $planned_holding_months
+ * @property int|null $fuel_tank_liters
  * @property CarbonImmutable|null $retired_on
  * @property string|null $retirement_reason
  * @property Money|null $disposal_amount
@@ -59,7 +60,7 @@ use LogicException;
 #[Fillable([
     'internal_code', 'plate_number', 'vin', 'vehicle_category_id', 'brand', 'model', 'year', 'color',
     'fuel', 'transmission', 'agency_id', 'current_agency_id', 'acquired_on', 'acquisition_supplier_id',
-    'purchase_amount', 'financing_mode', 'initial_contribution_amount', 'planned_holding_months',
+    'purchase_amount', 'financing_mode', 'initial_contribution_amount', 'planned_holding_months', 'fuel_tank_liters',
 ])]
 class Vehicle extends Model
 {

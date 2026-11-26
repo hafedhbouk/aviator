@@ -27,6 +27,7 @@ use App\Models\Reservation;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleCategory;
+use App\Settings\PricingSettings;
 use App\Support\Agency\CurrentAgency;
 use App\Support\Money\AmountInput;
 use App\Support\Money\Money;
@@ -53,10 +54,12 @@ use InvalidArgumentException;
  *   devis (QuoteCalculator) ; remise au-delà du seuil et dérogation à la liste noire
  *   ouvrent une demande au super admin (D46), le départ l'attendra.
  *
- * Conditions figées à la création (D-05, D48) : kilométrage (illimité ou forfait par
- * jour et prix du km supplémentaire de la catégorie), carburant (même niveau au
- * retour), tarif journalier du dernier jour du devis (base de la prolongation et du
- * retard), caution prévue de la catégorie (encaissée en phase 6).
+ * Conditions figées à la création (D-05, D48, D50, D51) : kilométrage (illimité ou
+ * forfait par jour et prix du km supplémentaire de la catégorie), carburant (même
+ * niveau au retour ; capacité du réservoir du véhicule, prix du litre et frais de
+ * service du paramétrage), tarif journalier du dernier jour du devis et tarif horaire
+ * de la catégorie (prolongation et retard), franchise et caution prévue de la catégorie.
+ * Un paramétrage modifié ensuite ne change pas un contrat ouvert.
  */
 final class OpenContract
 {
@@ -72,6 +75,7 @@ final class OpenContract
         private readonly SequenceAllocator $sequences,
         private readonly CurrentAgency $currentAgency,
         private readonly ReservedStatusSync $reserved,
+        private readonly PricingSettings $pricing,
     ) {}
 
     public function fromReservation(Reservation $reservation, ?int $vehicleId, User $actor): Contract
@@ -215,6 +219,11 @@ final class OpenContract
             'included_km_per_day' => $rules->hasUnlimitedMileage() ? null : $category->included_km_per_day,
             'extra_km_amount' => $rules->hasUnlimitedMileage() ? null : $category->extra_km_amount,
             'fuel_policy' => Contract::FUEL_SAME_LEVEL,
+            'fuel_tank_liters' => Vehicle::query()->withoutGlobalScopes()->whereKey($links['vehicle_id'])->value('fuel_tank_liters'),
+            'fuel_liter_amount' => $this->pricing->fuel_liter_amount === null ? null : Money::of($this->pricing->fuel_liter_amount),
+            'fuel_service_amount' => $this->pricing->fuel_service_amount === null ? null : Money::of($this->pricing->fuel_service_amount),
+            'late_hour_amount' => $rules->lateHourAmount,
+            'insurance_excess_amount' => $rules->insuranceExcessAmount,
             'daily_rate_amount' => Money::of(is_array($lastDay) ? (string) $lastDay['daily_amount'] : '0'),
             'rental_amount' => Money::of((string) $quote['rental_amount']),
             'options_amount' => Money::of((string) $quote['options_amount']),

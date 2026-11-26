@@ -27,6 +27,7 @@ final readonly class CategoryRules
         public ?int $includedKmPerDay,
         public ?Money $extraKmAmount,
         public ?Money $insuranceExcessAmount,
+        public ?Money $lateHourAmount,
     ) {}
 
     public static function for(VehicleCategory $category, ?ReservationSettings $settings = null): self
@@ -41,6 +42,7 @@ final readonly class CategoryRules
             includedKmPerDay: $category->included_km_per_day,
             extraKmAmount: $category->extra_km_amount,
             insuranceExcessAmount: $category->insurance_excess_amount,
+            lateHourAmount: $category->late_hour_amount,
         );
     }
 

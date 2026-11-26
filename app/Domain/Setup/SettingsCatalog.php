@@ -42,6 +42,8 @@ final class SettingsCatalog
                 'day_mode' => ['rules' => ['required', 'in:'.implode(',', array_keys(PricingSettings::DAY_MODES))], 'cast' => 'string'],
                 'late_tolerance_minutes' => ['rules' => ['required', 'integer', 'between:0,1440'], 'cast' => 'int'],
                 'late_unit' => ['rules' => ['required', 'in:'.implode(',', array_keys(PricingSettings::LATE_UNITS))], 'cast' => 'string'],
+                'fuel_liter_amount' => ['rules' => ['nullable', 'string', 'max:32'], 'cast' => '?money'],
+                'fuel_service_amount' => ['rules' => ['nullable', 'string', 'max:32'], 'cast' => '?money'],
             ],
             BillingSettings::class => [
                 'vat_rounding_mode' => ['rules' => ['required', 'in:'.implode(',', BillingSettings::ROUNDING_MODES)], 'cast' => 'string'],

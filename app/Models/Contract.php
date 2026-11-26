@@ -41,6 +41,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property Money|null $extra_km_amount
  * @property string $fuel_policy
  * @property int|null $fuel_eighths_required
+ * @property int|null $fuel_tank_liters
+ * @property Money|null $fuel_liter_amount
+ * @property Money|null $fuel_service_amount
+ * @property Money|null $late_hour_amount
+ * @property Money|null $insurance_excess_amount
  * @property Money $daily_rate_amount
  * @property Money $rental_amount
  * @property Money $options_amount
@@ -72,7 +77,8 @@ class Contract extends Model
     protected $fillable = [
         'number', 'agency_id', 'return_agency_id', 'reservation_id', 'vehicle_id', 'vehicle_category_id', 'customer_id',
         'starts_at', 'ends_at', 'departed_at', 'returned_at', 'status', 'mileage_policy', 'included_km_per_day',
-        'extra_km_amount', 'fuel_policy', 'fuel_eighths_required', 'daily_rate_amount', 'rental_amount', 'options_amount',
+        'extra_km_amount', 'fuel_policy', 'fuel_eighths_required', 'fuel_tank_liters', 'fuel_liter_amount', 'fuel_service_amount',
+        'daily_rate_amount', 'late_hour_amount', 'insurance_excess_amount', 'rental_amount', 'options_amount',
         'discount_amount', 'total_amount', 'quote', 'deposit_expected_amount', 'discount_approval_id', 'override_approval_id',
         'cancellation_reason', 'cancelled_at', 'closed_at', 'created_by',
     ];
@@ -91,6 +97,11 @@ class Contract extends Model
             'included_km_per_day' => 'integer',
             'extra_km_amount' => MoneyCast::class,
             'fuel_eighths_required' => 'integer',
+            'fuel_tank_liters' => 'integer',
+            'fuel_liter_amount' => MoneyCast::class,
+            'fuel_service_amount' => MoneyCast::class,
+            'late_hour_amount' => MoneyCast::class,
+            'insurance_excess_amount' => MoneyCast::class,
             'daily_rate_amount' => MoneyCast::class,
             'rental_amount' => MoneyCast::class,
             'options_amount' => MoneyCast::class,

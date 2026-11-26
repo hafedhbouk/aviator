@@ -67,7 +67,15 @@ class ContractInfolist
                         ->state(fn (Contract $record): string => $record->hasUnlimitedMileage()
                             ? 'Illimité'
                             : "{$record->included_km_per_day} km par jour, km supplémentaire ".($record->extra_km_amount?->format() ?? 'non tarifé')),
-                    TextEntry::make('fuel')->label('Carburant')->state('Même niveau au retour qu\'au départ'),
+                    TextEntry::make('fuel')->label('Carburant')
+                        ->state(fn (Contract $record): string => 'Même niveau au retour qu\'au départ ; '.(
+                            $record->fuel_tank_liters === null || $record->fuel_liter_amount === null
+                                ? 'carburant manquant non facturé (réservoir ou prix du litre non renseigné)'
+                                : "réservoir {$record->fuel_tank_liters} L, litre {$record->fuel_liter_amount->format()}"
+                                    .($record->fuel_service_amount === null ? '' : ", frais de service {$record->fuel_service_amount->format()}")
+                        )),
+                    TextEntry::make('late_hour_amount')->label('Tarif horaire du retard')->formatStateUsing($money)->placeholder('Non fixé'),
+                    TextEntry::make('insurance_excess_amount')->label('Franchise')->formatStateUsing($money)->placeholder('Sans plafond'),
                     TextEntry::make('daily_rate_amount')->label('Tarif journalier (prolongation, retard)')->formatStateUsing($money),
                     TextEntry::make('deposit_expected_amount')->label('Caution prévue')->formatStateUsing($money)->placeholder('À saisir'),
                 ]),

@@ -86,6 +86,8 @@ class VehicleForm
                         AmountField::make('initial_contribution_amount')->label('Apport initial'),
                         TextInput::make('planned_holding_months')->label('Durée de détention prévue (mois)')->integer()
                             ->minValue(1)->maxValue(240)->helperText('Sert à la rentabilité (Q19).'),
+                        TextInput::make('fuel_tank_liters')->label('Capacité du réservoir (litres)')->integer()
+                            ->minValue(1)->maxValue(300)->helperText('Sert au calcul du carburant manquant au retour (Q92) ; vide = aucun frais.'),
                     ]),
                 Section::make('Historique')->columnSpanFull()
                     ->description('Statuts, kilométrage et documents, du plus récent au plus ancien (B-06).')
