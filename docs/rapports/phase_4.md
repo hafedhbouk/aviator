@@ -5,7 +5,7 @@
 | Phase | 4. Parc, leasing et réservations (lot 1) |
 | Branche | `phase/04-parc-leasing-reservations`, créée le 19/11/2026 depuis `main` (`cbd9ff3`, après la fusion de la phase 3) |
 | Dates | 19/11/2026 au 26/11/2026 |
-| Statut proposé | **Validée avec réserves**, comme décidé par Hafedh le 25/11/2026 (plan §0 et §10). **Réserve n° 1 de la phase 4** : atelier avec les agences reporté, à tenir en recette selon `docs/rapports/atelier_phase_4_preparation.md`. **Réserve n° 2** : planning remesuré en recette (condition 3 de D35), avec un signalement au-delà de 300 ms. Les deux réserves héritées, installation de la recette et saisie du paramétrage, restent **prioritaires** et conditionnent les deux premières |
+| Statut | **Validée avec réserves** le 26/11/2026 par Hafedh (responsable technique), comme prévu le 25/11/2026 (plan §0 et §10) ; pull requests n° 5 et n° 6 fusionnées dans `main`. **Réserve n° 1 de la phase 4** : atelier avec les agences reporté, à tenir en recette selon `docs/rapports/atelier_phase_4_preparation.md`. **Réserve n° 2** : planning remesuré en recette (condition 3 de D35), avec un signalement au-delà de 300 ms. Les deux réserves héritées, installation de la recette et saisie du paramétrage, restent **prioritaires** et conditionnent les deux premières |
 | Critère d'acceptation (plan, en-tête) | Scénarios 1, 2, 10 et 15 verts, machine à états du véhicule, alertes : **atteint** (§3). En plus, atelier avec les agences en fin de phase : **non tenu**, reporté (réserve n° 1) |
 | Valideur | Responsable technique (rapport) ; agences et admin du siège (atelier, reporté) |
 | Plan | `docs/plans/phase_4.md` (validé le 19/11/2026 ; suivi de la charge au §11) |
