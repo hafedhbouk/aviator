@@ -1,0 +1,89 @@
+<?php
+
+// Clés absentes de la traduction française livrée par Filament 5 (lot L14 de la phase 4),
+// fusionnées par Laravel avec celles du paquet. Parité testée : tests/Feature/Setup/FilamentTranslationTest.php.
+
+return [
+    'form' => [
+        'or_groups' => [
+            'group' => [
+                'label' => 'Groupe',
+            ],
+            'block' => [
+                'picker_group' => 'Logique',
+            ],
+        ],
+    ],
+    'max_rules_reached_tooltip' => 'Vous avez atteint le maximum de :count règles.',
+    'operators' => [
+        'date' => [
+            'unit_labels' => [
+                'second' => 'Secondes',
+                'minute' => 'Minutes',
+                'hour' => 'Heures',
+                'day' => 'Jours',
+                'week' => 'Semaines',
+                'month' => 'Mois',
+                'quarter' => 'Trimestres',
+                'year' => 'Années',
+            ],
+            'presets' => [
+                'past_decade' => 'Dix dernières années',
+                'past_5_years' => 'Cinq dernières années',
+                'past_2_years' => 'Deux dernières années',
+                'past_year' => 'Année écoulée',
+                'past_6_months' => 'Six derniers mois',
+                'past_quarter' => 'Trimestre écoulé',
+                'past_month' => 'Mois écoulé',
+                'past_2_weeks' => 'Deux dernières semaines',
+                'past_week' => 'Semaine écoulée',
+                'past_hour' => 'Heure écoulée',
+                'past_minute' => 'Minute écoulée',
+                'this_decade' => 'Cette décennie',
+                'this_year' => 'Cette année',
+                'this_quarter' => 'Ce trimestre',
+                'this_month' => 'Ce mois-ci',
+                'today' => 'Aujourd\'hui',
+                'this_hour' => 'Cette heure',
+                'this_minute' => 'Cette minute',
+                'next_minute' => 'Minute suivante',
+                'next_hour' => 'Heure suivante',
+                'next_week' => 'Semaine prochaine',
+                'next_2_weeks' => 'Deux prochaines semaines',
+                'next_month' => 'Mois prochain',
+                'next_quarter' => 'Trimestre prochain',
+                'next_6_months' => 'Six prochains mois',
+                'next_year' => 'Année prochaine',
+                'next_2_years' => 'Deux prochaines années',
+                'next_5_years' => 'Cinq prochaines années',
+                'next_decade' => 'Dix prochaines années',
+                'custom' => 'Personnalisée',
+            ],
+            'form' => [
+                'mode' => [
+                    'label' => 'Type de date',
+                    'options' => [
+                        'absolute' => 'Date précise',
+                        'relative' => 'Période glissante',
+                    ],
+                ],
+                'preset' => [
+                    'label' => 'Période',
+                ],
+                'relative_value' => [
+                    'label' => 'Combien',
+                ],
+                'relative_unit' => [
+                    'label' => 'Unité de temps',
+                ],
+                'tense' => [
+                    'label' => 'Sens',
+                    'options' => [
+                        'past' => 'Passé',
+                        'future' => 'Futur',
+                    ],
+                ],
+            ],
+        ],
+    ],
+];

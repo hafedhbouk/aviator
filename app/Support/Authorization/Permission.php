@@ -29,6 +29,9 @@ enum Permission: string
     case FiscalManage = 'fiscal.manage';
     case SettingsManage = 'settings.manage';
 
+    // Parc et leasing (module B, phase 4).
+    case FleetManage = 'fleet.manage';
+
     /**
      * Profils qui reçoivent cette permission par défaut.
      *
@@ -48,6 +51,7 @@ enum Permission: string
 
             self::AgenciesAll,
             self::ExportsAccounting,
+            self::FleetManage,
             self::ReferenceDataManage => [Role::SuperAdmin, Role::Admin],
 
             self::CustomersViewNames => [Role::SuperAdmin, Role::Admin, Role::AgencyUser],
@@ -83,6 +87,7 @@ enum Permission: string
             self::ReferenceDataManage => 'Modifier le paramétrage (société, agences, catégories, tarifs, options, fournisseurs)',
             self::FiscalManage => 'Modifier les paramètres fiscaux et les mentions des factures',
             self::SettingsManage => 'Modifier les réglages (réservation, tarification, facturation, approbations, notifications, sécurité)',
+            self::FleetManage => 'Gérer le parc : véhicules, documents, kilométrage, financements',
         };
     }
 }

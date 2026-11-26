@@ -10,6 +10,16 @@ use RuntimeException;
 abstract class TestCase extends BaseTestCase
 {
     /**
+     * Tables jamais vidées par DatabaseTruncation (tests de concurrence) : les réglages
+     * sont posés par les migrations de spatie/laravel-settings, que RefreshDatabase ne
+     * rejoue pas. Sans cette exclusion, tout test lancé après un test de concurrence
+     * échouait sur MissingSettings, selon l'ordre d'exécution (constat du 19/11/2026).
+     *
+     * @var list<string>
+     */
+    protected array $exceptTables = ['settings'];
+
+    /**
      * Ajoute les migrations des modèles de test (tests/Fixtures/migrations), qui
      * n'existent que dans la base de test : elles permettent d'éprouver les briques
      * du socle (portée par agence…) avant l'arrivée des documents métier.

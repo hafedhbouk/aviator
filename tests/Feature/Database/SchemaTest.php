@@ -18,7 +18,7 @@ function aviatorTables(): array
 
 it('crée toutes les tables du socle (D18)', function () {
     $expected = [
-        'agencies', 'users', 'agency_assignments', 'sequences', 'customers', 'company', 'agency_locations', 'vehicle_categories', 'seasons', 'rate_plans', 'rate_plan_lines', 'fiscal_references', 'tax_codes', 'tax_rules', 'stamp_duty_rules', 'options', 'payment_methods', 'suppliers',
+        'agencies', 'users', 'agency_assignments', 'sequences', 'customers', 'company', 'agency_locations', 'vehicle_categories', 'seasons', 'rate_plans', 'rate_plan_lines', 'fiscal_references', 'tax_codes', 'tax_rules', 'stamp_duty_rules', 'options', 'payment_methods', 'suppliers', 'named_locks',
         'roles', 'permissions', 'model_has_roles', 'model_has_permissions', 'role_has_permissions',
         'activity_log', 'settings', 'notifications',
         'password_reset_tokens', 'sessions', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs',

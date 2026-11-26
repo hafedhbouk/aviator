@@ -39,6 +39,8 @@ class ReservationSettingsPage extends SettingsPage
                     ->helperText('Vide : pas d\'expiration automatique (Q90, C-09).'),
                 TextInput::make('no_show_after_minutes')->label('Non-présentation après (minutes)')->integer()->required()->minValue(0)
                     ->helperText('Q39 : 120 min, statut proposé puis confirmé par l\'agence.'),
+                TextInput::make('reserved_status_window_hours')->label('Statut « Réservé » avant le départ (heures)')->integer()->required()->minValue(0)->maxValue(168)
+                    ->helperText('Q28 : 24 h. Un véhicule affecté passe « Réservé » quand son départ est plus proche que ce délai.'),
                 TextInput::make('preparation_buffer_minutes')->label('Délai de préparation (minutes)')->integer()->required()->minValue(0)
                     ->helperText('Q41 : 60 min, surchargeable par catégorie.'),
                 Toggle::make('allow_one_way')->label('Restitution dans une autre agence')->inline(false)

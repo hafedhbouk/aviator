@@ -5,8 +5,12 @@ namespace App\Providers\Filament;
 use App\Filament\Auth\EditProfile;
 use App\Filament\Auth\Login;
 use App\Filament\Auth\ResetPassword;
+use App\Filament\Pages\SwitchAgency;
 use App\Http\Controllers\PrintFiscalConfigurationReport;
+use App\Http\Controllers\VehicleDocumentFileController;
 use App\Http\Middleware\EnsurePrivilegedTwoFactor;
+use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -16,6 +20,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -49,6 +54,18 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Sky,
             ])
+            // Centre de notifications (alertes B-07, B-13, limite de recherches D24) ;
+            // le push s'y ajoute en phase 9. Rafraîchi chaque minute (mutualisé).
+            // Agence active (Q69, lot L13) : seulement pour un utilisateur d'agence qui a le choix.
+            ->userMenuItems([
+                'switch-agency' => Action::make('switchAgency')
+                    ->label(fn (): string => auth()->user() instanceof User ? SwitchAgency::menuLabel(auth()->user()) : '')
+                    ->icon(Heroicon::OutlinedBuildingStorefront)
+                    ->url(fn (): string => SwitchAgency::getUrl())
+                    ->visible(fn (): bool => SwitchAgency::canAccess()),
+            ])
+            ->databaseNotifications()
+            ->databaseNotificationsPollingInterval('60s')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -77,6 +94,11 @@ class AdminPanelProvider extends PanelProvider
                 Route::get('fiscal/rapport/imprimer', PrintFiscalConfigurationReport::class)
                     ->middleware(EnsurePrivilegedTwoFactor::class)
                     ->name('fiscal-report.print');
+                // Fichiers privés (D21) : servis après la policy du document propriétaire.
+                Route::get('fichiers/vehicules/documents/{document}', VehicleDocumentFileController::class)
+                    ->whereNumber('document')
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('private-files.vehicle-document');
             });
     }
 }

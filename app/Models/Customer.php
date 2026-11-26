@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Client (K-01). Structure seulement en phase 2 (D18) : écrans et recherche en phase 7.
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $company_name
  * @property string|null $tax_id
  * @property string $search_name
+ * @property string $name_key
  * @property string|null $phone
  * @property string|null $phone_search
  * @property string|null $email
@@ -39,7 +41,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'id_document_type', 'id_document_number', 'id_document_expires_at',
     'origin_agency_id', 'acquisition_source', 'referrer_customer_id', 'created_by',
 ])]
-#[Hidden(['id_document_number', 'id_document_hash', 'phone_search'])]
+#[Hidden(['id_document_number', 'id_document_hash', 'phone_search', 'name_key'])]
 class Customer extends Model
 {
     use AuditsChanges;
@@ -87,6 +89,7 @@ class Customer extends Model
     public function refreshSearchKeys(): void
     {
         $this->search_name = SearchNormalizer::name($this->displayName());
+        $this->name_key = SearchNormalizer::nameKey($this->displayName());
         $this->phone_search = $this->phone !== null && $this->phone !== ''
             ? SearchNormalizer::phone($this->phone)
             : null;
@@ -122,6 +125,22 @@ class Customer extends Model
     public function referrer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'referrer_customer_id');
+    }
+
+    /**
+     * @return HasMany<Driver, $this>
+     */
+    public function drivers(): HasMany
+    {
+        return $this->hasMany(Driver::class);
+    }
+
+    /**
+     * @return HasMany<CustomerRecommendation, $this>
+     */
+    public function recommendations(): HasMany
+    {
+        return $this->hasMany(CustomerRecommendation::class);
     }
 
     /**

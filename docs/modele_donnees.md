@@ -85,6 +85,15 @@ Index (`user_id`, `starts_on`, `ends_on`). **Remplacements à durée limitée (Q
 | `last_value` | BIGINT UNSIGNED | NN, défaut 0 | Incrémenté sous `SELECT … FOR UPDATE` (RG-02, RG-07) |
 | `created_at`, `updated_at` | TIMESTAMP | N | |
 
+### `named_locks` — P4 (lot L1, D38)
+
+| Colonne | Type | Contraintes | Remarque |
+| --- | --- | --- | --- |
+| `name` | VARCHAR(64) | PK | Nom du verrou, par exemple `setup:seasons` ; ligne créée à la première utilisation |
+| `created_at` | TIMESTAMP | N | |
+
+Verrous de sérialisation en base : `App\Support\Locking\DatabaseLock` verrouille la ligne par `SELECT … FOR UPDATE` jusqu'à la fin de la transaction. Aucune donnée métier. Les verrous de cache sont interdits dans `app/` (test d'architecture `tests/Arch/LockingTest.php`).
+
 ### Tables des paquets — P2
 
 | Table | Origine | Remarque |
@@ -105,10 +114,11 @@ Index (`user_id`, `starts_on`, `ends_on`). **Remplacements à durée limitée (Q
 | `company_name` | VARCHAR(255) | N | Obligatoire pour une entreprise |
 | `tax_id` | VARCHAR(32) | N | Matricule fiscal (entreprise) ; seule donnée client, avec le nom, des exports comptables (D13) |
 | `search_name` | VARCHAR(255) | NN, I | Nom normalisé (minuscules, sans accents ni espaces multiples) pour la recherche exacte (K-04) |
+| `name_key` | VARCHAR(255) | NN, I, défaut `''` | Nom complet aux mots triés (D24 : recherche exacte du nom complet dans n'importe quel ordre) ; ajouté au lot L8 de la phase 4 |
 | `birth_date` | DATE | N | |
 | `nationality` | CHAR(2) | N | Code ISO 3166-1 |
 | `phone` | VARCHAR(32) | N | **Coordonnée** (RG-14) |
-| `phone_search` | VARCHAR(32) | N, I | Téléphone normalisé (chiffres seuls, indicatif compris) |
+| `phone_search` | VARCHAR(32) | N, I | Téléphone au format international `+216XXXXXXXX` (D24, lot L8 de la phase 4) |
 | `email` | VARCHAR(255) | N | **Coordonnée** |
 | `address`, `city` | VARCHAR(255), VARCHAR(100) | N | **Coordonnées** |
 | `country` | CHAR(2) | N | |
@@ -177,7 +187,7 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 
 ## 4. Parc, financement et maintenance (phases 4 et 8)
 
-### `vehicles` (phase 4)
+### `vehicles` (phase 4) — réalisé au lot L2
 
 | Colonne | Type | Contraintes | Remarque |
 | --- | --- | --- | --- |
@@ -210,12 +220,12 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 
 | Table | Colonnes principales | Contraintes clés |
 | --- | --- | --- |
-| `vehicle_status_logs` | `vehicle_id` FK, `from_status`, `to_status` VARCHAR(32), `cause_type`/`cause_id` (polymorphe), `user_id` FK N, `occurred_at` DATETIME | I (`vehicle_id`, `occurred_at`) ; ajout seul |
-| `vehicle_mileage_logs` | `vehicle_id` FK, `mileage` INT UNSIGNED, `source_type`/`source_id`, `is_correction` BOOLEAN, `reason` VARCHAR(255) N, `user_id` FK, `recorded_at` DATETIME | Correction : motif obligatoire (contrôle applicatif) |
-| `vehicle_documents` | `vehicle_id` FK, `type` (`insurance`, `technical_inspection`, `road_tax`, `registration`), `supplier_id` FK N, `reference` VARCHAR(64) N, `valid_from` DATE N, `valid_until` DATE N, `amount` DECIMAL(15,3) N, `file_path` N (privé) | I (`vehicle_id`, `type`, `valid_until`) |
-| `vehicle_blocks` | `vehicle_id` FK, `starts_at`, `ends_at` DATETIME (délai de préparation inclus), `source_type`/`source_id`, `active` BOOLEAN | **I (`vehicle_id`, `active`, `starts_at`, `ends_at`)** ; contrôle RG-01 sous verrou |
-| `vehicle_financings` | `vehicle_id` FK, `type` (`leasing`, `credit`), `supplier_id` FK, `reference` VARCHAR(64), `starts_on`, `ends_on` DATE, `initial_payment_amount`, `monthly_amount_excl_tax`, `monthly_amount_incl_tax`, `residual_value_amount`, `principal_amount` (crédit), `interest_rate` DECIMAL(7,4) N, `purchase_option_on` DATE N, `outcome` (`option_exercised`, `returned`) N | I (`vehicle_id`) |
-| `financing_installments` | `vehicle_financing_id` FK CASCADE, `sequence` SMALLINT, `due_date` DATE, `amount_excl_tax`, `amount_incl_tax`, `interest_amount` N, `charge_month` DATE (1er du mois, RG-17), `paid_at` DATETIME N | **U (`vehicle_financing_id`, `sequence`)** ; I (`charge_month`) |
+| `vehicle_status_logs` | `vehicle_id` FK, `from_status`, `to_status` VARCHAR(32), `cause_type`/`cause_id` (polymorphe), `user_id` FK N, `occurred_at` DATETIME | I (`vehicle_id`, `occurred_at`) ; ajout seul (modification et suppression refusées par le modèle) ; colonne `reason` VARCHAR(255) N ajoutée ; réalisé au lot L5 |
+| `vehicle_mileage_logs` | `vehicle_id` FK, `previous_mileage`, `mileage` INT UNSIGNED, `source_type`/`source_id` N, `is_correction` BOOLEAN, `reason` VARCHAR(255) N, `user_id` FK N, `recorded_at` DATETIME | I (`vehicle_id`, `recorded_at`) ; ajout seul ; baisse seulement par correction motivée (10 caractères au moins), relevés chronologiques ; `vehicles.mileage` écrit uniquement par `MileageLedger` ; réalisé au lot L4 |
+| `vehicle_documents` | `vehicle_id` FK, `type` (`insurance`, `technical_inspection`, `road_tax`, `registration`), `supplier_id` FK N, `reference` VARCHAR(64) N, `valid_from` DATE N, `valid_until` DATE N, `amount` DECIMAL(15,3) N, `file_path` N (privé), `created_by` FK `users` N | I (`vehicle_id`, `type`, `valid_until`) ; réalisé au lot L2 ; échéance obligatoire sauf carte grise ; aucune suppression (historique des échéances) |
+| `vehicle_blocks` | `vehicle_id` FK, `agency_id` FK (agence du document), `starts_at`, `ends_at` DATETIME (délai de préparation inclus), `buffer_minutes` SMALLINT, `source_type`/`source_id`, `active` BOOLEAN, `released_at` DATETIME N | **I (`vehicle_id`, `active`, `starts_at`, `ends_at`)** ; **U (`source_type`, `source_id`)** (une occupation par source, déplacée ou libérée, jamais supprimée) ; écrite uniquement par `BlockRegistry` sous verrou du véhicule ; réalisé au lot L9 |
+| `vehicle_financings` | `vehicle_id` FK, `type` (`leasing`, `credit`), `supplier_id` FK, `reference` VARCHAR(64), `starts_on`, `ends_on` DATE, `initial_payment_amount`, `monthly_amount_excl_tax`, `monthly_amount_incl_tax`, `residual_value_amount`, `principal_amount` (crédit), `interest_rate` DECIMAL(7,4) N, `purchase_option_on` DATE N, `outcome` (`option_exercised`, `returned`) N | I (`vehicle_id`) ; **réalisé au lot L6** : `first_due_on` DATE, `installments_count` SMALLINT, `outcome_on` DATE N, `created_by` FK N ajoutés ; `outcome` : `option_exercised`, `returned`, `repaid` ; un seul financement en cours par véhicule (contrôle sous verrou) |
+| `financing_installments` | `vehicle_financing_id` FK CASCADE, `sequence` SMALLINT, `due_date` DATE, `amount_excl_tax`, `amount_incl_tax`, `interest_amount` N, `charge_month` DATE (1er du mois, RG-17), `paid_at` DATETIME N | **U (`vehicle_financing_id`, `sequence`)** ; I (`charge_month`) ; **réalisé au lot L6** : `paid_at` remplacé par `paid_on` DATE ; charge = loyer HT (leasing) ou intérêts (crédit, Q59), au mois de l'échéance |
 
 ### Maintenance et dépenses (phase 8)
 
@@ -231,7 +241,7 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 
 ## 5. Réservations, contrats et états des lieux (phases 4 et 5)
 
-### `reservations` (phase 4)
+### `reservations` (phase 4) — réalisé au lot L11
 
 | Colonne | Type | Contraintes | Remarque |
 | --- | --- | --- | --- |
@@ -258,13 +268,15 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 
 `reservation_options` : `reservation_id` FK CASCADE, `option_id` FK, `quantity` SMALLINT, `unit_amount` DECIMAL(15,3), `total_amount` DECIMAL(15,3) ; U (`reservation_id`, `option_id`).
 
+**Réalisé au lot L11 de la phase 4.** Écarts au tableau ci-dessus : `cancelled_at` DATETIME N ajouté ; `discount_approval_id` et `override_approval_id` sans clé étrangère jusqu'à `approval_requests` (phase 5, D36) ; index (`agency_id`, `status`, `starts_at`) ajouté. Numéro `RES-AAAA-NNNNN` attribué dans la transaction de création (aucun numéro consommé par un refus). Toute écriture passe par `SaveReservation`, `AssignVehicle` et `CloseReservation`, sous verrou de la catégorie puis du véhicule (`ReservationHold`). Le réglage `reservations.reserved_status_window_hours` (Q28, 24 h) est ajouté.
+
 ### `contracts` (phase 5)
 
 `id` ; `number` VARCHAR(32) NN U (`CTR-AAAA-NNNNN`) ; `agency_id` FK NN I ; `return_agency_id` FK NN ; `reservation_id` FK N U ; `vehicle_id` FK NN I ; `customer_id` FK NN I ; `starts_at`, `ends_at` DATETIME NN (prévu) ; `departed_at`, `returned_at` DATETIME N (réel) ; `status` VARCHAR(32) NN I (`draft`, `active`, `returned`, `closed`, `cancelled`) ; `mileage_policy` VARCHAR(32) NN (`unlimited`, `daily_allowance`) ; `included_km_per_day` INT N ; `extra_km_amount` DECIMAL(15,3) N ; `fuel_policy` VARCHAR(32) NN ; `rental_amount`, `options_amount`, `discount_amount` DECIMAL(15,3) NN ; `discount_approval_id` FK N ; `closed_at` DATETIME N ; `created_by` FK ; horodatages.
 
 | Table | Colonnes principales | Contraintes clés |
 | --- | --- | --- |
-| `drivers` | `customer_id` FK, `first_name`, `last_name`, `birth_date` DATE, `license_number` TEXT (chiffré), `license_hash` CHAR(64) I, `license_issued_on`, `license_expires_on` DATE, `license_country` CHAR(2), `id_document_number` TEXT (chiffré) N, `id_document_hash` CHAR(64) N I | Recherche exacte par permis (K-04) |
+| `drivers` | `customer_id` FK, `first_name`, `last_name`, `birth_date` DATE, `license_number` TEXT (chiffré), `license_hash` CHAR(64) I, `license_issued_on`, `license_expires_on` DATE, `license_country` CHAR(2), `id_document_number` TEXT (chiffré) N, `id_document_hash` CHAR(64) N I | Recherche exacte par permis (K-04) ; `created_by` FK N ajouté ; permis et pièce chiffrés, couverts par `aviator:reencrypt-secrets` et `aviator:rehash-blind-index` ; **réalisé au lot L8 de la phase 4** (avancé de la phase 5) |
 | `contract_drivers` | `contract_id` FK CASCADE, `driver_id` FK, `is_primary` BOOLEAN | PK (`contract_id`, `driver_id`) ; un seul conducteur principal |
 | `contract_options` | `contract_id` FK CASCADE, `option_id` FK, `quantity`, `unit_amount`, `total_amount` | |
 | `contract_extensions` | `contract_id` FK, `previous_ends_at`, `new_ends_at` DATETIME, `created_by` FK | Contrôle de disponibilité tracé (D-07) |
@@ -318,7 +330,7 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 | Table | Phase | Colonnes principales | Contraintes clés |
 | --- | --- | --- | --- |
 | `approval_requests` | 5 | `agency_id` FK, `type` (`discount`, `retention`, `blacklist`, `blacklist_override`), `subject_type`/`subject_id`, `payload` JSON (données figées), `requested_by` FK, `status` (`pending`, `approved`, `rejected`, `cancelled`), `decided_by` FK N, `decided_at` DATETIME N, `comment` TEXT N | I (`status`, `created_at`) ; décision sous verrou (pas de double décision) |
-| `customer_recommendations` | 7 | `customer_id` FK, `author_id` FK, `contract_id` FK N, `level` (`recommended`, `standard`, `watch`, `blacklist`), `reason_code` VARCHAR(32), `comment` TEXT N, `status` (`effective`, `proposed`, `rejected`), `approval_request_id` FK N, `created_at` | **Ajout seul** (RG-16) : ni `updated_at` modifiable, ni suppression |
+| `customer_recommendations` | **4 (v1, lot L8)**, écran en 7 | `customer_id` FK, `author_id` FK, `contract_id` FK N, `level` (`recommended`, `standard`, `watch`, `blacklist`), `reason_code` VARCHAR(32), `comment` TEXT N, `status` (`effective`, `proposed`, `rejected`), `approval_request_id` FK N, `created_at` | **Ajout seul** (RG-16) : ni modification ni suppression (refusées par le modèle) ; `agency_id` FK N ajouté ; `contract_id` et `approval_request_id` sans clé étrangère jusqu'à leurs tables (phase 5) |
 | `customer_interactions` | 7 | `customer_id` FK, `agency_id` FK, `user_id` FK, `type` (`call`, `email`, `visit`, `complaint`, `dispute`), `subject`, `body` TEXT, `follow_up` TEXT N, `occurred_at` DATETIME | I (`customer_id`, `occurred_at`) |
 | `complaints` | 7 | `customer_id` FK, `agency_id` FK, `assigned_to` FK N, `subject`, `body`, `status`, `due_on` DATE N, `resolved_at` N | |
 | `customer_consents` | 7 | `customer_id` FK, `channel` (`push`), `granted` BOOLEAN, `recorded_at` DATETIME, `source` | Ajout seul (K-07) |

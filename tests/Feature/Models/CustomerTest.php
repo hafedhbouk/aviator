@@ -16,7 +16,7 @@ it('calcule le nom de recherche, le téléphone normalisé et l\'empreinte de la
     ]);
 
     expect($customer->search_name)->toBe('hedi ben salah')
-        ->and($customer->phone_search)->toBe('21698765432')
+        ->and($customer->phone_search)->toBe('+21698765432')
         ->and($customer->id_document_hash)->toBe(app(BlindIndex::class)->hash('12345678', Customer::ID_DOCUMENT_INDEX));
 });
 
