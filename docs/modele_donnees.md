@@ -342,6 +342,8 @@ Ils remplacent la table `taxes` prévue en phase 1. Statuts de validation (réf�
 | `notification_preferences` | 9 | `user_id` FK CASCADE, `type` VARCHAR(64), `enabled` BOOLEAN | U (`user_id`, `type`) |
 | `kpi_monthly_vehicle` | 9 | `vehicle_id` FK, `agency_id` FK, `month` DATE, charges par nature et CA HT net (DECIMAL(15,3)), `rented_days`, `available_days` SMALLINT, `km_driven` INT, `is_dirty` BOOLEAN, `computed_at` DATETIME | **U (`vehicle_id`, `month`)** ; RG-17 |
 
+**`approval_requests` réalisé au lot L1 de la phase 5** (D46). Écarts au tableau : `reason` TEXT NN (motif du demandeur, obligatoire) ; types `discount` et `blacklist_override` seulement en phase 5 (`retention` en phase 6, `blacklist` en phase 7) ; index (`subject_type`, `subject_id`, `type`) ; colonnes figées à la création (agence, type, objet, `payload`, motif, demandeur : modification refusée par le modèle) et suppression refusée. Clés étrangères posées vers `approval_requests` sur `reservations.discount_approval_id`, `reservations.override_approval_id` et `customer_recommendations.approval_request_id`. Écriture uniquement par `App\Domain\Approvals` (`RequestApproval`, `DecideApproval` sous verrou de la ligne, `CancelPendingApprovals`) ; permission `approvals.decide`, super admin seul.
+
 ## 8. Lot 2 (phase 11)
 
 `customer_accounts` (1 pour 1 avec `customers`, garde `customer`), `customer_documents` (pièces envoyées par le client, statut de vérification, disque `private`), `reviews` (avis, distincts des recommandations). Définies en phase 11.

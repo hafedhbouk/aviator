@@ -139,5 +139,6 @@ Marge : 1,75 j sous le budget de 30 j ; seuil d'alerte à 36 j. Je signale tout 
 | --- | ---: | ---: | ---: | --- |
 | Jeu de données de développement (`DevSampleDataSeeder`), hors lots | — | 0,5 | 0,5 | Demandé le 26/11/2026 pour tester sans saisie ; poste local uniquement |
 | L0. Plan et questions | 0,5 | 0,5 | 1 | |
+| L1. Approbations | 3 | 2,5 | 3,5 | Domaine `Approvals`, écran du super admin, branchement sur les réservations (remise, dérogation), action « Confirmer » d'un brouillon (manquait en phase 4) ; double décision testée sur deux processus (échoue sans le verrou : essai fait) |
 
-Budget 30 j ; seuil d'alerte 36 j. Prévu restant : 27,75 j.
+Budget 30 j ; seuil d'alerte 36 j. Prévu restant : 24,75 j.
