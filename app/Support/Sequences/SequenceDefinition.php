@@ -11,8 +11,8 @@ use InvalidArgumentException;
  * Format d'une numérotation : préfixe, période et longueur du numéro.
  * Exemple : new SequenceDefinition('RES', SequencePeriod::Year, 5) → RES-2026-00001.
  *
- * Les numéros de facture et d'avoir n'ont pas de définition ici : leur format et
- * leur période viendront des règles fiscales validées (Q11, Q30, Q16).
+ * Les factures, avoirs et reçus de caution n'utilisent pas cette classe : leur
+ * format est réglé par série (Series, SeriesFormat, D27).
  */
 final readonly class SequenceDefinition
 {

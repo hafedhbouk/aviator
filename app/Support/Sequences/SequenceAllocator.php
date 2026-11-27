@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Sequences;
 
 use App\Models\Sequence;
+use App\Models\SequenceSeries;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,8 @@ use Illuminate\Support\Facades\DB;
  *   échoue, l'incrément est annulé avec elle, et le numéro sera réattribué (pas de trou).
  *   Hors transaction, l'attribution ouvre la sienne.
  * - Pour les factures et avoirs, le numéro est attribué à l'émission, jamais au
- *   brouillon (RG-07), avec le format fixé par la règle fiscale validée (Q11, Q30).
+ *   brouillon (RG-07), dans leur série (nextInSeries, D27) : format réglable, compteur
+ *   attaché à la série et non au préfixe.
  */
 final class SequenceAllocator
 {
@@ -49,6 +51,69 @@ final class SequenceAllocator
     }
 
     /**
+     * Numéro suivant d'une série à format réglable (D27) : factures, avoirs, reçus.
+     *
+     * Verrous pris dans cet ordre : la ligne de la série (le format ne change pas
+     * pendant l'attribution), puis le compteur. La commande de réglage prend les mêmes,
+     * dans le même ordre.
+     */
+    public function nextInSeries(Series $series, ?CarbonInterface $at = null): string
+    {
+        $date = $at ?? CarbonImmutable::now();
+        $this->prepareSeries($series, $date);
+
+        return DB::transaction(function () use ($series, $date): string {
+            /** @var SequenceSeries $config */
+            $config = SequenceSeries::query()->where('code', $series->value)->lockForUpdate()->firstOrFail();
+            $format = $config->format();
+            $key = $format->counterKey($series, $date);
+
+            $sequence = Sequence::query()->where('key', $key)->lockForUpdate()->first()
+                ?? throw new SequenceSeriesChangedException("Le réglage de la série « {$series->label()} » vient de changer : recommencez l'opération.");
+            $value = $sequence->last_value + 1;
+
+            if ($value > $format->maxValue()) {
+                throw SequenceOverflowException::for($key, $format->padding);
+            }
+
+            $sequence->last_value = $value;
+            $sequence->save();
+
+            return $format->format($value, $date);
+        });
+    }
+
+    /**
+     * Crée d'avance les séries et leurs compteurs pour cette date, avant la transaction
+     * du document (voir prepare()). Les compteurs des trois séries sont créés ensemble :
+     * un document qui numérote dans plusieurs séries (facture et reçu de caution) ne
+     * crée aucun compteur pendant qu'il en tient un autre.
+     */
+    public function prepareSeries(Series $series, ?CarbonInterface $at = null): void
+    {
+        $date = $at ?? CarbonImmutable::now();
+        $keys = array_map(
+            fn (Series $case): string => SequenceSeries::ensure($case)->format()->counterKey($case, $date),
+            Series::cases(),
+        );
+
+        // Seulement les clés absentes : INSERT IGNORE sur une clé existante attend le
+        // verrou de cette ligne, même s'il n'insère rien.
+        $missing = array_values(array_diff($keys, Sequence::query()->whereIn('key', $keys)->pluck('key')->all()));
+
+        if ($missing === []) {
+            return;
+        }
+
+        Sequence::on(self::AUTOCOMMIT_CONNECTION)->insertOrIgnore(array_map(fn (string $key): array => [
+            'key' => $key,
+            'last_value' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], $missing));
+    }
+
+    /**
      * Crée d'avance le compteur de la période, **avant** d'ouvrir la transaction du
      * document. À appeler quand cette transaction peut déjà tenir le verrou d'un autre
      * compteur : le verrou de ligne de MariaDB couvre aussi l'intervalle qui précède la
@@ -70,7 +135,7 @@ final class SequenceAllocator
      * en évidence par SequenceConcurrencyTest). La ligne créée vaut 0 : elle ne
      * consomme aucun numéro, même si le document échoue ensuite.
      */
-    private function ensureCounterExists(string $key): void
+    public function ensureCounterExists(string $key): void
     {
         // Lecture simple, sans verrou : le cas courant (compteur existant) s'arrête ici.
         if (Sequence::query()->where('key', $key)->exists()) {

@@ -56,7 +56,8 @@ function workerResult(Process $process): array
 }
 
 afterEach(function () {
-    Sequence::query()->where('key', 'like', 'CONC%')->delete();
+    // Compteurs validés (commit) : à retirer, sinon les tests suivants les verraient.
+    Sequence::query()->where('key', 'like', 'CONC%')->orWhere('key', 'like', 'series:%')->delete();
 });
 
 it('attribue 60 numéros depuis deux processus simultanés, sans doublon ni trou', function () {
@@ -113,4 +114,22 @@ it('ne laisse aucun trou si la transaction qui tient le verrou est annulée', fu
     DB::rollBack();
 
     expect(workerResult($other)['numbers'])->toBe(['CONCC-2026-00002']);
+});
+
+it('numérote factures et avoirs depuis trois processus simultanés : séries indépendantes, sans doublon ni trou (D27)', function () {
+    $invoicesA = startWorker('series:invoice', 25);
+    $creditNotes = startWorker('series:credit_note', 20);
+    $invoicesB = startWorker('series:invoice', 25);
+
+    $a = workerResult($invoicesA);
+    $c = workerResult($creditNotes);
+    $b = workerResult($invoicesB);
+
+    $invoices = array_merge($a['numbers'], $b['numbers']);
+    sort($invoices);
+
+    expect($invoices)->toBe(array_map(fn (int $n): string => sprintf('AVI-%06d', $n), range(1, 50)))
+        ->and($c['numbers'])->toBe(array_map(fn (int $n): string => sprintf('AV-%06d', $n), range(1, 20)))
+        ->and(Sequence::query()->where('key', 'series:invoice')->value('last_value'))->toBe(50)
+        ->and(Sequence::query()->where('key', 'series:credit_note')->value('last_value'))->toBe(20);
 });
