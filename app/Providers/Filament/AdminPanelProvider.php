@@ -6,6 +6,7 @@ use App\Filament\Auth\EditProfile;
 use App\Filament\Auth\Login;
 use App\Filament\Auth\ResetPassword;
 use App\Filament\Pages\SwitchAgency;
+use App\Http\Controllers\DamageFileDocumentController;
 use App\Http\Controllers\InspectionFileController;
 use App\Http\Controllers\PrintFiscalConfigurationReport;
 use App\Http\Controllers\VehicleDocumentFileController;
@@ -108,6 +109,10 @@ class AdminPanelProvider extends PanelProvider
                     ->whereNumber('inspection')
                     ->middleware(EnsurePrivilegedTwoFactor::class)
                     ->name('private-files.inspection-signature');
+                Route::get('fichiers/dossiers-de-dommage/pieces/{document}', DamageFileDocumentController::class)
+                    ->whereNumber('document')
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('private-files.damage-document');
             });
     }
 }

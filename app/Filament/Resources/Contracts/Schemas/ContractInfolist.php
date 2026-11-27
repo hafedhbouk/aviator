@@ -2,12 +2,16 @@
 
 namespace App\Filament\Resources\Contracts\Schemas;
 
+use App\Domain\Rental\Actions\ManageDamageFile;
 use App\Enums\ApprovalStatus;
 use App\Enums\ContractStatus;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\Contract;
+use App\Models\ContractAmendment;
 use App\Models\ContractCharge;
 use App\Models\ContractExtension;
+use App\Models\DamageFile;
+use App\Models\DamageFileDocument;
 use App\Models\Driver;
 use App\Support\Money\Money;
 use Filament\Infolists\Components\TextEntry;
@@ -46,6 +50,7 @@ class ContractInfolist
                         ->url(fn (Contract $record): ?string => $record->reservation_id === null ? null : ReservationResource::getUrl('view', ['record' => $record->reservation_id])),
                     TextEntry::make('departed_at')->label('Parti le')->formatStateUsing($at)->placeholder('—'),
                     TextEntry::make('returned_at')->label('Restitué le')->formatStateUsing($at)->placeholder('—'),
+                    TextEntry::make('closed_at')->label('Clôturé le')->formatStateUsing($at)->placeholder('—'),
                     TextEntry::make('cancellation_reason')->label('Motif d\'annulation')
                         ->visible(fn (Contract $record): bool => $record->status === ContractStatus::Cancelled),
                     $approval('discountApproval', 'Remise : approbation'),
@@ -83,6 +88,31 @@ class ContractInfolist
                         TextEntry::make('charges_list')->label('Frais')->listWithLineBreaks()->bulleted()
                             ->state(fn (Contract $record): array => $record->charges()->get()->map(fn (ContractCharge $charge): string => "{$charge->label} : {$charge->amount->format()}"
                                 .(($charge->calculation['capped'] ?? false) ? ' (plafonné par la franchise)' : ''))->all()),
+                    ]),
+                Section::make('Dossiers de dommage (justificatifs, N2)')->columnSpanFull()
+                    ->visible(fn (Contract $record): bool => $record->damageFiles()->exists())
+                    ->schema([
+                        TextEntry::make('damage_files_list')->label('Dossiers')->listWithLineBreaks()->bulleted()->html()
+                            ->state(fn (Contract $record): array => $record->damageFiles()->with(['damage', 'documents'])->get()->map(function (DamageFile $file): string {
+                                $documents = $file->documents->map(fn (DamageFileDocument $document): string => '<a class="underline" target="_blank" href="'
+                                    .e(route('filament.admin.private-files.damage-document', ['document' => $document->id])).'">'.e($document->kind->label()).'</a>')->implode(', ');
+
+                                return e("{$file->damage->zone->label()} : {$file->damage->description}")
+                                    .' — '.($file->isComplete() ? 'complet' : 'incomplet : '.e(implode(', ', app(ManageDamageFile::class)->missing($file))).' à joindre')
+                                    .($documents === '' ? '' : ' — '.$documents);
+                            })->all()),
+                    ]),
+                Section::make('Avenants (D-11)')->columnSpanFull()
+                    ->visible(fn (Contract $record): bool => $record->amendments()->exists())
+                    ->schema([
+                        TextEntry::make('amendments_list')->label('Avenants')->listWithLineBreaks()->bulleted()
+                            ->state(fn (Contract $record): array => $record->amendments()->get()->map(fn (ContractAmendment $amendment): string => sprintf(
+                                '%s, %s : %s (motif : %s)',
+                                $amendment->created_at?->timezone((string) config('app.timezone'))->format('d/m/Y H:i') ?? '—',
+                                $amendment->typeLabel(),
+                                $amendment->type === ContractAmendment::NOTE ? (string) ($amendment->changes['note'] ?? '') : (string) ($amendment->changes['driver']['name'] ?? ''),
+                                $amendment->reason,
+                            ))->all()),
                     ]),
                 Section::make('Conditions')->columnSpanFull()->columns(4)->schema([
                     TextEntry::make('mileage')->label('Kilométrage')

@@ -89,6 +89,37 @@ final class ContractException extends RuntimeException
         return new self('Heure de retour impossible : ni avant le départ, ni dans le futur.');
     }
 
+    public static function damageNotOfContract(): self
+    {
+        return new self('Dossier impossible : ce dommage n\'est pas un dommage nouveau du retour validé de ce contrat.');
+    }
+
+    /**
+     * @param  list<string>  $missing
+     */
+    public static function damageFileIncomplete(array $missing): self
+    {
+        return new self('Dossier incomplet : '.implode(', ', $missing).' à joindre.');
+    }
+
+    public static function invalidFile(string $message): self
+    {
+        return new self($message);
+    }
+
+    /**
+     * @param  list<string>  $failures
+     */
+    public static function cannotClose(array $failures): self
+    {
+        return new self('Clôture impossible : '.implode(' ; ', $failures).'.');
+    }
+
+    public static function amendmentTypeRefused(): self
+    {
+        return new self('Avenant limité aux mentions et aux conducteurs additionnels : un écart financier passe par une facture complémentaire ou un avoir.');
+    }
+
     public static function startInPast(): self
     {
         return new self('Le départ d\'un contrat ne peut pas être dans le passé.');

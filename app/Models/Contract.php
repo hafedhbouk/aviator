@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 /**
  * Contrat de location (module D). Document de l'agence de départ (RG-13,
@@ -73,6 +74,17 @@ class Contract extends Model
 
     /** Carburant : même niveau au retour qu'au départ (Q44). */
     public const FUEL_SAME_LEVEL = 'same_level';
+
+    protected static function booted(): void
+    {
+        // Contrat clôturé non modifiable (D-11) : une correction passe par un avenant.
+        static::updating(function (Contract $contract): void {
+            if ($contract->getOriginal('status') === ContractStatus::Closed
+                && array_diff(array_keys($contract->getDirty()), ['updated_at']) !== []) {
+                throw new LogicException('Un contrat clôturé ne se modifie pas : passez par un avenant.');
+            }
+        });
+    }
 
     protected $fillable = [
         'number', 'agency_id', 'return_agency_id', 'reservation_id', 'vehicle_id', 'vehicle_category_id', 'customer_id',
@@ -171,6 +183,26 @@ class Contract extends Model
     public function drivers(): BelongsToMany
     {
         return $this->belongsToMany(Driver::class, 'contract_drivers')->withPivot(['is_primary', 'checks'])->withTimestamps();
+    }
+
+    /**
+     * Avenants (D-11), en ajout seul.
+     *
+     * @return HasMany<ContractAmendment, $this>
+     */
+    public function amendments(): HasMany
+    {
+        return $this->hasMany(ContractAmendment::class)->orderBy('id');
+    }
+
+    /**
+     * Dossiers de dommage (N2).
+     *
+     * @return HasMany<DamageFile, $this>
+     */
+    public function damageFiles(): HasMany
+    {
+        return $this->hasMany(DamageFile::class)->orderBy('id');
     }
 
     /**
