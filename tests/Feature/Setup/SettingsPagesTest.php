@@ -4,6 +4,7 @@ use App\Domain\Setup\Actions\UpdateSettings;
 use App\Domain\Setup\Exceptions\SetupException;
 use App\Filament\Pages\Settings\ApprovalSettingsPage;
 use App\Filament\Pages\Settings\BillingSettingsPage;
+use App\Filament\Pages\Settings\ContractSettingsPage;
 use App\Filament\Pages\Settings\InspectionSettingsPage;
 use App\Filament\Pages\Settings\NotificationSettingsPage;
 use App\Filament\Pages\Settings\PricingSettingsPage;
@@ -59,6 +60,7 @@ it('réserve toutes les pages de réglages au super admin', function (string $pa
 })->with([
     ReservationSettingsPage::class, PricingSettingsPage::class, BillingSettingsPage::class,
     ApprovalSettingsPage::class, NotificationSettingsPage::class, SecuritySettingsPage::class, InspectionSettingsPage::class,
+    ContractSettingsPage::class,
 ]);
 
 it('refuse la modification à l\'admin, même hors de l\'interface', function () {

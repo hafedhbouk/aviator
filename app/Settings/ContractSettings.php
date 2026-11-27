@@ -16,6 +16,12 @@ class ContractSettings extends Settings
 
     public string $early_return_refund;
 
+    /** Modèle de contrat et conditions générales validés par le conseil juridique (Q15) ; faux = mention « Modèle non validé ». */
+    public bool $template_validated;
+
+    /** Conditions générales de location, texte imprimé avec le contrat (Q15) ; vide = page signalant leur absence. */
+    public ?string $terms_text;
+
     public static function group(): string
     {
         return 'contracts';

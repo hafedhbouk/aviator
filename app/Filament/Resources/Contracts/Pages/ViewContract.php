@@ -23,6 +23,7 @@ use App\Models\InspectionDamage;
 use App\Models\User;
 use App\Support\Files\PrivateFiles;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -53,6 +54,18 @@ class ViewContract extends ViewRecord
             && (auth()->user()?->can('update', $record) ?? false);
 
         return [
+            ActionGroup::make([
+                Action::make('contractPdf')->label('Contrat (PDF)')->icon(Heroicon::OutlinedDocumentArrowDown)
+                    ->url(fn (Contract $record): string => route('filament.admin.documents.contract', ['contract' => $record->id])),
+                Action::make('departurePdf')->label('État des lieux de départ (PDF)')->icon(Heroicon::OutlinedDocumentArrowDown)
+                    ->visible(fn (Contract $record): bool => $record->inspections()->where('type', InspectionType::Departure->value)->exists())
+                    ->url(fn (Contract $record): string => route('filament.admin.documents.inspection', ['inspection' => (int) $record->inspections()->where('type', InspectionType::Departure->value)->value('id')])),
+                Action::make('returnPdf')->label('État des lieux de retour (PDF)')->icon(Heroicon::OutlinedDocumentArrowDown)
+                    ->visible(fn (Contract $record): bool => $record->inspections()->where('type', InspectionType::Return->value)->exists())
+                    ->url(fn (Contract $record): string => route('filament.admin.documents.inspection', ['inspection' => (int) $record->inspections()->where('type', InspectionType::Return->value)->value('id')])),
+                Action::make('termsPdf')->label('Conditions générales (PDF)')->icon(Heroicon::OutlinedDocumentArrowDown)
+                    ->url(fn (): string => route('filament.admin.documents.terms')),
+            ])->label('Imprimer')->icon(Heroicon::OutlinedPrinter)->button()->color('gray'),
             Action::make('departureInspection')
                 ->label('État des lieux de départ')
                 ->icon(Heroicon::OutlinedClipboardDocumentCheck)

@@ -6,6 +6,7 @@ use App\Filament\Auth\EditProfile;
 use App\Filament\Auth\Login;
 use App\Filament\Auth\ResetPassword;
 use App\Filament\Pages\SwitchAgency;
+use App\Http\Controllers\ContractDocumentController;
 use App\Http\Controllers\DamageFileDocumentController;
 use App\Http\Controllers\InspectionFileController;
 use App\Http\Controllers\PrintFiscalConfigurationReport;
@@ -113,6 +114,18 @@ class AdminPanelProvider extends PanelProvider
                     ->whereNumber('document')
                     ->middleware(EnsurePrivilegedTwoFactor::class)
                     ->name('private-files.damage-document');
+                // Documents du contrat en PDF (D-10, D43), après la policy du contrat.
+                Route::get('documents/contrats/{contract}', [ContractDocumentController::class, 'contract'])
+                    ->whereNumber('contract')
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('documents.contract');
+                Route::get('documents/etats-des-lieux/{inspection}', [ContractDocumentController::class, 'inspection'])
+                    ->whereNumber('inspection')
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('documents.inspection');
+                Route::get('documents/conditions-generales', [ContractDocumentController::class, 'terms'])
+                    ->middleware(EnsurePrivilegedTwoFactor::class)
+                    ->name('documents.terms');
             });
     }
 }

@@ -61,6 +61,8 @@ final class SettingsCatalog
             ],
             ContractSettings::class => [
                 'early_return_refund' => ['rules' => ['required', 'in:'.implode(',', array_keys(ContractSettings::EARLY_RETURN_REFUNDS))], 'cast' => 'string'],
+                'template_validated' => ['rules' => ['boolean'], 'cast' => 'bool'],
+                'terms_text' => ['rules' => ['nullable', 'string', 'max:30000'], 'cast' => '?text'],
             ],
             InspectionSettings::class => [
                 'max_photos' => ['rules' => ['required', 'integer', 'between:1,40'], 'cast' => 'int'],

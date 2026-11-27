@@ -119,6 +119,7 @@ final class UpdateSettings
             'bool' => (bool) $value,
             'percent' => self::percent((string) $value),
             '?money' => $value === null || $value === '' ? null : (string) $value,
+            '?text' => $value === null || trim((string) $value) === '' ? null : str_replace("\r\n", "\n", trim((string) $value)),
             'alerts' => self::alerts(is_array($value) ? $value : []),
             default => (string) $value,
         };

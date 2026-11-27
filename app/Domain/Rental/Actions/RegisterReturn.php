@@ -8,6 +8,7 @@ use App\Domain\Availability\BlockRegistry;
 use App\Domain\Availability\VehicleLock;
 use App\Domain\Fleet\Actions\RecordMileage;
 use App\Domain\Fleet\VehicleStatusService;
+use App\Domain\Rental\Documents\ContractDocuments;
 use App\Domain\Rental\Exceptions\ContractException;
 use App\Domain\Rental\ReturnCharges;
 use App\Enums\ChargeNature;
@@ -109,6 +110,8 @@ final class RegisterReturn
                 'validated_at' => CarbonImmutable::now(),
                 'validated_by' => $actor->id,
             ])->save();
+            // Exemplaire signé figé (D43).
+            app(ContractDocuments::class)->archiveSignedInspection($return);
 
             return $locked;
         });

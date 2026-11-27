@@ -12,6 +12,7 @@ use App\Domain\Crm\CustomerRiskGate;
 use App\Domain\Fleet\Actions\RecordMileage;
 use App\Domain\Fleet\VehicleStatusService;
 use App\Domain\Rental\ContractDrivers;
+use App\Domain\Rental\Documents\ContractDocuments;
 use App\Domain\Rental\Exceptions\ContractException;
 use App\Domain\Setup\CategoryRules;
 use App\Enums\ContractStatus;
@@ -99,6 +100,8 @@ final class StartRental
             ])->save();
 
             $inspection->fill(['validated_at' => $departedAt, 'validated_by' => $actor->id])->save();
+            // Exemplaire signé figé (D43).
+            app(ContractDocuments::class)->archiveSignedInspection($inspection);
 
             return $locked;
         });
