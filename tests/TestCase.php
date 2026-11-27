@@ -20,6 +20,19 @@ abstract class TestCase extends BaseTestCase
     protected array $exceptTables = ['settings'];
 
     /**
+     * Les tests ne dépendent pas des assets construits : `composer check` lance les tests
+     * avant `npm run build`, et la CI part d'un dépôt sans `public/build`. Sans cela, une
+     * vue qui appelle `@vite` passait sur le poste (manifeste d'une construction
+     * précédente) et échouait en CI (constat du 27/11/2026, lots L6 à L11).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+    }
+
+    /**
      * Ajoute les migrations des modèles de test (tests/Fixtures/migrations), qui
      * n'existent que dans la base de test : elles permettent d'éprouver les briques
      * du socle (portée par agence…) avant l'arrivée des documents métier.
