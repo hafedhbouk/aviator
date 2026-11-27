@@ -6,6 +6,8 @@ namespace App\Domain\Setup;
 
 use App\Settings\ApprovalSettings;
 use App\Settings\BillingSettings;
+use App\Settings\ContractSettings;
+use App\Settings\InspectionSettings;
 use App\Settings\NotificationSettings;
 use App\Settings\PricingSettings;
 use App\Settings\ReservationSettings;
@@ -42,6 +44,8 @@ final class SettingsCatalog
                 'day_mode' => ['rules' => ['required', 'in:'.implode(',', array_keys(PricingSettings::DAY_MODES))], 'cast' => 'string'],
                 'late_tolerance_minutes' => ['rules' => ['required', 'integer', 'between:0,1440'], 'cast' => 'int'],
                 'late_unit' => ['rules' => ['required', 'in:'.implode(',', array_keys(PricingSettings::LATE_UNITS))], 'cast' => 'string'],
+                'fuel_liter_amount' => ['rules' => ['nullable', 'string', 'max:32'], 'cast' => '?money'],
+                'fuel_service_amount' => ['rules' => ['nullable', 'string', 'max:32'], 'cast' => '?money'],
             ],
             BillingSettings::class => [
                 'vat_rounding_mode' => ['rules' => ['required', 'in:'.implode(',', BillingSettings::ROUNDING_MODES)], 'cast' => 'string'],
@@ -54,6 +58,15 @@ final class SettingsCatalog
             NotificationSettings::class => [
                 'send_urgent_in_request' => ['rules' => ['boolean'], 'cast' => 'bool'],
                 'alerts' => ['rules' => ['required', 'array'], 'cast' => 'alerts'],
+            ],
+            ContractSettings::class => [
+                'early_return_refund' => ['rules' => ['required', 'in:'.implode(',', array_keys(ContractSettings::EARLY_RETURN_REFUNDS))], 'cast' => 'string'],
+                'template_validated' => ['rules' => ['boolean'], 'cast' => 'bool'],
+                'terms_text' => ['rules' => ['nullable', 'string', 'max:30000'], 'cast' => '?text'],
+                'show_phone_on_active_contract' => ['rules' => ['boolean'], 'cast' => 'bool'],
+            ],
+            InspectionSettings::class => [
+                'max_photos' => ['rules' => ['required', 'integer', 'between:1,40'], 'cast' => 'int'],
             ],
             SecuritySettings::class => [
                 'require_2fa_for_agency_users' => ['rules' => ['boolean'], 'cast' => 'bool'],

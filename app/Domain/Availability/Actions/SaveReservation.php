@@ -4,14 +4,22 @@ declare(strict_types=1);
 
 namespace App\Domain\Availability\Actions;
 
+use App\Domain\Approvals\Actions\CancelPendingApprovals;
+use App\Domain\Approvals\Actions\RequestApproval;
+use App\Domain\Approvals\ApprovalGate;
+use App\Domain\Approvals\Exceptions\ApprovalException;
 use App\Domain\Availability\Exceptions\ReservationException;
 use App\Domain\Availability\Period;
 use App\Domain\Availability\ReservationHold;
 use App\Domain\Crm\CustomerRiskGate;
+use App\Domain\Crm\Exceptions\CustomerBlocked;
 use App\Domain\Fleet\ReservedStatusSync;
 use App\Domain\Pricing\PriceQuote;
 use App\Domain\Pricing\QuoteCalculator;
+use App\Enums\ApprovalStatus;
+use App\Enums\ApprovalType;
 use App\Enums\ReservationStatus;
+use App\Models\ApprovalRequest;
 use App\Models\Customer;
 use App\Models\Reservation;
 use App\Models\ReservationOption;
@@ -24,6 +32,7 @@ use App\Support\Money\Money;
 use App\Support\Sequences\SequenceAllocator;
 use App\Support\Sequences\SequenceDefinition;
 use App\Support\Sequences\SequencePeriod;
+use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -36,10 +45,15 @@ use InvalidArgumentException;
  *
  * 1. Droits : l'agence de départ est une agence où l'acteur agit (Q37 : seule l'agence
  *    de départ crée) ; une réservation se modifie dans son agence.
- * 2. Client : pas de client sur liste noire (RG-15, refus sans motif, D36).
+ * 2. Client sur liste noire (RG-15, D46) : seulement un brouillon, avec une demande
+ *    de dérogation motivée au super admin ; la confirmation exige la dérogation
+ *    approuvée pour cette réservation. Le refus ne donne jamais le motif.
  * 3. Règles de réservation facultatives (Q90 : vides = désactivées) : durée minimale,
  *    préavis ; départ jamais dans le passé.
- * 4. Devis calculé côté serveur (QuoteCalculator) et figé avec la réservation.
+ * 4. Devis calculé côté serveur (QuoteCalculator) et figé avec la réservation. Une
+ *    remise au-delà du seuil (RG-10, D46) ouvre une demande d'approbation motivée ; la
+ *    réservation est enregistrée, le départ attendra l'approbation (ApprovalGate).
+ *    Une remise inchangée garde sa demande ; une remise modifiée la remplace.
  * 5. Confirmée : capacité et véhicule contrôlés sous verrou (ReservationHold), numéro
  *    `RES-AAAA-NNNNN` attribué dans la même transaction (aucun numéro consommé par un
  *    refus), occupation du véhicule. Brouillon : devis enregistré, sans véhicule ni
@@ -58,12 +72,17 @@ final class SaveReservation
         private readonly CurrentAgency $currentAgency,
         private readonly ReservationSettings $settings,
         private readonly ReservedStatusSync $reserved,
+        private readonly ApprovalGate $approvals,
+        private readonly RequestApproval $requestApproval,
+        private readonly CancelPendingApprovals $cancelApprovals,
     ) {}
 
     /**
      * @param  array<string, mixed>  $data  customer_id, agency_id, vehicle_category_id, vehicle_id, starts_at, ends_at,
      *                                      options (identifiant => quantité), discount_amount, pickup_location_id,
-     *                                      return_location_id, status (« confirmed » par défaut, ou « draft »)
+     *                                      return_location_id, status (« confirmed » par défaut, ou « draft »),
+     *                                      discount_reason (remise au-delà du seuil), override_reason
+     *                                      (dérogation à la liste noire)
      */
     public function handle(?Reservation $reservation, array $data, User $actor): Reservation
     {
@@ -79,15 +98,22 @@ final class SaveReservation
         }
 
         $customer = Customer::query()->findOrFail($values['customer_id']);
-        $this->risk->assertCanRent($customer);
+        $needsOverride = $this->risk->isBlacklisted($customer) && $this->assertOverride($reservation, $values);
 
         $period = new Period($values['starts_at'], $values['ends_at']);
         $this->assertReservationRules($period, $reservation);
 
-        $quote = $this->quotes->quote($values['vehicle_category_id'], $values['agency_id'], $period, $values['options'], $values['discount_amount']);
+        $quote = $this->quotes->quote($values['vehicle_category_id'], $values['agency_id'], $period, $values['options'], $values['discount_amount'], allowApproval: true);
+        $keepDiscountApproval = $this->keepsDiscountApproval($reservation, $quote);
+
+        if ($quote->discountRequiresApproval && ! $keepDiscountApproval
+            && mb_strlen((string) $values['discount_reason']) < RequestApproval::MIN_REASON_LENGTH) {
+            throw ApprovalException::reasonRequired('une remise au-delà du seuil de '.$this->quotes->thresholdLabel().' %', RequestApproval::MIN_REASON_LENGTH);
+        }
+
         $previousVehicleId = $reservation?->vehicle_id;
 
-        $saved = DB::transaction(function () use ($reservation, $values, $period, $quote, $actor): Reservation {
+        $saved = DB::transaction(function () use ($reservation, $values, $period, $quote, $actor, $needsOverride, $keepDiscountApproval): Reservation {
             $buffer = 0;
 
             if ($values['status'] === ReservationStatus::Confirmed) {
@@ -120,6 +146,7 @@ final class SaveReservation
 
             $this->saveOptions($reservation, $quote);
             $this->hold->apply($reservation, $buffer);
+            $this->syncApprovals($reservation, $quote, $values, $actor, $needsOverride, $keepDiscountApproval);
 
             return $reservation;
         });
@@ -133,7 +160,7 @@ final class SaveReservation
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{customer_id: int, agency_id: int, vehicle_category_id: int, vehicle_id: int|null, starts_at: CarbonImmutable, ends_at: CarbonImmutable, options: array<int, int>, discount_amount: Money|null, pickup_location_id: int|null, return_location_id: int|null, status: ReservationStatus}
+     * @return array{customer_id: int, agency_id: int, vehicle_category_id: int, vehicle_id: int|null, starts_at: CarbonImmutable, ends_at: CarbonImmutable, options: array<int, int>, discount_amount: Money|null, pickup_location_id: int|null, return_location_id: int|null, status: ReservationStatus, discount_reason: string|null, override_reason: string|null}
      */
     private function validated(array $data, ?Reservation $reservation, User $actor): array
     {
@@ -196,7 +223,100 @@ final class SaveReservation
             'pickup_location_id' => $validated['pickup_location_id'] === null ? null : (int) $validated['pickup_location_id'],
             'return_location_id' => $validated['return_location_id'] === null ? null : (int) $validated['return_location_id'],
             'status' => ReservationStatus::from((string) $validated['status']),
+            'discount_reason' => is_scalar($data['discount_reason'] ?? null) ? trim((string) $data['discount_reason']) : null,
+            'override_reason' => is_scalar($data['override_reason'] ?? null) ? trim((string) $data['override_reason']) : null,
         ];
+    }
+
+    /**
+     * Client sur liste noire : la réservation est-elle permise, et faut-il ouvrir une
+     * demande de dérogation ?
+     *
+     * @param  array{status: ReservationStatus, override_reason: string|null}  $values
+     * @return bool vrai s'il faut ouvrir une demande de dérogation
+     *
+     * @throws CustomerBlocked
+     */
+    private function assertOverride(?Reservation $reservation, array $values): bool
+    {
+        if ($reservation !== null && $this->approvals->overrideApproved($reservation, $reservation->override_approval_id)) {
+            return false;
+        }
+
+        $pending = $reservation !== null && $this->approvals->overridePending($reservation, $reservation->override_approval_id);
+
+        if ($values['status'] !== ReservationStatus::Draft) {
+            throw $pending ? CustomerBlocked::overridePending() : CustomerBlocked::blacklisted();
+        }
+
+        if ($pending) {
+            return false;
+        }
+
+        if (mb_strlen((string) $values['override_reason']) < RequestApproval::MIN_REASON_LENGTH) {
+            throw CustomerBlocked::blacklisted();
+        }
+
+        return true;
+    }
+
+    /**
+     * Remise au-delà du seuil déjà soumise, au même montant, et pas refusée : la demande
+     * en attente ou approuvée reste valable.
+     */
+    private function keepsDiscountApproval(?Reservation $reservation, PriceQuote $quote): bool
+    {
+        if ($reservation?->discount_approval_id === null || ! $quote->discountRequiresApproval) {
+            return false;
+        }
+
+        $request = ApprovalRequest::query()->withoutGlobalScopes()->find($reservation->discount_approval_id);
+
+        return $request !== null
+            && in_array($request->status, [ApprovalStatus::Pending, ApprovalStatus::Approved], true)
+            && ($request->payload['discount_amount'] ?? null) === $quote->discountAmount->toDecimalString();
+    }
+
+    /**
+     * Demandes d'approbation de la réservation, dans la transaction de l'enregistrement.
+     *
+     * @param  array{discount_reason: string|null, override_reason: string|null}  $values
+     */
+    private function syncApprovals(Reservation $reservation, PriceQuote $quote, array $values, User $actor, bool $needsOverride, bool $keepDiscountApproval): void
+    {
+        $discountApprovalId = $reservation->discount_approval_id;
+
+        if (! $quote->discountRequiresApproval) {
+            $this->cancelApprovals->handle($reservation, ApprovalType::Discount, 'Remise modifiée ou retirée.');
+            $discountApprovalId = null;
+        } elseif (! $keepDiscountApproval) {
+            $subtotal = $quote->subtotal();
+            $discountApprovalId = $this->requestApproval->handle(ApprovalType::Discount, $reservation, $reservation->agency_id, [
+                'document_number' => $reservation->number,
+                'starts_at' => $quote->startsAt->toIso8601String(),
+                'ends_at' => $quote->endsAt->toIso8601String(),
+                'subtotal_amount' => $subtotal->toDecimalString(),
+                'discount_amount' => $quote->discountAmount->toDecimalString(),
+                'discount_percent' => (string) $quote->discountAmount->toBigDecimal()->multipliedBy(100)->dividedBy($subtotal->toBigDecimal(), 2, RoundingMode::HalfUp),
+                'threshold_percent' => $this->quotes->thresholdLabel(),
+                'total_excluding_tax' => $quote->totalExcludingTax->toDecimalString(),
+            ], $values['discount_reason'], $actor)->id;
+        }
+
+        $overrideApprovalId = $reservation->override_approval_id;
+
+        if ($needsOverride) {
+            $overrideApprovalId = $this->requestApproval->handle(ApprovalType::BlacklistOverride, $reservation, $reservation->agency_id, [
+                'document_number' => $reservation->number,
+                'customer_id' => $reservation->customer_id,
+                'starts_at' => $quote->startsAt->toIso8601String(),
+                'ends_at' => $quote->endsAt->toIso8601String(),
+            ], $values['override_reason'], $actor)->id;
+        }
+
+        if ($discountApprovalId !== $reservation->discount_approval_id || $overrideApprovalId !== $reservation->override_approval_id) {
+            $reservation->forceFill(['discount_approval_id' => $discountApprovalId, 'override_approval_id' => $overrideApprovalId])->save();
+        }
     }
 
     private function assertReservationRules(Period $period, ?Reservation $reservation): void

@@ -51,8 +51,12 @@ final class QuoteCalculator
 
     /**
      * @param  array<int, int>  $options  identifiant de l'option => quantité
+     * @param  bool  $allowApproval  vrai pour un enregistrement qui sait ouvrir une demande
+     *                               d'approbation (D46) : une remise au-delà du seuil est
+     *                               alors acceptée et marquée `discountRequiresApproval` ;
+     *                               sinon elle est refusée
      */
-    public function quote(int $categoryId, int $agencyId, Period $period, array $options = [], ?Money $discount = null): PriceQuote
+    public function quote(int $categoryId, int $agencyId, Period $period, array $options = [], ?Money $discount = null, bool $allowApproval = false): PriceQuote
     {
         $category = VehicleCategory::query()->findOrFail($categoryId);
 
@@ -86,7 +90,7 @@ final class QuoteCalculator
 
         $subtotal = $rental->plus($optionsAmount);
         $discount ??= Money::zero();
-        $this->assertDiscount($discount, $subtotal);
+        $requiresApproval = $this->assertDiscount($discount, $subtotal, $allowApproval);
         $total = $subtotal->minus($discount);
 
         [$taxes, $notice] = $this->taxes($rental, $optionLines, $subtotal, $discount, $period->startsAt);
@@ -105,6 +109,7 @@ final class QuoteCalculator
             taxes: $taxes,
             taxNotice: $notice,
             computedAt: CarbonImmutable::now(),
+            discountRequiresApproval: $requiresApproval,
         );
     }
 
@@ -160,27 +165,48 @@ final class QuoteCalculator
         return [$lines, $total];
     }
 
-    private function assertDiscount(Money $discount, Money $subtotal): void
+    /**
+     * @return bool vrai si la remise dépasse le seuil et attend l'approbation du super admin
+     */
+    private function assertDiscount(Money $discount, Money $subtotal, bool $allowApproval): bool
     {
         if ($discount->isNegative() || $discount->compareTo($subtotal) > 0) {
             throw QuoteUnavailable::discountTooHigh();
         }
 
         if ($discount->isZero()) {
-            return;
+            return false;
         }
 
         $threshold = BigDecimal::of($this->approvals->discount_threshold_percent);
         $allowed = $subtotal->multipliedBy($threshold->dividedBy(100, 6, RoundingMode::HalfUp), RoundingMode::HalfUp);
 
-        if ($discount->compareTo($allowed) > 0) {
-            $shown = (string) $threshold;
-            if (str_contains($shown, '.')) {
-                $shown = rtrim(rtrim($shown, '0'), '.');
-            }
-
-            throw QuoteUnavailable::discountAboveThreshold($shown);
+        if ($discount->compareTo($allowed) <= 0) {
+            return false;
         }
+
+        if ($allowApproval) {
+            return true;
+        }
+
+        throw QuoteUnavailable::discountAboveThreshold($this->thresholdLabel());
+    }
+
+    /**
+     * Remise au-delà du seuil accordé sans approbation (RG-10), sur une base donnée :
+     * prolongation d'un contrat (Q93), par exemple.
+     */
+    public function discountNeedsApproval(Money $discount, Money $base): bool
+    {
+        return $this->assertDiscount($discount, $base, allowApproval: true);
+    }
+
+    /** Seuil affiché sans zéros inutiles (« 10 », « 7,5 »). */
+    public function thresholdLabel(): string
+    {
+        $shown = (string) BigDecimal::of($this->approvals->discount_threshold_percent);
+
+        return str_contains($shown, '.') ? str_replace('.', ',', rtrim(rtrim($shown, '0'), '.')) : $shown;
     }
 
     /**

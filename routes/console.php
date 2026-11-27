@@ -4,6 +4,7 @@ use App\Domain\Availability\Actions\CloseReservation;
 use App\Domain\Fleet\Alerts\DueDateAlerts;
 use App\Domain\Fleet\ReservedStatusSync;
 use App\Domain\Fleet\StatusConsistencyCheck;
+use App\Domain\Rental\Alerts\LateReturnAlerts;
 use App\Support\Scheduling\QueueDrainer;
 use App\Support\Scheduling\SchedulerHeartbeat;
 use Illuminate\Support\Facades\Schedule;
@@ -45,6 +46,11 @@ Schedule::call(fn (CloseReservation $reservations) => $reservations->expireDue()
 Schedule::call(fn (ReservedStatusSync $reserved) => $reserved->syncAll())
     ->name('fleet-reserved-window')
     ->hourly();
+
+// Retards de restitution (A-09, phase 5, lot L12) : une alerte par échéance dépassée.
+Schedule::call(fn (LateReturnAlerts $alerts) => $alerts->run())
+    ->name('contracts-late-returns')
+    ->everyFifteenMinutes();
 
 Schedule::call(fn (QueueDrainer $drainer) => $drainer->drain())
     ->name('queue-worker')

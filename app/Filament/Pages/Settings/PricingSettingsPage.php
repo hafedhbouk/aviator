@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Settings;
 
+use App\Filament\Forms\AmountField;
 use App\Settings\PricingSettings;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -36,8 +37,14 @@ class PricingSettingsPage extends SettingsPage
                 TextInput::make('late_tolerance_minutes')->label('Tolérance de retard (minutes)')->integer()->required()->minValue(0)
                     ->helperText('Q14 : 60 min.'),
                 Select::make('late_unit')->label('Retard au-delà de la tolérance')->options(PricingSettings::LATE_UNITS)->required()
-                    ->helperText('Q14 : une journée au tarif du contrat.'),
+                    ->helperText('Q14 : une journée au tarif du contrat. À l\'heure : tarif horaire de chaque catégorie obligatoire (Q91).'),
             ]),
+            Section::make('Carburant manquant au retour')->columns(2)
+                ->description('Vide = aucun frais de carburant calculé (Q44). Frais = huitièmes manquants × capacité du réservoir ÷ 8 × prix du litre + frais de service.')
+                ->schema([
+                    AmountField::make('fuel_liter_amount')->label('Prix du litre HT'),
+                    AmountField::make('fuel_service_amount')->label('Frais de service HT'),
+                ]),
         ];
     }
 }

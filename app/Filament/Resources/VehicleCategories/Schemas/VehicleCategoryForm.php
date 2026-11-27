@@ -62,6 +62,8 @@ class VehicleCategoryForm
                         TextInput::make('included_km_per_day')->label('Kilométrage inclus (km par jour)')->integer()
                             ->minValue(1)->placeholder('Illimité'),
                         AmountField::make('extra_km_amount')->label('Prix du km supplémentaire'),
+                        AmountField::make('late_hour_amount')->label('Tarif horaire du retard')
+                            ->helperText('Seulement si le retard est facturé à l\'heure (Q91) ; vide sinon.'),
                     ]),
             ]);
     }

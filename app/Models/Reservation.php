@@ -17,7 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Réservation (module C). Document de l'agence de départ (RG-13, BelongsToAgency),
  * numéroté `RES-AAAA-NNNNN` (Q49) et jamais supprimé (HasSequenceNumber, RG-11) :
  * il s'annule. Écrit uniquement par les actions de App\Domain\Availability\Actions,
- * sous verrou de la catégorie et du véhicule (RG-01, RG-02, Q36).
+ * sous verrou de la catégorie et du véhicule (RG-01, RG-02, Q36), et par
+ * App\Domain\Rental\Actions\OpenContract pour sa conversion en contrat.
  *
  * @property int $id
  * @property string $number
@@ -35,6 +36,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array<string, mixed> $quote
  * @property Money $estimated_total_amount
  * @property Money $discount_amount
+ * @property int|null $discount_approval_id
+ * @property int|null $override_approval_id
  * @property CarbonImmutable|null $expires_at
  * @property string|null $cancellation_reason
  * @property CarbonImmutable|null $cancelled_at
@@ -102,6 +105,26 @@ class Reservation extends Model
     public function options(): HasMany
     {
         return $this->hasMany(ReservationOption::class);
+    }
+
+    /**
+     * Demande d'approbation de la remise (RG-10, D46).
+     *
+     * @return BelongsTo<ApprovalRequest, $this>
+     */
+    public function discountApproval(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalRequest::class, 'discount_approval_id')->withoutGlobalScopes();
+    }
+
+    /**
+     * Demande de dérogation à la liste noire (RG-15, D46).
+     *
+     * @return BelongsTo<ApprovalRequest, $this>
+     */
+    public function overrideApproval(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalRequest::class, 'override_approval_id')->withoutGlobalScopes();
     }
 
     /**

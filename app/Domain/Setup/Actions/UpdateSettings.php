@@ -7,10 +7,15 @@ namespace App\Domain\Setup\Actions;
 use App\Domain\Setup\Exceptions\SetupException;
 use App\Domain\Setup\SettingsCatalog;
 use App\Models\User;
+use App\Models\VehicleCategory;
 use App\Settings\NotificationSettings;
+use App\Settings\PricingSettings;
 use App\Support\Authorization\Permission;
+use App\Support\Money\AmountInput;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use Spatie\LaravelSettings\Settings;
 
 /**
@@ -42,6 +47,20 @@ final class UpdateSettings
         }
 
         $validated = Validator::make($input, $rules)->validate();
+
+        foreach ($fields as $key => $field) {
+            if ($field['cast'] === '?money' && array_key_exists($key, $validated)) {
+                try {
+                    $validated[$key] = AmountInput::parse($validated[$key])?->toDecimalString();
+                } catch (InvalidArgumentException $exception) {
+                    throw ValidationException::withMessages([$key => $exception->getMessage()]);
+                }
+            }
+        }
+
+        if ($settings instanceof PricingSettings && ($validated['late_unit'] ?? null) === 'hour') {
+            $this->assertHourlyLateRates();
+        }
 
         $old = [];
         $new = [];
@@ -77,6 +96,21 @@ final class UpdateSettings
         return $settings;
     }
 
+    /**
+     * Retard à l'heure (D51, Q91) : refusé tant qu'une catégorie active n'a pas de tarif
+     * horaire. Aucun tarif n'est déduit du tarif journalier.
+     */
+    private function assertHourlyLateRates(): void
+    {
+        $missing = VehicleCategory::query()->where('is_active', true)->whereNull('late_hour_amount')->orderBy('sort_order')->pluck('name')->all();
+
+        if ($missing !== []) {
+            throw ValidationException::withMessages([
+                'late_unit' => 'Retard à l\'heure impossible : tarif horaire du retard à saisir pour '.implode(', ', $missing).' (Q91).',
+            ]);
+        }
+    }
+
     private static function cast(string $cast, mixed $value): mixed
     {
         return match ($cast) {
@@ -84,6 +118,8 @@ final class UpdateSettings
             '?int' => $value === null || $value === '' ? null : (int) $value,
             'bool' => (bool) $value,
             'percent' => self::percent((string) $value),
+            '?money' => $value === null || $value === '' ? null : (string) $value,
+            '?text' => $value === null || trim((string) $value) === '' ? null : str_replace("\r\n", "\n", trim((string) $value)),
             'alerts' => self::alerts(is_array($value) ? $value : []),
             default => (string) $value,
         };

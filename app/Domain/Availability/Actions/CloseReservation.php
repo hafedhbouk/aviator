@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Availability\Actions;
 
+use App\Domain\Approvals\Actions\CancelPendingApprovals;
 use App\Domain\Availability\BlockRegistry;
 use App\Domain\Availability\Exceptions\ReservationException;
 use App\Domain\Fleet\ReservedStatusSync;
@@ -29,6 +30,7 @@ final class CloseReservation
         private readonly BlockRegistry $blocks,
         private readonly ReservedStatusSync $reserved,
         private readonly ReservationSettings $settings,
+        private readonly CancelPendingApprovals $approvals,
     ) {}
 
     public function cancel(Reservation $reservation, string $reason, User $actor): Reservation
@@ -104,6 +106,8 @@ final class CloseReservation
             $locked->save();
 
             $this->blocks->release($locked);
+            // Demandes devenues sans objet : le super admin n'a plus à en décider (D46).
+            $this->approvals->handle($locked, null, "Réservation close ({$action}).");
 
             return $locked->vehicle_id;
         });

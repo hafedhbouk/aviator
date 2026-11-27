@@ -4,12 +4,14 @@ use App\Domain\Availability\Actions\SaveReservation;
 use App\Domain\Crm\Actions\AddRecommendation;
 use App\Domain\Setup\Actions\SaveRatePlan;
 use App\Domain\Setup\Actions\SaveSeason;
+use App\Enums\ApprovalStatus;
 use App\Enums\ReservationStatus;
 use App\Filament\Resources\Reservations\Pages\CreateReservation;
 use App\Filament\Resources\Reservations\Pages\ListReservations;
 use App\Filament\Resources\Reservations\Pages\ViewReservation;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\Agency;
+use App\Models\ApprovalRequest;
 use App\Models\Customer;
 use App\Models\Reservation;
 use App\Models\Vehicle;
@@ -101,18 +103,31 @@ it('affiche le devis calculé par le domaine pendant la saisie', function () {
         ->assertSee('total HT 300,000 DT');
 });
 
-it('affiche le refus d\'une réservation sur liste noire et n\'enregistre rien', function () {
+it('n\'enregistre, pour un client sur liste noire, qu\'un brouillon avec une demande de dérogation motivée (D46)', function () {
     app(AddRecommendation::class)->handle($this->customer, ['level' => 'blacklist', 'reason_code' => 'fraude'], $this->superAdmin);
     $this->actingAs($this->agent);
 
-    // Même si l'option était forcée dans le formulaire, le domaine refuse.
+    // Sans motif : rien n'est enregistré.
     Livewire::test(CreateReservation::class)
-        ->set('customerResults', screenFoundCustomer())
-        ->fillForm(screenFormData())
+        ->set('customerResults', screenFoundCustomer(blacklisted: true))
+        ->fillForm(screenFormData(['status' => 'draft']))
         ->call('create')
-        ->assertNotified('Réservation impossible pour ce client. Contactez le super admin.');
+        ->assertHasFormErrors(['override_reason' => 'required']);
 
     expect(Reservation::query()->count())->toBe(0);
+
+    // Avec motif : brouillon (seul choix proposé ; le domaine refuse une confirmation forcée, ApprovalTest).
+    Livewire::test(CreateReservation::class)
+        ->set('customerResults', screenFoundCustomer(blacklisted: true))
+        ->fillForm(screenFormData(['status' => 'draft', 'override_reason' => 'Dette réglée, justificatif présenté']))
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $reservation = Reservation::query()->sole();
+
+    expect($reservation->status)->toBe(ReservationStatus::Draft)
+        ->and(ApprovalRequest::query()->sole()->status)->toBe(ApprovalStatus::Pending)
+        ->and($reservation->override_approval_id)->toBe(ApprovalRequest::query()->sole()->id);
 });
 
 it('montre à l\'agent les seules réservations de son agence (RG-13)', function () {
@@ -133,6 +148,17 @@ it('montre à l\'agent les seules réservations de son agence (RG-13)', function
     $this->get(ReservationResource::getUrl('view', ['record' => $mine]))->assertOk();
     $this->get(ReservationResource::getUrl('view', ['record' => $theirs]))->assertNotFound();
     $this->get(ReservationResource::getUrl('create'))->assertOk();
+});
+
+it('confirme un brouillon depuis sa fiche, disponibilité contrôlée par le domaine', function () {
+    $draft = app(SaveReservation::class)->handle(null, screenFormData(['status' => 'draft']), $this->agent);
+    $this->actingAs($this->agent);
+
+    Livewire::test(ViewReservation::class, ['record' => $draft->getRouteKey()])
+        ->callAction('confirm')
+        ->assertHasNoActionErrors();
+
+    expect($draft->fresh()?->status)->toBe(ReservationStatus::Confirmed);
 });
 
 it('annule une réservation depuis sa fiche, motif obligatoire', function () {

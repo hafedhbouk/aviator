@@ -25,6 +25,12 @@ class PricingSettings extends Settings
     /** Facturation du retard au-delà de la tolérance (Q14 : une journée). */
     public string $late_unit;
 
+    /** Prix du litre de carburant manquant, HT (Q44 : vide = aucun frais de carburant). */
+    public ?string $fuel_liter_amount;
+
+    /** Frais de service du carburant manquant, HT, par retour concerné (Q44 : vide = aucun). */
+    public ?string $fuel_service_amount;
+
     public static function group(): string
     {
         return 'pricing';

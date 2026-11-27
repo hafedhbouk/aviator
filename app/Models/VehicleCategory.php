@@ -25,13 +25,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $included_km_per_day
  * @property Money|null $extra_km_amount
  * @property Money|null $insurance_excess_amount
+ * @property Money|null $late_hour_amount
  * @property int|null $preparation_buffer_minutes
  * @property int $sort_order
  * @property bool $is_active
  */
 #[Fillable([
     'code', 'name', 'description', 'deposit_amount', 'min_driver_age', 'min_license_years',
-    'included_km_per_day', 'extra_km_amount', 'insurance_excess_amount', 'preparation_buffer_minutes',
+    'included_km_per_day', 'extra_km_amount', 'insurance_excess_amount', 'late_hour_amount', 'preparation_buffer_minutes',
     'sort_order', 'is_active',
 ])]
 class VehicleCategory extends Model
@@ -50,6 +51,7 @@ class VehicleCategory extends Model
             'deposit_amount' => MoneyCast::class,
             'extra_km_amount' => MoneyCast::class,
             'insurance_excess_amount' => MoneyCast::class,
+            'late_hour_amount' => MoneyCast::class,
             'min_driver_age' => 'integer',
             'min_license_years' => 'integer',
             'included_km_per_day' => 'integer',

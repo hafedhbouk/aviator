@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Fleet;
 
+use App\Enums\ContractStatus;
 use App\Enums\ReservationStatus;
 use App\Enums\VehicleStatus;
+use App\Models\Contract;
 use App\Models\Reservation;
 use App\Models\Vehicle;
 use App\Settings\ReservationSettings;
@@ -33,13 +35,23 @@ final class ReservedStatusSync
         $now ??= CarbonImmutable::now();
         $vehicle = Vehicle::query()->withoutGlobalScopes()->findOrFail($vehicle->id);
 
+        $window = $now->addHours(max(0, $this->settings->reserved_status_window_hours));
+
+        // Réservation confirmée ou contrat en brouillon (pas encore parti, phase 5).
         $next = Reservation::query()->withoutGlobalScopes()
             ->where('vehicle_id', $vehicle->id)
             ->where('status', ReservationStatus::Confirmed->value)
-            ->where('starts_at', '<=', $now->addHours(max(0, $this->settings->reserved_status_window_hours)))
+            ->where('starts_at', '<=', $window)
             ->where('ends_at', '>', $now)
             ->orderBy('starts_at')
-            ->first();
+            ->first()
+            ?? Contract::query()->withoutGlobalScopes()
+                ->where('vehicle_id', $vehicle->id)
+                ->where('status', ContractStatus::Draft->value)
+                ->where('starts_at', '<=', $window)
+                ->where('ends_at', '>', $now)
+                ->orderBy('starts_at')
+                ->first();
 
         if ($vehicle->status === VehicleStatus::Available && $next !== null) {
             $this->statuses->transition($vehicle, VehicleStatus::Reserved, cause: $next, reason: "Départ prévu le {$next->starts_at->timezone((string) config('app.timezone'))->format('d/m/Y H:i')}");

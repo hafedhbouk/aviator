@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reservations;
 
+use App\Domain\Approvals\Exceptions\ApprovalException;
 use App\Domain\Availability\AvailabilityQuery;
 use App\Domain\Availability\Exceptions\InvalidPeriod;
 use App\Domain\Availability\Exceptions\ReservationException;
@@ -9,8 +10,10 @@ use App\Domain\Availability\Exceptions\VehicleUnavailable;
 use App\Domain\Availability\Period;
 use App\Domain\Crm\Exceptions\CrmException;
 use App\Domain\Crm\Exceptions\CustomerBlocked;
+use App\Domain\Fleet\Exceptions\IllegalVehicleTransition;
 use App\Domain\Fleet\Exceptions\VehicleNotRentable;
 use App\Domain\Pricing\Exceptions\QuoteUnavailable;
+use App\Domain\Rental\Exceptions\ContractException;
 use App\Enums\VehicleDocumentType;
 use Closure;
 use Filament\Notifications\Notification;
@@ -27,7 +30,8 @@ final class ReservationScreens
     /** Refus métier affichables tels quels, sans donnée client. */
     private const BUSINESS_REFUSALS = [
         ReservationException::class, VehicleUnavailable::class, VehicleNotRentable::class, QuoteUnavailable::class,
-        CustomerBlocked::class, InvalidPeriod::class, CrmException::class,
+        CustomerBlocked::class, InvalidPeriod::class, CrmException::class, ApprovalException::class, ContractException::class,
+        IllegalVehicleTransition::class,
     ];
 
     /**
@@ -43,16 +47,28 @@ final class ReservationScreens
         try {
             return $action();
         } catch (Throwable $exception) {
-            foreach (self::BUSINESS_REFUSALS as $refusal) {
-                if ($exception instanceof $refusal) {
-                    Notification::make()->danger()->title($exception->getMessage())->persistent()->send();
+            if (self::isRefusal($exception)) {
+                Notification::make()->danger()->title($exception->getMessage())->persistent()->send();
 
-                    throw (new Halt)->rollBackDatabaseTransaction();
-                }
+                throw (new Halt)->rollBackDatabaseTransaction();
             }
 
             throw $exception;
         }
+    }
+
+    /**
+     * Refus métier affichable tel quel (message sans donnée client).
+     */
+    public static function isRefusal(Throwable $exception): bool
+    {
+        foreach (self::BUSINESS_REFUSALS as $refusal) {
+            if ($exception instanceof $refusal) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
