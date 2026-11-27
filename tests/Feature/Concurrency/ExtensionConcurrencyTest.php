@@ -96,9 +96,12 @@ function workerOutcome(Process $process): array
     expect($process->isSuccessful())->toBeTrue('Processus en échec : '.$process->getErrorOutput().$process->getOutput());
 
     $lines = array_values(array_filter(explode("\n", trim($process->getOutput()))));
+    $decoded = json_decode((string) end($lines), true);
+
+    expect($decoded)->toBeArray('Sortie illisible : '.bin2hex(substr($process->getOutput(), -300)).' | '.$process->getErrorOutput());
 
     /** @var array{ok: bool, error?: string} */
-    return json_decode((string) end($lines), true, flags: JSON_THROW_ON_ERROR);
+    return $decoded;
 }
 
 it('ne laisse aboutir qu\'une prolongation ou une réservation saisies en même temps sur la même période', function () {

@@ -6,6 +6,7 @@ namespace App\Domain\Rental\Actions;
 
 use App\Domain\Approvals\Actions\CancelPendingApprovals;
 use App\Domain\Availability\BlockRegistry;
+use App\Domain\Availability\VehicleLock;
 use App\Domain\Fleet\ReservedStatusSync;
 use App\Domain\Rental\Exceptions\ContractException;
 use App\Enums\ContractStatus;
@@ -45,6 +46,9 @@ final class CancelContract
 
         $vehicleId = DB::transaction(function () use ($contract, $reason): int {
             $locked = Contract::query()->withoutGlobalScopes()->lockForUpdate()->findOrFail($contract->id);
+            // Ordre des verrous de la disponibilité (D38) : catégorie, puis véhicule ; sinon
+            // interblocage avec une réservation simultanée (MariaDB 1213).
+            app(VehicleLock::class)->category($locked->vehicle_category_id);
 
             if ($locked->status !== ContractStatus::Draft) {
                 throw ContractException::invalidStatus($locked->status->label(), 'annulation');

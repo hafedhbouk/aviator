@@ -7,6 +7,7 @@ namespace App\Domain\Rental\Actions;
 use App\Domain\Approvals\ApprovalGate;
 use App\Domain\Availability\BlockRegistry;
 use App\Domain\Availability\Period;
+use App\Domain\Availability\VehicleLock;
 use App\Domain\Crm\CustomerRiskGate;
 use App\Domain\Fleet\Actions\RecordMileage;
 use App\Domain\Fleet\VehicleStatusService;
@@ -64,6 +65,9 @@ final class StartRental
 
         return DB::transaction(function () use ($contract, $actor, $departedAt): Contract {
             $locked = Contract::query()->withoutGlobalScopes()->lockForUpdate()->findOrFail($contract->id);
+            // Ordre des verrous de la disponibilité (D38) : catégorie, puis véhicule ; sinon
+            // interblocage avec une réservation simultanée (MariaDB 1213).
+            app(VehicleLock::class)->category($locked->vehicle_category_id);
 
             if ($locked->status !== ContractStatus::Draft) {
                 throw ContractException::invalidStatus($locked->status->label(), 'départ');

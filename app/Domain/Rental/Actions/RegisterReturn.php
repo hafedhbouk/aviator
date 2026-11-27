@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Rental\Actions;
 
 use App\Domain\Availability\BlockRegistry;
+use App\Domain\Availability\VehicleLock;
 use App\Domain\Fleet\Actions\RecordMileage;
 use App\Domain\Fleet\VehicleStatusService;
 use App\Domain\Rental\Exceptions\ContractException;
@@ -65,6 +66,9 @@ final class RegisterReturn
 
         return DB::transaction(function () use ($contract, $data, $damageAmounts, $actor): Contract {
             $locked = Contract::query()->withoutGlobalScopes()->lockForUpdate()->findOrFail($contract->id);
+            // Ordre des verrous de la disponibilité (D38) : catégorie, puis véhicule ; sinon
+            // interblocage avec une réservation simultanée (MariaDB 1213).
+            app(VehicleLock::class)->category($locked->vehicle_category_id);
 
             if ($locked->status !== ContractStatus::Active) {
                 throw ContractException::invalidStatus($locked->status->label(), 'retour');

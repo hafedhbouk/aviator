@@ -8,6 +8,7 @@ use App\Domain\Approvals\Actions\RequestApproval;
 use App\Domain\Approvals\Exceptions\ApprovalException;
 use App\Domain\Availability\BlockRegistry;
 use App\Domain\Availability\Period;
+use App\Domain\Availability\VehicleLock;
 use App\Domain\Pricing\BillableDurationCalculator;
 use App\Domain\Pricing\QuoteCalculator;
 use App\Domain\Rental\Exceptions\ContractException;
@@ -72,6 +73,9 @@ final class ExtendContract
 
         return DB::transaction(function () use ($contract, $newEndsAt, $discount, $reason, $actor): ContractExtension {
             $locked = Contract::query()->withoutGlobalScopes()->lockForUpdate()->findOrFail($contract->id);
+            // Ordre des verrous de la disponibilité (D38) : catégorie, puis véhicule ; sinon
+            // interblocage avec une réservation simultanée (MariaDB 1213).
+            app(VehicleLock::class)->category($locked->vehicle_category_id);
 
             if ($locked->status !== ContractStatus::Active) {
                 throw ContractException::invalidStatus($locked->status->label(), 'prolongation');
