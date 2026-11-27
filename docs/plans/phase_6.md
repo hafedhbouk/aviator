@@ -1,8 +1,155 @@
-# Phase 6 — Facturation, encaissements, cautions : éléments reportés
+# Plan de la phase 6 — Facturation, encaissements, cautions
 
-Le plan complet sera établi au démarrage de la phase et soumis à validation.
+| Élément | Valeur |
+| --- | --- |
+| Phase | 6. Facturation, encaissements, cautions (lot 1) |
+| Branche | `phase/06-facturation-cautions`, créée le 27/11/2026 depuis `main` (`7262eeb`, fusion de la pull request n° 7) |
+| Budget | **37 j** : référence 31 j, demande d'évolution du cabinet (part indispensable, 5 j), numérotation D27 (1 j). **Seuil d'alerte : 37,2 j** (référence + 20 %). Le plan prévoit 32 j (§4) |
+| Statut | **Plan validé** par Hafedh le 27/11/2026 (lots, D52 à D59, application par défaut des questions ouvertes) ; lots en cours (§7) |
+| Critère d'acceptation | Scénarios **5** (facture réglée en deux paiements partiels), **6** (caution partiellement restituée après retenue approuvée), **7** (avoir partiel, numérotation sans trou) et **8** (modification d'une facture validée refusée ; période clôturée : voir D53) verts ; tests de référence du référentiel (annexe B) verts |
+| Règles fiscales disponibles | Liste **confirmée par Hafedh le 27/11/2026** : les règles **CONFIRMED** du référentiel v1.0 validé (TVA 19 % sur `RENTAL`, `CHILD_SEAT`, `GPS`, `EXTRA_DRIVER`, `EXTRA_RENTAL_PERIOD`, `FUEL_RECHARGE` ; timbre de 1,000 DT ; numérotation continue `AVI-{SEQUENCE}` et `AV-{SEQUENCE}` ; méthode d'arrondi ; avoirs) ; les règles **CONDITIONAL** opération par opération, avec leur justificatif (assurances, retard, dégâts, franchise) ; les **sept points PENDING_DOCUMENTATION inutilisables** tant que leur pièce manque (dont les exonérations de timbre et la preuve du dépôt TTN). Rien d'autre n'est appliqué |
+| Sources | Cahier, modules E (E-01 à E-10) et F (F-01 à F-08), RG-05 à RG-08, RG-11, RG-12 ; référentiel v1.0 §2 à §10 ; `docs/analyse_ecarts_cabinet.md` (E6, E8, E11, E13, E17, E19, E23, N2 à N4) ; D26, D27, D37, D46, D49 ; parcours P4 étapes 5 à 8, P5 ; Q25, Q50 à Q56, Q79, Q81, Q87, Q89 ; annexes A et B de ce document |
 
-## Décidé pendant la phase 2
+## 0. Réserves héritées
+
+Elles ne bloquent pas le développement, mais restent prioritaires de ton côté : installation de la recette (phase 2), saisie du paramétrage (phase 3), atelier avec les agences et remesure du planning (phase 4), essai sur une vraie tablette (phase 5). **En plus, pour cette phase** : les mentions obligatoires des factures (`company.invoice_legal_mentions`, super admin) sont vides ; tant qu'elles le sont, `aviator:check-environment` reste en erreur et aucune facture ne part en production (décision du 19/11/2026). Les factures émises sur le poste et en recette portent la mention « Règles fiscales non confirmées » (E6).
+
+## 1. Périmètre
+
+### Dans la phase
+
+| Exigence | Contenu |
+| --- | --- |
+| E-01, E-02, RG-05, Q50 | Facture de location établie depuis un contrat restitué : location, options, prolongations, frais figés au retour ; aucune période facturée deux fois ; location de plus de 30 jours facturable par période (`billing.long_rental_period_days`, Q50) |
+| N2, E6 | Code fiscal **choisi** pour chaque ligne, jamais déduit d'un libellé ; code proposé pour la location et les options (déjà configurées), **aucun code proposé pour les frais** du retour ; ligne exonérée ou hors champ refusée sans justificatif rattaché ; règle PENDING_DOCUMENTATION refusée en production |
+| E-03, RG-06, RG-07, D27, N4 | Numéro attribué **à la validation**, jamais au brouillon, dans la transaction, série `AVI-` continue ; facture validée verrouillée (modèle, base, interface) ; numérotation par modèle et compteur par série, verrous, commande Artisan (annexe B, D27-1 à D27-3) |
+| E11, Q79 | Deux statuts : **document** (brouillon, validée, émise, avoir total, annulée) et **paiement** (calculé : non payée, partiellement payée, payée) ; « annulée » sans avoir seulement pour une facture validée jamais émise, motif obligatoire, numéro conservé |
+| E8, D26 | Mentions : société (RNE, matricule), agence émettrice, type de document, contrat, client figé (`customer_snapshot` : nom, matricule fiscal, RNE du client entreprise, pays), totaux par taux, devise `TND` seule (toute autre refusée) |
+| §5 du référentiel | Calcul par `TaxCalculator` (bases agrégées par taux, TVA arrondie, timbre après le TTC) : exemple chiffré 115,000 → 137,850 identique à l'écran, au PDF et dans les montants enregistrés |
+| N3 | Exonération du timbre appliquée **à la main**, par une règle d'exonération active, avec motif et justificatif ; jamais automatique ; toutes les exonérations sont PENDING_DOCUMENTATION aujourd'hui, donc refusées en production |
+| E-05, Q87 c | Facture complémentaire (retard, dommages, km constatés après coup), série `AVI-` |
+| E-04, D27-4, E19 | Avoir total ou partiel, série `AV-`, lié à la facture d'origine, total plafonné sous verrou ; avoir **remboursé** (décaissement tracé) ou **imputé** sur une autre facture |
+| E-06, E17, Q81, D37, C-10 | Encaissements multi-modes (espèces, chèque, carte, virement, traite) avec banque pour le chèque et le virement ; paiements partiels ; imputation n ↔ n proposée « la plus ancienne d'abord », confirmée ; part non imputée = acompte ; **acompte à la réservation** (reporté de la phase 4, D37) |
+| E-07 | Liste des impayés et de leur ancienneté |
+| E-08 (P2), Q53 | Relances manuelles tracées (appel, courrier, visite) |
+| E-09 (P2), Q55 | Journal de caisse par agence et par jour, ouverture, clôture avec montant compté et écart motivé |
+| F-01 à F-08, RG-08, Q51, Q52, Q54, Q56, E23 | Caution liée au contrat (montant, mode, référence, aucune donnée de carte) ; états ; restitution totale ou partielle avec reçu numéroté `CAU-AAAA-NNNNN` ; retenue motivée, justifiée, **approuvée par le super admin** (D46, type `retention`), qualifiée (elle règle la facture de frais) ; restitué + retenu ≤ reçu sous verrou ; jamais en chiffre d'affaires ; liste des cautions en cours |
+| D49, P3 étape 4 | Conditions ajoutées : caution enregistrée au départ quand une caution est prévue ; facture émise et caution soldée à la clôture du contrat (`ContractClosingConditions`) |
+| E-10, Q25 | PDF de la facture, de l'avoir et des reçus (caution, encaissement) ; **pas d'envoi par e-mail** (`billing.email_invoices = false`, Q25) |
+| E13 | Interface `ElectronicInvoicingProvider`, fournisseur « désactivé » par défaut, champs de suivi et table des envois : **structure seulement**, aucune transmission simulée |
+| Scénario 12, RG-13 | Factures, encaissements, cautions, caisse : portée par agence, testée par type de document |
+
+### Hors phase
+
+| Élément | Phase |
+| --- | --- |
+| Exports comptables (H-01 à H-08), clôture des périodes exportées (RG-12) | 8 (voir D53 pour le scénario 8) |
+| Clôture mensuelle exigée par le cabinet | 9 |
+| Écran de réglage de la numérotation (D27) | 9 (commande Artisan en phase 6) |
+| Connecteur TEIF / TTN | Avenant séparé (Q16, Q84) |
+| Notifications push (retenue à approuver, impayés) | 9 ; canal `database` ici |
+
+## 2. Décisions proposées (à valider)
+
+| N° | Décision | Raison |
+| --- | --- | --- |
+| **D52** | **Moment de la facture** (Q50, valeur par défaut) : une facture de location par contrat, établie au retour (contrat « Restitué ») ; pour un contrat de plus de `billing.long_rental_period_days` (30) jours, factures intermédiaires par période, jamais deux fois la même (RG-05, contrôle sous verrou du contrat). La facture se prépare en brouillon depuis le contrat ; l'agent choisit les codes fiscaux, puis la valide | Q50 ; P4 étape 5 |
+| **D53** | **Scénario 8 en deux temps** : en phase 6, la modification d'une facture validée est refusée (modèle, base, interface, requête falsifiée) ; un **garde de période** (`ClosedPeriodGuard`) est appelé par l'émission, les avoirs et les encaissements, mais il ne bloque rien tant que la table des périodes exportées n'existe pas (phase 8). La moitié « période clôturée » du scénario 8 est testée en phase 8 | RG-12 relève de la phase 8 ; le garde est posé dès maintenant pour ne rien reprendre |
+| **D54** | **Codes fiscaux des lignes** (N2) : location `RENTAL` et options (code de l'option) proposés, modifiables ; prolongation proposée en `EXTRA_RENTAL_PERIOD` ; frais du retour **sans proposition** (l'agent choisit, par exemple `LATE_RETURN_PENALTY` ou `EXTRA_RENTAL_PERIOD` pour un retard, `VEHICLE_DAMAGE_COMPENSATION` ou `REPAIR_SERVICE` pour un dommage, `FUEL_RECHARGE` pour le carburant) ; une ligne de libellé libre reçoit aussi son code. Aucun code n'est déduit d'un libellé | Référentiel §2.7, N2 ; tests de référence (annexe B) |
+| **D55** | **Justificatifs** d'une ligne exonérée ou hors champ : un dossier de dommage **complet** (phase 5) ou une pièce jointe (contrat d'assurance, clause, constat) ; sans justificatif, la validation est refusée. En production, une règle PENDING_DOCUMENTATION est refusée même avec un justificatif (FiscalGuard) | Référentiel §14, N2, N5 |
+| **D56** | **Statuts et cycle** (E11, Q79) : brouillon → validée (numéro) → émise (remise au client, PDF figé) ; annulation sans avoir seulement d'une facture validée jamais émise ; statut de paiement toujours calculé depuis les imputations, jamais saisi | Référentiel §6 ; Q79 (valeur par défaut) |
+| **D57** | **Encaissements** (Q81) : imputation proposée « la plus ancienne d'abord », confirmée par l'agent ; part non imputée = acompte du client, imputable plus tard ; un encaissement en espèces exige une caisse ouverte de l'agence (Q55) ; un encaissement ne se supprime pas, il s'annule avec motif (RG-11) | Q81, Q55 ; annexe A |
+| **D58** | **Cautions** (Q51, Q52, Q54, Q56) : caution exigée au départ quand le contrat en prévoit une (`contracts.deposit_expected_amount`, repris de `vehicle_categories.deposit_amount`), montant reçu différent accepté avec motif ; empreinte de carte = référence d'autorisation seulement ; **toute retenue** passe par le super admin (D46, type `retention`) ; une retenue approuvée crée un encaissement « retenue sur caution » imputé sur la facture de frais, qui porte la qualification fiscale (la caution elle-même n'entre jamais en chiffre d'affaires) ; reçu `CAU-AAAA-NNNNN` à la réception et à chaque restitution | Q51, Q52, Q54, Q56 (valeurs par défaut) ; E23 |
+| **D59** | **Mentions et RNE du client entreprise** (E8) : colonne `customers.trade_register` (vide par défaut) ; le client est figé sur la facture à la validation ; les mentions légales du super admin s'impriment en pied de facture | E8 ; décision du 19/11/2026 |
+
+Questions déjà ouvertes que ce plan applique par défaut : Q50, Q51, Q52, Q53, Q54, Q55, Q56, Q79, Q81, Q87, Q89. Aucune nouvelle question à ce stade.
+
+## 3. Modèle de données
+
+Conforme à `docs/modele_donnees.md` §6, avec les écarts suivants.
+
+| Table | Lot | Contenu, écarts au modèle |
+| --- | --- | --- |
+| `sequences` | L1 | Série nommée (`invoice`, `credit_note`, `deposit_receipt`) et modèle de format (D27-1), compteur attaché à la série ; reprise des compteurs existants sans changement de numéro |
+| `invoices` | L2 | Conformes au §6, plus `document_status` et `payment_status` (D56), `period_start`, `period_end`, `currency` (`TND` seule), `issued_pdf_path` et `issued_pdf_sha256`, `cancellation_reason`, `stamp_exemption_rule_id` N, champs de suivi électronique (E13) |
+| `invoice_lines` | L3 | Plus `tax_code_id` FK (code choisi), `source_type` et `source_id` (contrat, prolongation, frais, ligne libre) |
+| `invoice_line_justifications` **[ajout]** | L4 | `invoice_line_id`, `damage_file_id` N ou pièce jointe (chemin privé, SHA-256), `kind` |
+| `invoice_taxes` | L4 | Conformes ; copie figée de la règle appliquée |
+| `payments`, `payment_allocations` | L7 | Conformes, plus `bank_name` N (E17), `currency` ; `reservation_id` N pour l'acompte (D37) |
+| `payment_reminders` | L9 | Conformes (Q53) |
+| `cash_sessions` | L8 | Conformes |
+| `deposits`, `deposit_movements` | L10 | Conformes, plus `currency` ; mouvement `refund` ou `retention`, retenue liée à l'approbation et à l'encaissement qui règle la facture de frais |
+| `credit_note_settlements` **[ajout]** | L6 | Remboursement (décaissement) ou imputation d'un avoir (E19) |
+| `electronic_invoice_submissions` **[ajout]** | L12 | Structure seulement (E13) |
+| `customers.trade_register` | L2 | VARCHAR(64) N (D59) |
+| Réglages | L1, L3 | `billing.long_rental_period_days` (30), `billing.email_invoices` (`false`), formats de numérotation (D27) |
+
+## 4. Lots
+
+Ordre : numérotation et facture d'abord (tout le reste s'y impute), puis avoirs, encaissements, caisse, cautions, et le retour sur tablette.
+
+| Lot | Contenu | Tests clés | Charge (j) |
+| --- | --- | --- | ---: |
+| **L0. Plan** | Ce plan, D52 à D59 | — | 0,5 |
+| **L1. Numérotation (D27)** | Modèle de format et compteur par série, reprise des compteurs, verrous (format avec l'année, remise à zéro), commande Artisan de réglage | Tests de référence D27 (annexe B) : passage d'année, séries indépendantes, verrous, commande | 1 |
+| **L2. Factures (modèle)** | `invoices`, lignes, taxes, statuts (D56), client figé, RNE du client (D59), dinar seul (D26) ; facture validée verrouillée par le modèle et refusée à la suppression | Modification et suppression d'une facture validée refusées (scénario 8, partie 1) ; devise autre que TND refusée | 2,5 |
+| **L3. Brouillon depuis le contrat** | Lignes reprises du contrat (location, options, prolongations, frais), codes proposés ou à choisir (D54), lignes libres, période facturée (RG-05, Q50) | Aucune période facturée deux fois (sous verrou, deux processus) ; aucun code proposé pour les frais ; facture de plus de 30 jours par période | 3 |
+| **L4. Validation et émission** | Garde fiscal (E6, N2, D55), calcul (§5), numéro dans la transaction (RG-07), timbre, exonération manuelle (N3), émission et PDF figé ; `ClosedPeriodGuard` (D53) | Exemple chiffré 115,000 → 137,850 ; libellé « assurance » ; hors champ sans justificatif refusé ; règle PENDING_DOCUMENTATION refusée en production ; numéros sans trou sous émission simultanée (deux processus) ; aucun numéro consommé par un refus | 3 |
+| **L5. Facture complémentaire et annulation** | E-05 ; annulation d'une facture validée jamais émise (Q79) | Annulation d'une facture émise refusée | 1 |
+| **L6. Avoirs** | Série `AV-`, total ou partiel, plafond sous verrou, remboursement ou imputation (E19) | **Scénario 7** ; avoirs plafonnés (annexe B) ; deux avoirs simultanés : un seul passe | 2,5 |
+| **L7. Encaissements** | Modes, banque, partiels, imputation proposée et confirmée (Q81), acompte de réservation (D37), statut de paiement, annulation motivée, impayés et ancienneté (E-07) | **Scénario 5** ; Σ imputations ≤ encaissé et ≤ reste dû sous verrou ; acompte imputé à la facture du contrat | 3,5 |
+| **L8. Journal de caisse** | Ouverture, encaissements en espèces rattachés, clôture, écart motivé (Q55) | Espèces refusées sans caisse ouverte ; une seule caisse par agence et par jour | 2 |
+| **L9. Relances** | Relances manuelles tracées (Q53) | Historique par facture | 0,5 |
+| **L10. Cautions** | Réception (mode, référence sans donnée de carte), reçus `CAU`, restitution totale ou partielle, retenue soumise au super admin (D46), retenue appliquée en encaissement de la facture de frais (Q51), états, liste des cautions en cours (F-08) | **Scénario 6** ; RG-08 sous verrou (deux processus) ; double restitution refusée ; caution jamais en chiffre d'affaires | 4 |
+| **L11. Conditions du contrat** | Caution au départ (D58), facture émise et caution soldée à la clôture (D49) | Départ refusé sans caution prévue ; clôture refusée sans facture | 0,5 |
+| **L12. Facturation électronique (E13)** | Interface, fournisseur désactivé, champs de suivi, table des envois | Aucune transmission ; fournisseur désactivé par défaut | 0,75 |
+| **L13. PDF** | Facture, avoir, reçus ; mentions (E8) ; « Règles fiscales non confirmées » hors production (E6) | Contenu et totaux identiques à l'écran ; mention présente hors production | 1,5 |
+| **L14. Écrans** | Factures, avoirs, encaissements, caisse, cautions ; retour sur tablette (P4 étapes 5 à 8 : facture, encaissement, caution, clôture) | Tests de page ; **vérification dans le navigateur** | 3 |
+| **L15. Droits et tests transverses** | Matrice par profil, scénario 12 par type de document, architecture (écritures dans le domaine, aucun `float`) | Codes HTTP attendus ; requêtes Livewire falsifiées | 1,25 |
+| **L16. Rapport et revue** | `docs/rapports/phase_6.md`, revue de la branche | `composer check`, CI | 1,5 |
+| **Total** | | | **32** |
+
+Marge : 5 j sous le budget de 37 j ; seuil d'alerte à 37,2 j. Je signale tout lot qui dépasse sa charge de plus de 20 %. Après chaque envoi, je vérifie la CI avant de poursuivre.
+
+## 5. Risques
+
+| Risque | Parade |
+| --- | --- |
+| Mentions légales des factures vides | Garde de `aviator:check-environment` ; mention « Règles fiscales non confirmées » hors production ; rappel au rapport |
+| Points PENDING_DOCUMENTATION (timbre, retard, franchise, assurances) qui bloquent certaines lignes en production | Codes taxables proposés à la place quand la nature le permet ; liste des pièces manquantes dans le rapport |
+| Concurrence sur la numérotation, les avoirs, les imputations et les cautions | Verrous en base (D38) ; quatre tests sur processus distincts |
+| Budget à 0,2 j du seuil d'alerte | Plan à 32 j ; relances (P2) et journal de caisse (P2) en fin d'ordre si une marge doit être reprise |
+
+## 6. À valider
+
+1. Ce plan et son découpage en lots (32 j pour 37 j de budget).
+2. Les décisions **D52 à D59**, en particulier D53 (scénario 8 en deux temps), D54 (aucun code proposé pour les frais) et D58 (caution exigée au départ, toute retenue approuvée).
+3. L'application par défaut des questions ouvertes Q50 à Q56, Q79, Q81, Q87 et Q89.
+
+**Validé par Hafedh le 27/11/2026** : plan, découpage et décisions D52 à D59.
+
+## 7. Suivi de la charge
+
+| Lot | Prévu (j) | Estimé (j) | Cumul (j) | Remarque |
+| --- | ---: | ---: | ---: | --- |
+| L0. Plan | 0,5 | 0,5 | 0,5 | |
+| L1. Numérotation (D27) | 1 | 1 | 1,5 | Séries `invoice`, `credit_note`, `deposit_receipt` (`sequence_series`), modèle `{PREFIX}`, `{YEAR}`, `{SEQUENCE}`, compteur attaché à la série (clé `series:<code>`), journal `sequence_series_changes` et journal d'audit ; commande `aviator:numbering` ; verrous D27-2 (voir ci-dessous) ; test sur trois processus (factures et avoirs simultanés) |
+
+**Verrous D27-2, mise en œuvre (L1)** : le format avec l'année et la remise à zéro annuelle d'une série fiscale s'ouvrent seulement avec `--confirmation=<version>`, une version du référentiel enregistrée dans `fiscal_references` et **postérieure à la v1.0** (une nouvelle version exige la confirmation signée du cabinet, `CLAUDE.md` règle 3) ; la version qui a ouvert le verrou reste attachée à la série. Un format qui peut reproduire un numéro d'une autre série, actuelle ou ancienne, est refusé (intersection exacte des formats) ; dans la même série, seul un ancien format de même squelette (longueur seule changée) est accepté. Quand la remise à zéro s'active, le compteur de l'année en cours reprend la valeur du compteur continu : la remise à zéro joue au 1er janvier suivant.
+
+Exemples :
+
+```bash
+php artisan aviator:numbering invoice                                  # réglage, prochain numéro, verrous
+php artisan aviator:numbering invoice --prefix=FAC --by="Nom, fonction"   # en production : ajouter --force
+php artisan aviator:numbering invoice --template='{PREFIX}-{YEAR}-{SEQUENCE}' --confirmation=1.1 --by="Nom, fonction"
+```
+
+
+---
+
+
+## Annexe A. Décidé pendant la phase 2
 
 | Élément | Charge en phase 6 | Détail |
 | --- | ---: | --- |
@@ -10,7 +157,7 @@ Le plan complet sera établi au démarrage de la phase et soumis à validation.
 | **Mode d'annulation à confirmer avec l'expert-comptable** | 0 (question) | Facture émise : annulation par un **avoir** total ou partiel (E-04, RG-06) ; autres documents numérotés (reçus de caution, encaissements) : par un **statut** d'annulation avec motif, ou par un document d'annulation. À valider avec Q11, Q30 et Q16 avant d'écrire les écrans |
 | **Format des numéros** | Selon la règle fiscale | `SequenceDefinition` des factures et avoirs (préfixe, période, séquence commune ou par agence) fixée par la règle validée ; aucun format n'est écrit avant |
 
-## Demande d'évolution du cabinet (18/11/2026)
+## Annexe B. Demande d'évolution du cabinet (18/11/2026)
 
 Source : `docs/analyse_ecarts_cabinet.md`, validée le 18/11/2026 avec décisions provisoires, à confirmer par la direction.
 
