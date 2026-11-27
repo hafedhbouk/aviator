@@ -5,7 +5,7 @@
 | Phase | 5. Contrats et états des lieux (lot 1) |
 | Branche | `phase/05-contrats-etats-des-lieux`, créée le 26/11/2026 depuis `main` (`8fb17aa`) |
 | Dates | 26/11/2026 au 27/11/2026 |
-| Statut proposé | **Validée avec réserves** (§9) : saisie sur tablette vérifiée dans un navigateur réglé en tablette, **pas sur une vraie tablette** (Q72) ; atelier avec les agences toujours reporté (réserve de la phase 4) |
+| Statut | **Validée avec réserves le 27/11/2026** par Hafedh (responsable technique) ; revue acceptée. Rappel du statut proposé (§9) : saisie sur tablette vérifiée dans un navigateur réglé en tablette, **pas sur une vraie tablette** (Q72) ; atelier avec les agences toujours reporté (réserve de la phase 4) |
 | Critère d'acceptation (plan, en-tête) | Scénarios 3 et 4 verts : **atteint** ; PDF : **atteint** ; saisie sur tablette : **atteinte en émulation** (Chromium 800 × 1 280), vraie tablette à faire en recette. En plus : scénario 12 sur le contrat et scénario 10 au départ : **atteints** |
 | Valideur | Responsable technique ; agences et conseil juridique pour les points listés au §7 |
 | Plan | `docs/plans/phase_5.md` (validé le 26/11/2026 ; suivi de la charge au §7) |
