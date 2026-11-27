@@ -9,6 +9,7 @@ use App\Domain\Rental\Actions\ExtendContract;
 use App\Domain\Rental\Actions\ManageDamageFile;
 use App\Domain\Rental\Actions\RemoveContractDriver;
 use App\Domain\Rental\Actions\SaveContractDriver;
+use App\Domain\Rental\ContractCustomerPhone;
 use App\Domain\Rental\Exceptions\ContractException;
 use App\Enums\ContractStatus;
 use App\Enums\DamageDocumentKind;
@@ -66,6 +67,22 @@ class ViewContract extends ViewRecord
                 Action::make('termsPdf')->label('Conditions générales (PDF)')->icon(Heroicon::OutlinedDocumentArrowDown)
                     ->url(fn (): string => route('filament.admin.documents.terms')),
             ])->label('Imprimer')->icon(Heroicon::OutlinedPrinter)->button()->color('gray'),
+            Action::make('customerPhone')
+                ->label('Téléphone du client')
+                ->icon(Heroicon::OutlinedPhone)
+                ->color('gray')
+                ->visible(fn (Contract $record): bool => ($user = auth()->user()) instanceof User && app(ContractCustomerPhone::class)->canReveal($record, $user))
+                ->requiresConfirmation()
+                ->modalDescription('Réservé au suivi de la location en cours (retard, incident). La consultation est journalisée.')
+                ->action(function (Contract $record): void {
+                    /** @var User $actor */
+                    $actor = auth()->user();
+                    $phone = ReservationScreens::run(fn () => app(ContractCustomerPhone::class)->reveal($record, $actor));
+
+                    Notification::make()->info()->persistent()
+                        ->title($phone === null ? 'Aucun téléphone renseigné pour ce client.' : "Téléphone du client : {$phone}")
+                        ->send();
+                }),
             Action::make('departureInspection')
                 ->label('État des lieux de départ')
                 ->icon(Heroicon::OutlinedClipboardDocumentCheck)

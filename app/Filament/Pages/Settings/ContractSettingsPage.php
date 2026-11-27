@@ -37,6 +37,10 @@ class ContractSettingsPage extends SettingsPage
                 Textarea::make('terms_text')->label('Conditions générales de location')->rows(16)->maxLength(30000)
                     ->helperText('Texte imprimé avec le contrat. Une ligne vide sépare deux paragraphes ; une ligne commençant par « # » est un titre.'),
             ]),
+            Section::make('Données du client')->schema([
+                Toggle::make('show_phone_on_active_contract')->label('Téléphone du client visible sur un contrat en cours de l\'agence')
+                    ->helperText('Q4 : pour joindre le client en cas de retard ; chaque consultation est journalisée.'),
+            ]),
             Section::make('Restitution anticipée')->schema([
                 Select::make('early_return_refund')->label('Remboursement')->options(ContractSettings::EARLY_RETURN_REFUNDS)->required()
                     ->helperText('D-08, Q14 : aucun remboursement tant que la direction n\'a pas fixé de règle.'),

@@ -22,6 +22,9 @@ class ContractSettings extends Settings
     /** Conditions générales de location, texte imprimé avec le contrat (Q15) ; vide = page signalant leur absence. */
     public ?string $terms_text;
 
+    /** Q4 : téléphone du client affichable sur un contrat en cours de l'agence, consultation journalisée. */
+    public bool $show_phone_on_active_contract;
+
     public static function group(): string
     {
         return 'contracts';
