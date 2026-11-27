@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Contracts\Pages;
 
 use App\Domain\Rental\Actions\RecordInspection;
+use App\Domain\Rental\Actions\RegisterReturn;
 use App\Domain\Rental\Actions\StartRental;
 use App\Enums\ContractStatus;
 use App\Enums\DamageSeverity;
@@ -16,6 +17,8 @@ use App\Models\InspectionDamage;
 use App\Models\InspectionPhoto;
 use App\Models\User;
 use App\Support\Files\PrivateFiles;
+use App\Support\Money\AmountInput;
+use Carbon\CarbonImmutable;
 use Closure;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
@@ -72,6 +75,14 @@ class InspectContract extends Page
     public ?string $severity = null;
 
     public ?string $absentReason = null;
+
+    /** Heure de retour déclarée (retour hors horaires, Q73) ; vide = maintenant. */
+    public ?string $returnedAt = null;
+
+    public bool $vehicleToRepair = false;
+
+    /** @var array<int|string, string|null> identifiant du dommage nouveau => montant HT saisi */
+    public array $damageAmounts = [];
 
     /**
      * Photo déjà compressée par le navigateur, en attente de rattachement (propriété non
@@ -241,6 +252,58 @@ class InspectContract extends Page
     public function markAbsent(): void
     {
         $this->attempt(fn (User $actor) => app(RecordInspection::class)->markCustomerAbsent($this->inspection(), (string) $this->absentReason, $actor), 'Absence du client enregistrée.');
+    }
+
+    /**
+     * Frais du retour calculés par le domaine, sans rien enregistrer (P4, étape 4).
+     *
+     * @return list<array{label: string, amount: string, detail: string}>|string
+     */
+    public function returnPreview(): array|string
+    {
+        $inspection = $this->inspection();
+        $departure = $this->departure();
+
+        if ($inspection->mileage === null || $inspection->fuel_eighths === null || $departure === null) {
+            return 'Saisissez le kilométrage et le carburant pour voir les frais.';
+        }
+
+        try {
+            $amounts = [];
+            foreach ($this->damageAmounts as $id => $value) {
+                $amount = AmountInput::parse($value);
+                if ($amount !== null) {
+                    $amounts[(int) $id] = $amount;
+                }
+            }
+
+            $at = $this->returnedAt === null || trim($this->returnedAt) === ''
+                ? CarbonImmutable::now()
+                : CarbonImmutable::parse($this->returnedAt, (string) config('app.timezone'));
+            $lines = app(RegisterReturn::class)->preview($this->contract(), $departure, $inspection, $at, $amounts);
+        } catch (Throwable) {
+            return 'Frais non calculables : vérifiez l\'heure de retour et les montants.';
+        }
+
+        return array_map(fn (array $line): array => [
+            'label' => $line['label'],
+            'amount' => $line['amount']->format(),
+            'detail' => ($line['calculation']['capped'] ?? false) ? 'plafonné par la franchise' : '',
+        ], $lines);
+    }
+
+    public function validateReturn(): void
+    {
+        $contract = $this->attempt(fn (User $actor) => app(RegisterReturn::class)->handle($this->contract(), [
+            'returned_at' => $this->returnedAt,
+            'vehicle_to_repair' => $this->vehicleToRepair,
+            'damage_amounts' => $this->damageAmounts,
+        ], $actor));
+
+        if ($contract instanceof Contract) {
+            Notification::make()->success()->title("Retour validé : contrat {$contract->number} restitué.")->send();
+            $this->redirect(ContractResource::getUrl('view', ['record' => $contract]));
+        }
     }
 
     public function validateDeparture(): void

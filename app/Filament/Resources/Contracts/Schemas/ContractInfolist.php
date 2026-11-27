@@ -6,6 +6,7 @@ use App\Enums\ApprovalStatus;
 use App\Enums\ContractStatus;
 use App\Filament\Resources\Reservations\ReservationResource;
 use App\Models\Contract;
+use App\Models\ContractCharge;
 use App\Models\ContractExtension;
 use App\Models\Driver;
 use App\Support\Money\Money;
@@ -75,6 +76,13 @@ class ContractInfolist
                                 $extension->total_amount->format(),
                                 $extension->discount_amount->isZero() ? '' : ' (remise '.$extension->discount_amount->format().')',
                             ))->all()),
+                    ]),
+                Section::make('Frais figés au retour (HT, sans taxe : qualifiés à la facture)')->columnSpanFull()
+                    ->visible(fn (Contract $record): bool => $record->charges()->exists())
+                    ->schema([
+                        TextEntry::make('charges_list')->label('Frais')->listWithLineBreaks()->bulleted()
+                            ->state(fn (Contract $record): array => $record->charges()->get()->map(fn (ContractCharge $charge): string => "{$charge->label} : {$charge->amount->format()}"
+                                .(($charge->calculation['capped'] ?? false) ? ' (plafonné par la franchise)' : ''))->all()),
                     ]),
                 Section::make('Conditions')->columnSpanFull()->columns(4)->schema([
                     TextEntry::make('mileage')->label('Kilométrage')

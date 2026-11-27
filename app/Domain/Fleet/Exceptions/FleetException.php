@@ -16,6 +16,16 @@ final class FleetException extends RuntimeException
         return new self("Action non autorisée sur {$what}.");
     }
 
+    public static function reasonRequired(int $min): self
+    {
+        return new self("Motif obligatoire ({$min} caractères au moins).");
+    }
+
+    public static function notInMaintenance(string $label): self
+    {
+        return new self("Le véhicule {$label} n'est pas en maintenance.");
+    }
+
     public static function vehicleRetired(string $label): self
     {
         return new self("Le véhicule {$label} est sorti du parc : il ne peut plus être modifié.");

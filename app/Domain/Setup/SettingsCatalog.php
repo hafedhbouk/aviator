@@ -6,6 +6,7 @@ namespace App\Domain\Setup;
 
 use App\Settings\ApprovalSettings;
 use App\Settings\BillingSettings;
+use App\Settings\ContractSettings;
 use App\Settings\InspectionSettings;
 use App\Settings\NotificationSettings;
 use App\Settings\PricingSettings;
@@ -57,6 +58,9 @@ final class SettingsCatalog
             NotificationSettings::class => [
                 'send_urgent_in_request' => ['rules' => ['boolean'], 'cast' => 'bool'],
                 'alerts' => ['rules' => ['required', 'array'], 'cast' => 'alerts'],
+            ],
+            ContractSettings::class => [
+                'early_return_refund' => ['rules' => ['required', 'in:'.implode(',', array_keys(ContractSettings::EARLY_RETURN_REFUNDS))], 'cast' => 'string'],
             ],
             InspectionSettings::class => [
                 'max_photos' => ['rules' => ['required', 'integer', 'between:1,40'], 'cast' => 'int'],

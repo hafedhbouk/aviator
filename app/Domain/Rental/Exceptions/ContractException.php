@@ -84,6 +84,11 @@ final class ContractException extends RuntimeException
         return new self('Remise refusée : elle dépasse le montant de la prolongation.');
     }
 
+    public static function invalidReturnTime(): self
+    {
+        return new self('Heure de retour impossible : ni avant le départ, ni dans le futur.');
+    }
+
     public static function startInPast(): self
     {
         return new self('Le départ d\'un contrat ne peut pas être dans le passé.');

@@ -244,8 +244,40 @@
                 <button type="button" class="eds-btn eds-btn-primary" wire:click="validateDeparture" wire:confirm="Valider le départ ? L'état des lieux ne sera plus modifiable.">Valider le départ</button>
             </div>
         @elseif ($editable && $isReturn)
+            @php($newDamages = $inspection->damages->where('is_new', true))
             <div class="eds-card">
-                <p style="opacity:.8">La validation du retour, avec le calcul des frais, arrive au lot suivant (L8).</p>
+                <h2>5. Frais et validation du retour</h2>
+                <div class="eds-row">
+                    <label class="eds-field">Heure de retour déclarée (si différente de maintenant)
+                        <input type="datetime-local" wire:model.live.debounce.500ms="returnedAt">
+                        @error('returned_at') <span style="color:rgb(185 28 28)">{{ $message }}</span> @enderror
+                    </label>
+                </div>
+                @if ($newDamages->isNotEmpty())
+                    <p style="margin:.75rem 0 .35rem">Montant HT des nouveaux dommages (devis ou barème ; plafonné par la franchise)</p>
+                    @foreach ($newDamages as $damage)
+                        <label class="eds-field">{{ $damage->zone->label() }} : {{ $damage->description }}
+                            <input type="text" inputmode="decimal" wire:model.live.debounce.500ms="damageAmounts.{{ $damage->id }}" placeholder="0,000">
+                        </label>
+                    @endforeach
+                @endif
+                <label style="display:flex;gap:.5rem;align-items:center;margin-top:.75rem">
+                    <input type="checkbox" wire:model="vehicleToRepair" style="width:1.4rem;height:1.4rem"> Véhicule à réparer (il passe « En maintenance »)
+                </label>
+                @php($preview = $this->returnPreview())
+                <div style="margin-top:.75rem">
+                    @if (is_string($preview))
+                        <p style="opacity:.8">{{ $preview }}</p>
+                    @elseif ($preview === [])
+                        <p>Aucun frais.</p>
+                    @else
+                        @foreach ($preview as $line)
+                            <p>{{ $line['label'] }} : <strong>{{ $line['amount'] }}</strong> {{ $line['detail'] }}</p>
+                        @endforeach
+                    @endif
+                </div>
+                <button type="button" class="eds-btn eds-btn-primary" style="margin-top:.75rem" wire:click="validateReturn"
+                    wire:confirm="Valider le retour ? Les frais sont figés et l'état des lieux n'est plus modifiable.">Valider le retour</button>
             </div>
         @endif
     </div>

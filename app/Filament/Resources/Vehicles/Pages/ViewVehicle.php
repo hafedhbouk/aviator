@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Vehicles\Pages;
 
 use App\Domain\Fleet\Actions\CorrectMileage;
+use App\Domain\Fleet\Actions\EndMaintenance;
 use App\Domain\Fleet\Actions\RecordMileage;
 use App\Domain\Fleet\Actions\RetireVehicle;
 use App\Domain\Fleet\Exceptions\FleetException;
@@ -13,6 +14,7 @@ use App\Filament\Forms\AmountField;
 use App\Filament\Resources\Vehicles\VehicleResource;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Support\Authorization\Permission;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
@@ -59,6 +61,32 @@ class ViewVehicle extends ViewRecord
                 ])
                 ->action(function (Vehicle $record, array $data): void {
                     $this->mileageAction(fn (User $actor) => app(CorrectMileage::class)->handle($record, (int) $data['mileage'], (string) $data['reason'], $actor));
+                }),
+            Action::make('endMaintenance')
+                ->label('Fin d\'intervention')
+                ->icon(Heroicon::OutlinedWrenchScrewdriver)
+                ->color('success')
+                ->visible(fn (Vehicle $record): bool => $record->status === VehicleStatus::Maintenance
+                    && (auth()->user()?->hasPermissionTo(Permission::FleetManage->value) ?? false))
+                ->modalDescription('Le véhicule redevient « Disponible ». Les ordres de maintenance arrivent en phase 8 (D47).')
+                ->schema([
+                    Textarea::make('reason')->label('Intervention réalisée (obligatoire)')->required()
+                        ->minLength(EndMaintenance::MIN_REASON_LENGTH)->maxLength(255),
+                ])
+                ->action(function (Vehicle $record, array $data): void {
+                    /** @var User $actor */
+                    $actor = auth()->user();
+
+                    try {
+                        app(EndMaintenance::class)->handle($record, (string) $data['reason'], $actor);
+                    } catch (FleetException|IllegalVehicleTransition $exception) {
+                        Notification::make()->danger()->title($exception->getMessage())->send();
+
+                        throw new Halt;
+                    }
+
+                    Notification::make()->success()->title('Véhicule de nouveau disponible.')->send();
+                    $this->refreshFormData(['status_label']);
                 }),
             Action::make('retire')
                 ->label('Sortir du parc')

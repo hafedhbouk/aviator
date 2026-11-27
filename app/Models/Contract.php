@@ -174,6 +174,16 @@ class Contract extends Model
     }
 
     /**
+     * Frais figés au retour (D-09).
+     *
+     * @return HasMany<ContractCharge, $this>
+     */
+    public function charges(): HasMany
+    {
+        return $this->hasMany(ContractCharge::class)->orderBy('id');
+    }
+
+    /**
      * @return HasMany<ContractExtension, $this>
      */
     public function extensions(): HasMany
