@@ -93,3 +93,35 @@ Remarques libres des agents (lisibilité, champs manquants, ordre des étapes) :
 2. `docs/questions_ouvertes.md` mis à jour ; valeurs par défaut changées dans les réglages si la réponse le permet sans code.
 3. Les réponses qui ajoutent un mécanisme sont chiffrées puis proposées en décision avant tout développement.
 4. La réserve de la phase 4 (atelier reporté) est levée dans `docs/projet.md`.
+
+## 6. Complément de la phase 5 (atelier unique, 1 h 15 de plus)
+
+L'atelier de la phase 4, reporté, couvre aussi les parcours P3 (départ) et P4 (retour) livrés en phase 5. Préalables en plus du §1 : une **vraie tablette** de l'agence (Q72), chargée ; le prix du litre et la capacité du réservoir de deux véhicules saisis (Q44, Q92) ; un contrat ouvert pour chaque agent.
+
+| Horaire | N° | Démonstration | Compte utilisé | Point d'attention |
+| --- | --- | --- | --- | --- |
+| 2:30 | 10 | **Remise au-delà du seuil** à la réservation, puis approbation sur le téléphone du super admin (centre de notifications) | Agent, super admin | Q52 (seuil, suppléant), Q93 |
+| 2:40 | 11 | **Louer maintenant** et contrat depuis une réservation ; conducteurs (permis récent refusé, permis étranger signalé) | Agent | Q42, Q47, Q48 |
+| 2:50 | 12 | **Départ sur la tablette** : relevés, carburant, dommage sur le schéma, photo, signature, validation ; PDF du contrat et de l'état des lieux | Agent | Q46 (signature), Q72, Q15 (contenu du contrat, mention « Modèle non validé ») |
+| 3:10 | 13 | **Prolongation** sur une période libre, puis refusée sur une période réservée | Agent | Q93, Q94 (options par jour) |
+| 3:20 | 14 | **Retour en retard** : aperçu des frais (retard, carburant, dommage plafonné par la franchise), véhicule à réparer, dossier de dommage, clôture, avenant | Agent, admin du siège | Q14, Q43, Q44, Q45, Q73, Q91, D47 |
+| 3:35 | 15 | **Alerte de retard** dans la cloche ; téléphone du client sur un contrat en cours | Agent | Q4 |
+
+Questions à ajouter à la fiche de recueil (§4) :
+
+| Question | Ce qu'on demande | Valeur actuelle (paramétrable) | Réponse | Ajoute un mécanisme ? |
+| --- | --- | --- | --- | --- |
+| Q4 | Téléphone du client visible sur un contrat en cours ? | Oui, agence du contrat, consultation journalisée | | |
+| Q14 | Tolérance, unité du retard, restitution anticipée | 60 min, une journée ; aucun remboursement | | |
+| Q42 | Âge et ancienneté du permis par catégorie ; permis étrangers | 21 ans, 2 ans ; accepté et signalé | | |
+| Q43 | Forfait kilométrique et prix du km par catégorie | Illimité tant que vide | | |
+| Q44, Q92 | Carburant : prix du litre, frais de service, capacité des réservoirs | Vides : aucun frais | | |
+| Q45 | Chiffrage des dommages, franchise | Montant saisi, plafonné par la franchise | | |
+| Q46 | Signature sur tablette suffisante ? | Oui, intégrée au PDF, papier possible | | |
+| Q47, Q48 | Conducteur principal ; contrôle des conducteurs additionnels | Obligatoire ; liste noire contrôlée | | |
+| Q52 | Seuil de remise, suppléant du super admin | 0 %, aucun suppléant | | |
+| Q72 | Modèle de tablette, navigateur | Tablette 10 pouces, Chrome ou Safari | | |
+| Q73 | Retour hors horaires | Heure déclarée, motif, sans signature | | |
+| Q91 | Retard à l'heure : tarif, plafond | Unité « jour » seule | | |
+| Q93 | Remise sur un contrat en cours soumise au super admin ? | Oui, même seuil | | |
+| Q94 | Options par jour lors d'une prolongation | Prolongées au prix figé, plafond respecté | | |
