@@ -106,7 +106,7 @@ final class SequenceAllocator
 
         // Seulement les clés absentes : INSERT IGNORE sur une clé existante attend le
         // verrou de cette ligne, même s'il n'insère rien.
-        $missing = array_values(array_diff($keys, Sequence::query()->whereIn('key', $keys)->pluck('key')->all()));
+        $missing = array_values(array_diff($keys, self::existingCounters($keys)));
 
         if ($missing === []) {
             return;
@@ -171,7 +171,7 @@ final class SequenceAllocator
     public function ensureCounterExists(string $key): void
     {
         // Lecture simple, sans verrou : le cas courant (compteur existant) s'arrête ici.
-        if (Sequence::query()->where('key', $key)->exists()) {
+        if (self::existingCounters([$key]) !== []) {
             return;
         }
 
@@ -180,6 +180,31 @@ final class SequenceAllocator
             'last_value' => 0,
             'created_at' => now(),
             'updated_at' => now(),
+        ]));
+    }
+
+    /**
+     * Clés de compteur déjà créées, vues par la connexion courante **ou** par la connexion
+     * en validation automatique. La lecture de la transaction en cours ne voit pas un
+     * compteur créé (et validé) après son premier instantané ; la recréer attendrait le
+     * verrou de cette ligne, que la transaction elle-même peut tenir (interblocage avec
+     * soi-même jusqu'au délai d'attente). L'autre connexion voit les lignes validées.
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    public static function existingCounters(array $keys): array
+    {
+        $current = Sequence::query()->whereIn('key', $keys)->pluck('key')->all();
+        $missing = array_values(array_diff($keys, $current));
+
+        if ($missing === []) {
+            return $keys;
+        }
+
+        return array_values(array_unique([
+            ...$current,
+            ...Sequence::on(self::AUTOCOMMIT_CONNECTION)->whereIn('key', $missing)->pluck('key')->all(),
         ]));
     }
 }

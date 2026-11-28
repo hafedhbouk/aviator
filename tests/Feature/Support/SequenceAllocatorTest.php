@@ -5,6 +5,7 @@ use App\Support\Sequences\SequenceAllocator;
 use App\Support\Sequences\SequenceDefinition;
 use App\Support\Sequences\SequenceOverflowException;
 use App\Support\Sequences\SequencePeriod;
+use App\Support\Sequences\Series;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -144,4 +145,20 @@ it('abandonne après cinq interblocages et ne reprend jamais une autre erreur', 
         });
     })->toThrow(QueryException::class, 'Base table')
         ->and($attempts)->toBe(1);
+});
+
+it('attribue deux numéros de série de suite dans la même transaction, sans attendre son propre verrou', function () {
+    // Séries et compteurs validés par d'autres tests (connexion en validation automatique,
+    // hors de la transaction du test) : retirés, pour que ce test les crée lui-même.
+    $autocommit = DB::connection(SequenceAllocator::AUTOCOMMIT_CONNECTION);
+    $autocommit->table('sequences')->where('key', 'like', 'series:%')->delete();
+    $autocommit->table('sequence_series')->delete();
+
+    // Lecture faite avant la création des séries : l'instantané de la transaction ne les voit pas.
+    expect(Sequence::query()->where('key', 'like', 'series:%')->count())->toBe(0);
+
+    $first = allocator()->nextInSeries(Series::Invoice, tunis('2027-03-20 10:00'));
+    $second = allocator()->nextInSeries(Series::Invoice, tunis('2027-03-20 10:05'));
+
+    expect([$first, $second])->toBe(['AVI-000001', 'AVI-000002']);
 });

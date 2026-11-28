@@ -56,6 +56,15 @@ class SequenceSeries extends Model
             return $existing;
         }
 
+        // Ligne créée et validée après l'instantané de la transaction en cours : la
+        // connexion en validation automatique la voit ; ne pas la recréer (INSERT IGNORE
+        // attendrait le verrou que cette transaction peut tenir sur la ligne).
+        $committed = self::on(SequenceAllocator::AUTOCOMMIT_CONNECTION)->where('code', $series->value)->first();
+
+        if ($committed !== null) {
+            return $committed->setConnection((new self)->getConnectionName());
+        }
+
         $now = now();
         SequenceAllocator::createIgnoringRaces(fn () => self::on(SequenceAllocator::AUTOCOMMIT_CONNECTION)->insertOrIgnore(array_map(function (Series $case) use ($now): array {
             $format = $case->defaultFormat();
