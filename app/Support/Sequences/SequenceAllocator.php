@@ -8,6 +8,8 @@ use App\Models\Sequence;
 use App\Models\SequenceSeries;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Database\DetectsConcurrencyErrors;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,8 +26,13 @@ use Illuminate\Support\Facades\DB;
  */
 final class SequenceAllocator
 {
+    use DetectsConcurrencyErrors;
+
     /** Connexion en validation automatique, réservée à la création des compteurs. */
     public const AUTOCOMMIT_CONNECTION = 'mariadb_autocommit';
+
+    /** Essais d'une création de compteurs interrompue par un interblocage. */
+    private const CREATE_ATTEMPTS = 5;
 
     public function next(SequenceDefinition $definition, ?CarbonInterface $at = null): string
     {
@@ -105,12 +112,38 @@ final class SequenceAllocator
             return;
         }
 
-        Sequence::on(self::AUTOCOMMIT_CONNECTION)->insertOrIgnore(array_map(fn (string $key): array => [
+        self::createIgnoringRaces(fn () => Sequence::on(self::AUTOCOMMIT_CONNECTION)->insertOrIgnore(array_map(fn (string $key): array => [
             'key' => $key,
             'last_value' => 0,
             'created_at' => now(),
             'updated_at' => now(),
-        ], $missing));
+        ], $missing)));
+    }
+
+    /**
+     * Création de lignes absentes (INSERT IGNORE de plusieurs lignes, en validation
+     * automatique), reprise si MariaDB l'interrompt par un interblocage : plusieurs
+     * processus qui créent en même temps les mêmes clés peuvent se bloquer
+     * mutuellement sur les doublons (erreur 1213). L'instruction n'insère que ce qui
+     * manque : la reprendre ne crée ni doublon ni compteur avancé.
+     *
+     * @param  callable(): mixed  $insert
+     */
+    public static function createIgnoringRaces(callable $insert): void
+    {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                $insert();
+
+                return;
+            } catch (QueryException $exception) {
+                if ($attempt >= self::CREATE_ATTEMPTS || ! (new self)->causedByConcurrencyError($exception)) {
+                    throw $exception;
+                }
+
+                usleep(random_int(1_000, 20_000) * $attempt);
+            }
+        }
     }
 
     /**
@@ -142,11 +175,11 @@ final class SequenceAllocator
             return;
         }
 
-        Sequence::on(self::AUTOCOMMIT_CONNECTION)->insertOrIgnore([
+        self::createIgnoringRaces(fn () => Sequence::on(self::AUTOCOMMIT_CONNECTION)->insertOrIgnore([
             'key' => $key,
             'last_value' => 0,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
     }
 }

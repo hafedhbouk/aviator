@@ -6,6 +6,7 @@ use App\Support\Sequences\SequenceDefinition;
 use App\Support\Sequences\SequenceOverflowException;
 use App\Support\Sequences\SequencePeriod;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
@@ -98,4 +99,49 @@ it('numérote avec un format de démonstration, qui n\'est pas le format fiscal 
     $demo = new SequenceDefinition('DEMO-FACT', SequencePeriod::Year, 6);
 
     expect(allocator()->next($demo, tunis('2026-11-18')))->toBe('DEMO-FACT-2026-000001');
+});
+
+/** Erreur que MariaDB renvoie à l'instruction choisie pour rompre un interblocage. */
+function deadlockError(): QueryException
+{
+    return new QueryException('mariadb', 'insert ignore into `sequences` …', [], new PDOException('SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction'));
+}
+
+it('reprend la création des compteurs interrompue par un interblocage, sans rien avancer', function () {
+    $attempts = 0;
+
+    SequenceAllocator::createIgnoringRaces(function () use (&$attempts): void {
+        if (++$attempts < 3) {
+            throw deadlockError();
+        }
+
+        Sequence::query()->insertOrIgnore(['key' => 'RACE', 'last_value' => 0, 'created_at' => now(), 'updated_at' => now()]);
+    });
+
+    expect($attempts)->toBe(3)
+        ->and(Sequence::query()->where('key', 'RACE')->sole()->last_value)->toBe(0);
+});
+
+it('abandonne après cinq interblocages et ne reprend jamais une autre erreur', function () {
+    $attempts = 0;
+
+    expect(function () use (&$attempts): void {
+        SequenceAllocator::createIgnoringRaces(function () use (&$attempts): never {
+            $attempts++;
+
+            throw deadlockError();
+        });
+    })->toThrow(QueryException::class, 'Deadlock')
+        ->and($attempts)->toBe(5);
+
+    $attempts = 0;
+
+    expect(function () use (&$attempts): void {
+        SequenceAllocator::createIgnoringRaces(function () use (&$attempts): never {
+            $attempts++;
+
+            throw new QueryException('mariadb', 'insert …', [], new PDOException("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'x' doesn't exist"));
+        });
+    })->toThrow(QueryException::class, 'Base table')
+        ->and($attempts)->toBe(1);
 });

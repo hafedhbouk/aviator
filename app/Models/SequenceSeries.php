@@ -57,7 +57,7 @@ class SequenceSeries extends Model
         }
 
         $now = now();
-        self::on(SequenceAllocator::AUTOCOMMIT_CONNECTION)->insertOrIgnore(array_map(function (Series $case) use ($now): array {
+        SequenceAllocator::createIgnoringRaces(fn () => self::on(SequenceAllocator::AUTOCOMMIT_CONNECTION)->insertOrIgnore(array_map(function (Series $case) use ($now): array {
             $format = $case->defaultFormat();
 
             return [
@@ -69,7 +69,7 @@ class SequenceSeries extends Model
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
-        }, Series::cases()));
+        }, Series::cases())));
 
         $created = self::on(SequenceAllocator::AUTOCOMMIT_CONNECTION)->where('code', $series->value)->firstOrFail();
 
