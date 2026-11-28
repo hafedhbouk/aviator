@@ -49,6 +49,23 @@ class InvoicePolicy
         return $invoice->status === InvoiceStatus::Draft && $actor->canActOnAgency($invoice->agency_id);
     }
 
+    /**
+     * Validation (numéro attribué) : un brouillon d'une agence où le profil agit (L4).
+     */
+    public function validate(User $actor, Invoice $invoice): bool
+    {
+        return $this->update($actor, $invoice);
+    }
+
+    /**
+     * Émission (remise au client, PDF figé) : une facture validée d'une agence où le
+     * profil agit (L4).
+     */
+    public function issue(User $actor, Invoice $invoice): bool
+    {
+        return $invoice->status === InvoiceStatus::Validated && $actor->canActOnAgency($invoice->agency_id);
+    }
+
     protected function canDeleteDraft(User $user, Model $record): bool
     {
         return $record instanceof Invoice && $this->update($user, $record);

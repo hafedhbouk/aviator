@@ -8,8 +8,10 @@ use App\Support\Billing\LocksWithInvoice;
 use App\Support\Money\Money;
 use App\Support\Money\MoneyCast;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Ligne d'une facture (L3) : modifiable seulement au brouillon (LocksWithInvoice).
@@ -31,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Money $total_excl_tax_amount
  * @property-read Invoice $invoice
  * @property-read TaxCode|null $taxCode
+ * @property-read Collection<int, InvoiceLineJustification> $justifications
  */
 #[Fillable([
     'invoice_id', 'position', 'nature', 'source_type', 'source_id', 'source_key', 'tax_code_id', 'label', 'quantity',
@@ -84,5 +87,13 @@ class InvoiceLine extends Model
     public function taxCode(): BelongsTo
     {
         return $this->belongsTo(TaxCode::class);
+    }
+
+    /**
+     * @return HasMany<InvoiceLineJustification, $this>
+     */
+    public function justifications(): HasMany
+    {
+        return $this->hasMany(InvoiceLineJustification::class);
     }
 }

@@ -26,17 +26,25 @@
     @if ($unvalidated)
         <div class="watermark">Modèle non validé</div>
     @endif
+    @if (! empty($fiscalNotice))
+        <div class="watermark">Règles fiscales non confirmées</div>
+    @endif
 
     <div class="header">
-        <strong>{{ $company?->trade_name ?? $company?->legal_name ?? 'Aviator' }}</strong>
-        @if ($company?->legal_name) — {{ $company->legal_name }} @endif
-        @if ($company?->trade_register) — RNE {{ $company->trade_register }} @endif
-        @if ($company?->tax_id) — MF {{ $company->tax_id }} @endif
+        @hasSection('header')
+            @yield('header')
+        @else
+            <strong>{{ $company?->trade_name ?? $company?->legal_name ?? 'Aviator' }}</strong>
+            @if ($company?->legal_name) — {{ $company->legal_name }} @endif
+            @if ($company?->trade_register) — RNE {{ $company->trade_register }} @endif
+            @if ($company?->tax_id) — MF {{ $company->tax_id }} @endif
+        @endif
     </div>
 
     <div class="footer">
         @yield('title') — édité le {{ now()->timezone(config('app.timezone'))->format('d/m/Y à H:i') }}
         @if ($unvalidated) — Modèle non validé par le conseil juridique (Q15) @endif
+        @if (! empty($fiscalNotice)) — Règles fiscales non confirmées : document sans valeur fiscale (E6) @endif
     </div>
 
     @yield('content')
