@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $last_name
  * @property string|null $company_name
  * @property string|null $tax_id
+ * @property string|null $trade_register RNE du client entreprise (D59)
  * @property string $search_name
  * @property string $name_key
  * @property string|null $phone
@@ -36,7 +37,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $origin_agency_id
  */
 #[Fillable([
-    'type', 'first_name', 'last_name', 'company_name', 'tax_id', 'birth_date', 'nationality',
+    'type', 'first_name', 'last_name', 'company_name', 'tax_id', 'trade_register', 'birth_date', 'nationality',
     'phone', 'email', 'address', 'city', 'country',
     'id_document_type', 'id_document_number', 'id_document_expires_at',
     'origin_agency_id', 'acquisition_source', 'referrer_customer_id', 'created_by',
