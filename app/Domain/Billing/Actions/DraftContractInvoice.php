@@ -66,7 +66,9 @@ final class DraftContractInvoice
                 'created_by' => $actor->id,
             ]);
 
-            $already = self::billedAmounts($billed);
+            // Montants déjà facturés : factures de location et factures complémentaires
+            // (un frais facturé en complément ne revient jamais sur la dernière période).
+            $already = self::billedAmounts(self::billedInvoices($locked, InvoiceType::Supplementary)->merge($billed));
             $position = 0;
 
             foreach ($this->plan->items($locked) as $item) {
@@ -102,16 +104,17 @@ final class DraftContractInvoice
     }
 
     /**
-     * Factures de location du contrat qui retiennent leur période : toutes sauf les
-     * annulées (Q79). Les factures complémentaires et les avoirs n'en retiennent pas.
+     * Factures du contrat d'un type donné, sauf les annulées (Q79). Les factures de
+     * location (type par défaut) retiennent leur période ; les factures complémentaires
+     * et les avoirs n'en retiennent pas.
      *
      * @return Collection<int, Invoice>
      */
-    public static function billedInvoices(Contract $contract): Collection
+    public static function billedInvoices(Contract $contract, InvoiceType $type = InvoiceType::Invoice): Collection
     {
         return Invoice::query()->withoutGlobalScopes()
             ->where('contract_id', $contract->id)
-            ->where('type', InvoiceType::Invoice)
+            ->where('type', $type)
             ->where('status', '!=', InvoiceStatus::Cancelled)
             ->get();
     }
@@ -147,7 +150,7 @@ final class DraftContractInvoice
      * @param  Collection<int, Invoice>  $billed
      * @return array<string, array{0: Money, 1: Money}>
      */
-    private static function billedAmounts(Collection $billed): array
+    public static function billedAmounts(Collection $billed): array
     {
         $amounts = [];
 

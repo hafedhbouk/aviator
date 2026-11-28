@@ -36,6 +36,16 @@ final class InvoiceDraftException extends RuntimeException
         return new self("La période du {$period} est déjà facturée : une période ne se facture jamais deux fois (RG-05).");
     }
 
+    public static function supplementaryNeedsReturn(string $status): self
+    {
+        return new self("Une facture complémentaire suit le retour du véhicule : le contrat est au statut « {$status} ».");
+    }
+
+    public static function rentalNotBilled(string $period): self
+    {
+        return new self("Établissez d'abord la facture de location de la période du {$period} : la facture complémentaire vient après.");
+    }
+
     public static function notDraft(): self
     {
         return new self('Seul un brouillon se modifie : une facture validée se corrige par un avoir.');

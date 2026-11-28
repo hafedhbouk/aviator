@@ -66,6 +66,15 @@ class InvoicePolicy
         return $invoice->status === InvoiceStatus::Validated && $actor->canActOnAgency($invoice->agency_id);
     }
 
+    /**
+     * Annulation sans avoir (Q79) : facture d'une agence où le profil agit ; l'action
+     * vérifie qu'elle est validée et jamais émise, pour donner le bon message (L5).
+     */
+    public function cancel(User $actor, Invoice $invoice): bool
+    {
+        return $invoice->status !== InvoiceStatus::Draft && $actor->canActOnAgency($invoice->agency_id);
+    }
+
     protected function canDeleteDraft(User $user, Model $record): bool
     {
         return $record instanceof Invoice && $this->update($user, $record);

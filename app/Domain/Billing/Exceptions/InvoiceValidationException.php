@@ -58,6 +58,16 @@ final class InvoiceValidationException extends RuntimeException
         return new self("Exonération du timbre refusée : {$reason}");
     }
 
+    public static function cancellationReason(int $length): self
+    {
+        return new self("Un motif d'au moins {$length} caractères est obligatoire pour annuler une facture.");
+    }
+
+    public static function issuedNeedsCreditNote(): self
+    {
+        return new self('Une facture émise ne s\'annule pas : elle se corrige par un avoir total ou partiel (Q79).');
+    }
+
     public static function closedPeriod(string $operation, string $period): self
     {
         return new self("La période {$period} est clôturée : {$operation} refusée (RG-12).");
