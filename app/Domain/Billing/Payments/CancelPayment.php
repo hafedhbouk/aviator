@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Billing\Payments;
 
 use App\Domain\Billing\ClosedPeriodGuard;
+use App\Domain\Billing\Exceptions\CashException;
 use App\Domain\Billing\Exceptions\PaymentException;
 use App\Domain\Billing\InvoiceBalance;
+use App\Models\CashSession;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
@@ -19,7 +21,8 @@ use Illuminate\Support\Facades\DB;
  * Annulation d'un encaissement (RG-11, D57) : jamais supprimé, il passe au statut
  * « annulé » avec un motif ; ses imputations ne comptent plus et le statut de paiement
  * des factures concernées est recalculé, sous verrou (encaissement, puis factures dans
- * l'ordre de leurs identifiants). Garde de période sur la date de réception (D53).
+ * l'ordre de leurs identifiants). Garde de période sur la date de réception (D53). Un
+ * encaissement en espèces d'une caisse clôturée ne s'annule plus (Q55).
  */
 final class CancelPayment
 {
@@ -47,6 +50,12 @@ final class CancelPayment
             }
 
             $this->periods->assertOpen($locked->received_at, 'l\'annulation de l\'encaissement');
+
+            // Espèces d'une caisse déjà clôturée : son montant attendu est figé (Q55).
+            if ($locked->cash_session_id !== null
+                && CashSession::query()->withoutGlobalScopes()->whereKey($locked->cash_session_id)->lockForUpdate()->value('closed_at') !== null) {
+                throw CashException::closedSession();
+            }
 
             // Imputations de cet encaissement : créées seulement sous son verrou, déjà tenu ici.
             $allocations = PaymentAllocation::query()->where('payment_id', $locked->id)->get();

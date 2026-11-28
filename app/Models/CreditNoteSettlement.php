@@ -22,13 +22,14 @@ use LogicException;
  * @property Money $amount
  * @property int|null $invoice_id
  * @property int|null $payment_method_id
+ * @property int|null $cash_session_id
  * @property string|null $reference
  * @property CarbonImmutable $settled_on
  * @property int|null $created_by
  * @property-read Invoice $creditNote
  * @property-read Invoice|null $invoice
  */
-#[Fillable(['credit_note_id', 'kind', 'amount', 'invoice_id', 'payment_method_id', 'reference', 'settled_on', 'created_by'])]
+#[Fillable(['credit_note_id', 'kind', 'amount', 'invoice_id', 'payment_method_id', 'cash_session_id', 'reference', 'settled_on', 'created_by'])]
 class CreditNoteSettlement extends Model
 {
     use AuditsChanges;

@@ -2,6 +2,7 @@
 
 use App\Domain\Billing\Actions\IssueInvoice;
 use App\Domain\Billing\Actions\ValidateInvoice;
+use App\Domain\Billing\Cash\CashRegister;
 use App\Domain\Billing\InvoiceBalance;
 use App\Enums\InvoiceLineNature;
 use App\Enums\InvoiceType;
@@ -37,7 +38,7 @@ afterEach(function () {
         DB::rollBack();
     }
 
-    foreach (['payment_allocations', 'payments', 'payment_methods', 'invoice_taxes', 'invoice_lines', 'invoices', 'sequences', 'sequence_series_changes',
+    foreach (['payment_allocations', 'payments', 'cash_sessions', 'payment_methods', 'invoice_taxes', 'invoice_lines', 'invoices', 'sequences', 'sequence_series_changes',
         'sequence_series', 'stamp_duty_rules', 'tax_rules', 'tax_codes', 'fiscal_references', 'company', 'customers', 'activity_log', 'model_has_roles',
         'users', 'agencies'] as $table) {
         DB::table($table)->delete();
@@ -54,6 +55,7 @@ beforeEach(function () {
     $this->agency = Agency::factory()->create(['code' => 'SFX', 'name' => 'Sfax']);
     $this->agent = userWithProfile(Role::AgencyUser, ['agency_id' => $this->agency->id]);
     $this->customer = Customer::factory()->create(['origin_agency_id' => $this->agency->id]);
+    app(CashRegister::class)->open($this->agency, '0', $this->agent);
 
     $draft = Invoice::query()->create(['agency_id' => $this->agency->id, 'type' => InvoiceType::Invoice, 'customer_id' => $this->customer->id]);
     InvoiceLine::query()->create([

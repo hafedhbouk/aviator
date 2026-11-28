@@ -4,6 +4,7 @@ use App\Domain\Billing\Actions\CreateCreditNote;
 use App\Domain\Billing\Actions\IssueInvoice;
 use App\Domain\Billing\Actions\SettleCreditNote;
 use App\Domain\Billing\Actions\ValidateInvoice;
+use App\Domain\Billing\Cash\CashRegister;
 use App\Domain\Billing\Documents\InvoiceDocuments;
 use App\Domain\Billing\Exceptions\CreditNoteException;
 use App\Enums\InvoiceLineNature;
@@ -184,6 +185,7 @@ it('rembourse un avoir ou l\'impute sur une facture du même client, jamais au-d
     $cash = PaymentMethod::query()->where('code', 'cash')->sole();
     $transfer = PaymentMethod::query()->where('code', 'transfer')->sole();
 
+    app(CashRegister::class)->open($this->sfax, '50,000', $this->agent);
     $refund = $settle->refund($note, '20,000', $cash, null, $this->agent);
 
     expect($refund->kind)->toBe(CreditNoteSettlement::REFUND)

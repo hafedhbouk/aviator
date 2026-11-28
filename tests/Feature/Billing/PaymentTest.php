@@ -5,6 +5,7 @@ use App\Domain\Billing\Actions\CreateCreditNote;
 use App\Domain\Billing\Actions\IssueInvoice;
 use App\Domain\Billing\Actions\SettleCreditNote;
 use App\Domain\Billing\Actions\ValidateInvoice;
+use App\Domain\Billing\Cash\CashRegister;
 use App\Domain\Billing\Exceptions\CreditNoteException;
 use App\Domain\Billing\Exceptions\InvoiceValidationException;
 use App\Domain\Billing\Exceptions\PaymentException;
@@ -19,6 +20,7 @@ use App\Enums\InvoiceType;
 use App\Enums\PaymentStatus;
 use App\Enums\ReservationStatus;
 use App\Models\Agency;
+use App\Models\CashSession;
 use App\Models\Company;
 use App\Models\Contract;
 use App\Models\Customer;
@@ -85,8 +87,31 @@ function payableInvoice(string $amount = '115.000', array $attributes = []): Inv
     return app(IssueInvoice::class)->handle(app(ValidateInvoice::class)->handle($invoice, test()->superAdmin), test()->superAdmin);
 }
 
+/**
+ * Caisse du jour ouverte à Sfax (L8) : celle d'un jour précédent est clôturée d'abord.
+ */
+function cashOpenToday(): CashSession
+{
+    $register = app(CashRegister::class);
+    $open = CashSession::query()->withoutGlobalScopes()->where('agency_id', test()->sfax->id)->whereNull('closed_at')->first();
+
+    if ($open !== null && $open->business_date->format('Y-m-d') === CashRegister::businessDate(CarbonImmutable::now())) {
+        return $open;
+    }
+
+    if ($open !== null) {
+        $register->close($open, CashRegister::expected($open)->toDecimalString(), null, test()->agent);
+    }
+
+    return $register->open(test()->sfax, '0', test()->agent);
+}
+
 function pay(string $amount, array $allocations = [], string $method = 'cash', array $extra = []): Payment
 {
+    if ($method === 'cash') {
+        cashOpenToday();
+    }
+
     return app(RecordPayment::class)->handle([
         'agency_id' => test()->sfax->id, 'customer_id' => test()->customer->id, 'payment_method_id' => method($method),
         'amount' => $amount, 'allocations' => $allocations, ...$extra,
@@ -187,6 +212,8 @@ it('rattache un acompte à la réservation puis l\'impute sur la facture du cont
         ->and($allocator->depositsFor($invoice))->toBe([]);
 
     $other = Customer::factory()->create(['origin_agency_id' => $this->sfax->id]);
+
+    cashOpenToday();
 
     expect(fn () => app(RecordPayment::class)->handle([
         'agency_id' => $this->sfax->id, 'customer_id' => $other->id, 'payment_method_id' => method('cash'), 'amount' => '10', 'reservation_id' => $reservation->id,

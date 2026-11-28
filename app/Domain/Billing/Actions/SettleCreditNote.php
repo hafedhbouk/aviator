@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Billing\Actions;
 
+use App\Domain\Billing\Cash\CashRegister;
 use App\Domain\Billing\ClosedPeriodGuard;
 use App\Domain\Billing\Exceptions\CreditNoteException;
 use App\Domain\Billing\InvoiceBalance;
@@ -27,12 +28,15 @@ use InvalidArgumentException;
  * montant, ni imputé au-delà du reste dû de la facture.
  *
  * Le reste dû tient compte des encaissements et des avoirs déjà imputés (InvoiceBalance) ;
- * le statut de paiement de la facture est recalculé. Un remboursement en espèces passera
- * par la caisse ouverte de l'agence (L8).
+ * le statut de paiement de la facture est recalculé. Un remboursement en espèces sort de
+ * la caisse ouverte du jour de l'agence (L8), refusé sans elle.
  */
 final class SettleCreditNote
 {
-    public function __construct(private readonly ClosedPeriodGuard $periods) {}
+    public function __construct(
+        private readonly ClosedPeriodGuard $periods,
+        private readonly CashRegister $cash,
+    ) {}
 
     public function refund(Invoice $creditNote, mixed $amount, PaymentMethod $method, ?string $reference, User $actor): CreditNoteSettlement
     {
@@ -52,6 +56,8 @@ final class SettleCreditNote
             'kind' => CreditNoteSettlement::REFUND,
             'amount' => $value,
             'payment_method_id' => $method->id,
+            // Espèces : sorties de la caisse ouverte du jour de l'agence de l'avoir (L8, Q55).
+            'cash_session_id' => $method->code === CashRegister::CASH_METHOD ? $this->cash->openFor($note->agency_id)->id : null,
             'reference' => $reference === null ? null : mb_substr($reference, 0, 64),
             'settled_on' => CarbonImmutable::now()->timezone((string) config('app.timezone'))->startOfDay(),
             'created_by' => $actor->id,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Billing\Payments;
 
+use App\Domain\Billing\Cash\CashRegister;
 use App\Domain\Billing\ClosedPeriodGuard;
 use App\Domain\Billing\Exceptions\PaymentException;
 use App\Enums\ReservationStatus;
@@ -26,7 +27,7 @@ use InvalidArgumentException;
  * Imputé aussitôt sur les factures confirmées par l'agent (PaymentAllocator), dans la
  * même transaction ; la part non imputée reste un acompte. Un acompte de réservation
  * (D37, Q40) se rattache à la réservation, sans document fiscal, puis s'impute sur la
- * facture du contrat. Le rattachement des espèces à la caisse ouverte arrive au lot L8.
+ * facture du contrat. Les espèces exigent la caisse ouverte du jour de l'agence (L8).
  */
 final class RecordPayment
 {
@@ -36,6 +37,7 @@ final class RecordPayment
     public function __construct(
         private readonly PaymentAllocator $allocator,
         private readonly ClosedPeriodGuard $periods,
+        private readonly CashRegister $cash,
     ) {}
 
     /**
@@ -52,7 +54,11 @@ final class RecordPayment
         $this->periods->assertOpen($values['received_at'], 'l\'encaissement');
 
         return DB::transaction(function () use ($values, $actor): Payment {
-            $payment = Payment::query()->create([...$values, 'created_by' => $actor->id]);
+            // Espèces : rattachées à la caisse ouverte du jour de l'agence, sous son verrou (L8, Q55).
+            $session = $values['is_cash'] ? $this->cash->openFor($values['agency_id']) : null;
+            unset($values['is_cash']);
+
+            $payment = Payment::query()->create([...$values, 'cash_session_id' => $session?->id, 'created_by' => $actor->id]);
 
             $this->allocator->allocate($payment, $values['allocations'], $actor);
 
@@ -62,7 +68,7 @@ final class RecordPayment
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{agency_id: int, customer_id: int, payment_method_id: int, amount: Money, reference: string|null, bank_name: string|null, received_at: CarbonImmutable, reservation_id: int|null, currency: string, allocations: array<int|string, mixed>}
+     * @return array{agency_id: int, customer_id: int, payment_method_id: int, amount: Money, reference: string|null, bank_name: string|null, received_at: CarbonImmutable, reservation_id: int|null, currency: string, allocations: array<int|string, mixed>, is_cash: bool}
      */
     private function validated(array $data): array
     {
@@ -141,6 +147,7 @@ final class RecordPayment
             'reservation_id' => $reservationId,
             'currency' => blank($validated['currency'] ?? null) ? Money::CURRENCY : strtoupper(trim((string) $validated['currency'])),
             'allocations' => $validated['allocations'] ?? [],
+            'is_cash' => $method->code === CashRegister::CASH_METHOD,
         ];
     }
 }
