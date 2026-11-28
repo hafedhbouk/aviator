@@ -92,6 +92,14 @@ class InvoicePolicy
         return $creditNote->status !== InvoiceStatus::Draft && $actor->canActOnAgency($creditNote->agency_id);
     }
 
+    /**
+     * Relance d'un impayé (E-08) : profil de l'agence de la facture (L9).
+     */
+    public function remind(User $actor, Invoice $invoice): bool
+    {
+        return $invoice->status !== InvoiceStatus::Draft && $actor->canActOnAgency($invoice->agency_id);
+    }
+
     protected function canDeleteDraft(User $user, Model $record): bool
     {
         return $record instanceof Invoice && $this->update($user, $record);

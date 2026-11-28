@@ -62,6 +62,11 @@ final class PaymentException extends RuntimeException
         return new self("Un motif d'au moins {$length} caractères est obligatoire pour annuler un encaissement.");
     }
 
+    public static function nothingToRemind(): self
+    {
+        return new self('Cette facture n\'a plus de reste dû : rien à relancer.');
+    }
+
     public static function alreadyCancelled(): self
     {
         return new self('Cet encaissement est déjà annulé.');
