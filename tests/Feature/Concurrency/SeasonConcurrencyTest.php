@@ -81,15 +81,19 @@ it('fait attendre une seconde saisie tant que la première tient le verrou, puis
     $stillWaiting = $worker->isRunning();
 
     // Fin de la première saisie : saison enregistrée, transaction validée, verrou rendu.
+    // L'heure est prise juste avant la validation : MariaDB rend le verrou pendant le
+    // COMMIT, et le processus concurrent peut terminer avant que ce processus-ci ait
+    // repris la main (relevé en CI : 3,8 ms d'avance sur une heure prise après).
     Season::query()->create(['name' => 'Été A', 'starts_on' => '2027-07-01', 'ends_on' => '2027-08-31']);
+    $releasedFrom = microtime(true);
     DB::commit();
-    $committedAt = microtime(true);
 
     $result = seasonWorkerResult($worker);
 
-    // La seconde saisie s'est terminée après la validation de la première : elle a attendu.
+    // La seconde saisie attendait encore après 2 s, et ne s'est terminée qu'une fois le
+    // verrou rendu : elle a attendu.
     expect($stillWaiting)->toBeTrue('La seconde saisie n\'a pas attendu le verrou de la première.')
-        ->and($result['finished_at'])->toBeGreaterThanOrEqual($committedAt)
+        ->and($result['finished_at'])->toBeGreaterThanOrEqual($releasedFrom)
         ->and($result['ok'])->toBeFalse()
         ->and($result['error'] ?? '')->toContain('chevauche')
         ->and(Season::query()->count())->toBe(1);

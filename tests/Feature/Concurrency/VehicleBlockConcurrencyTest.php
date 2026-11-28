@@ -98,13 +98,15 @@ it('fait attendre la seconde saisie tant que la première tient le verrou, puis 
     usleep(2_000_000);
     $stillWaiting = $worker->isRunning();
 
+    // Heure prise juste avant la validation : MariaDB rend le verrou pendant le COMMIT, et
+    // le processus concurrent peut terminer avant que ce processus-ci ait repris la main.
+    $releasedFrom = microtime(true);
     DB::commit();
-    $committedAt = microtime(true);
 
     $result = blockWorkerResult($worker);
 
     expect($stillWaiting)->toBeTrue('La seconde saisie n\'a pas attendu le verrou de la première.')
-        ->and($result['finished_at'])->toBeGreaterThanOrEqual($committedAt)
+        ->and($result['finished_at'])->toBeGreaterThanOrEqual($releasedFrom)
         ->and($result['ok'])->toBeFalse()
         ->and(VehicleBlock::query()->where('active', true)->count())->toBe(1);
 });
