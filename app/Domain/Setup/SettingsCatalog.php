@@ -50,6 +50,7 @@ final class SettingsCatalog
             BillingSettings::class => [
                 'vat_rounding_mode' => ['rules' => ['required', 'in:'.implode(',', BillingSettings::ROUNDING_MODES)], 'cast' => 'string'],
                 'payment_terms_days' => ['rules' => ['required', 'integer', 'between:0,365'], 'cast' => 'int'],
+                'long_rental_period_days' => ['rules' => ['required', 'integer', 'between:7,365'], 'cast' => 'int'],
             ],
             ApprovalSettings::class => [
                 'discount_threshold_percent' => ['rules' => ['required', 'regex:/^(100(\.0{1,2})?|\d{1,2}([.,]\d{1,2})?)$/'], 'cast' => 'percent'],

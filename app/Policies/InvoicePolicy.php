@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\InvoiceStatus;
+use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Policies\Concerns\ForbidsDeletingNumberedDocuments;
@@ -33,6 +34,14 @@ class InvoicePolicy
     public function create(User $actor): bool
     {
         return $this->viewAny($actor);
+    }
+
+    /**
+     * Brouillon de facture depuis un contrat : profil de l'agence du contrat (L3).
+     */
+    public function createForContract(User $actor, Contract $contract): bool
+    {
+        return $actor->canActOnAgency($contract->agency_id);
     }
 
     public function update(User $actor, Invoice $invoice): bool

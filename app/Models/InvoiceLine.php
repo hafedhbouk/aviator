@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property InvoiceLineNature $nature
  * @property string|null $source_type
  * @property int|null $source_id
+ * @property string|null $source_key
  * @property int|null $tax_code_id
  * @property string $label
  * @property string $quantity
@@ -32,13 +33,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read TaxCode|null $taxCode
  */
 #[Fillable([
-    'invoice_id', 'position', 'nature', 'source_type', 'source_id', 'tax_code_id', 'label', 'quantity',
+    'invoice_id', 'position', 'nature', 'source_type', 'source_id', 'source_key', 'tax_code_id', 'label', 'quantity',
     'unit_amount_excl_tax', 'discount_amount', 'total_excl_tax_amount',
 ])]
 class InvoiceLine extends Model
 {
     use AuditsChanges;
     use LocksWithInvoice;
+
+    public const SOURCE_CONTRACT = 'contract';
+
+    public const SOURCE_CONTRACT_OPTION = 'contract_option';
+
+    public const SOURCE_EXTENSION = 'contract_extension';
+
+    public const SOURCE_CHARGE = 'contract_charge';
+
+    /** Ligne reprise du contrat (location, option, prolongation, frais), par opposition à une ligne libre. */
+    public function isFromContract(): bool
+    {
+        return $this->source_type !== null;
+    }
 
     /**
      * @return array<string, string>

@@ -37,6 +37,9 @@ class BillingSettingsPage extends SettingsPage
                 Select::make('vat_rounding_mode')->label('Arrondi de la TVA (3 décimales)')->required()
                     ->options(['half_up' => 'Demi supérieur (0,0285 → 0,029)', 'half_even' => 'Demi pair (0,0285 → 0,028)'])
                     ->helperText('Référentiel §5 ; mode à confirmer par le cabinet (Q86).'),
+                TextInput::make('long_rental_period_days')->label('Période de facturation des locations longues (jours)')->integer()->required()
+                    ->minValue(7)->maxValue(365)
+                    ->helperText('Au-delà, le contrat est facturé par période de cette durée (Q50).'),
             ]),
         ];
     }

@@ -27,6 +27,13 @@ class BillingSettings extends Settings
      */
     public int $payment_terms_days;
 
+    /**
+     * Location longue (Q50, D52) : au-delà de ce nombre de jours facturés, le contrat
+     * se facture par période de cette durée, jamais deux fois la même. 30 par défaut,
+     * à confirmer par la direction et l'expert-comptable (Q50).
+     */
+    public int $long_rental_period_days;
+
     public static function group(): string
     {
         return 'billing';
