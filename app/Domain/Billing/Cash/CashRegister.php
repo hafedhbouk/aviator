@@ -8,6 +8,8 @@ use App\Domain\Billing\Exceptions\CashException;
 use App\Models\Agency;
 use App\Models\CashSession;
 use App\Models\CreditNoteSettlement;
+use App\Models\Deposit;
+use App\Models\DepositMovement;
 use App\Models\Payment;
 use App\Models\User;
 use App\Support\Money\AmountInput;
@@ -120,8 +122,8 @@ final class CashRegister
     }
 
     /**
-     * Montant attendu : fond de caisse + espèces reçues (encaissements non annulés) −
-     * espèces remboursées (avoirs).
+     * Montant attendu : fond de caisse + espèces reçues (encaissements non annulés,
+     * cautions) − espèces rendues (remboursements d'avoirs, restitutions de cautions).
      */
     public static function expected(CashSession $session): Money
     {
@@ -130,7 +132,13 @@ final class CashRegister
         $out = CreditNoteSettlement::query()->where('cash_session_id', $session->id)->get()
             ->reduce(fn (Money $sum, CreditNoteSettlement $refund): Money => $sum->plus($refund->amount), Money::zero());
 
-        return $session->opening_amount->plus($in)->minus($out);
+        // Cautions en espèces (L10) : reçues dans la caisse, restituées depuis elle.
+        $depositsIn = Deposit::query()->withoutGlobalScopes()->where('cash_session_id', $session->id)->get()
+            ->reduce(fn (Money $sum, Deposit $deposit): Money => $sum->plus($deposit->amount_received), Money::zero());
+        $depositsOut = DepositMovement::query()->where('cash_session_id', $session->id)->where('type', DepositMovement::REFUND)->get()
+            ->reduce(fn (Money $sum, DepositMovement $movement): Money => $sum->plus($movement->amount), Money::zero());
+
+        return $session->opening_amount->plus($in)->minus($out)->plus($depositsIn)->minus($depositsOut);
     }
 
     public static function businessDate(CarbonImmutable $at): string

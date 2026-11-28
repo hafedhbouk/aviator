@@ -23,6 +23,22 @@ class PaymentMethod extends Model
     use AuditsChanges;
 
     /**
+     * Mode système de l'encaissement « retenue sur caution » (Q51, D58) : créé à la
+     * première retenue, **inactif** pour ne jamais être proposé à la saisie d'un
+     * encaissement ; seule l'application d'une retenue approuvée l'utilise.
+     */
+    public const DEPOSIT_RETENTION = 'deposit_retention';
+
+    public static function depositRetention(): self
+    {
+        return self::query()->firstOrCreate(['code' => self::DEPOSIT_RETENTION], [
+            'name' => 'Retenue sur caution',
+            'requires_reference' => false,
+            'is_active' => false,
+        ]);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

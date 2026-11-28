@@ -43,6 +43,7 @@ final class RequestApproval
             throw ApprovalException::reasonRequired(match ($type) {
                 ApprovalType::Discount => 'une remise au-delà du seuil',
                 ApprovalType::BlacklistOverride => 'une demande de dérogation',
+                ApprovalType::Retention => 'une retenue sur caution',
             }, self::MIN_REASON_LENGTH);
         }
 

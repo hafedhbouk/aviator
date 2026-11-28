@@ -12,6 +12,7 @@ use App\Models\CashSession;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
+use App\Models\PaymentMethod;
 use App\Models\User;
 use App\Support\Money\Money;
 use Carbon\CarbonImmutable;
@@ -50,6 +51,11 @@ final class CancelPayment
             }
 
             $this->periods->assertOpen($locked->received_at, 'l\'annulation de l\'encaissement');
+
+            // Retenue sur caution (Q51) : elle se rattache à la caution, elle ne s'annule pas ici.
+            if (PaymentMethod::query()->whereKey($locked->payment_method_id)->value('code') === PaymentMethod::DEPOSIT_RETENTION) {
+                throw PaymentException::retentionPayment();
+            }
 
             // Espèces d'une caisse déjà clôturée : son montant attendu est figé (Q55).
             if ($locked->cash_session_id !== null

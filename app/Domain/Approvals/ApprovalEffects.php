@@ -29,7 +29,9 @@ use Throwable;
  *
  * - remise : la remise est retirée et le devis recalculé (SaveReservation, mêmes
  *   contrôles qu'au comptoir) ;
- * - dérogation : le brouillon de réservation est annulé, motif à l'appui.
+ * - dérogation : le brouillon de réservation est annulé, motif à l'appui ;
+ * - retenue sur caution : rien à défaire, la retenue n'est appliquée qu'après une
+ *   approbation (ApplyRetention), la caution reste entière.
  *
  * Si l'effet échoue (grille tarifaire supprimée entre-temps, réservation déjà
  * annulée…), la décision reste acquise et le demandeur est prévenu : la remise refusée
@@ -58,6 +60,7 @@ final class ApprovalEffects
                 match ($request->type) {
                     ApprovalType::Discount => $this->removeDiscount($subject, $decider),
                     ApprovalType::BlacklistOverride => $this->cancelDraft($subject, $decider),
+                    ApprovalType::Retention => null,
                 };
             } elseif ($subject instanceof ContractExtension) {
                 if ($request->type === ApprovalType::Discount) {
@@ -67,6 +70,7 @@ final class ApprovalEffects
                 match ($request->type) {
                     ApprovalType::Discount => $this->removeContractDiscount($subject, $decider),
                     ApprovalType::BlacklistOverride => $this->cancelContract($subject, $decider),
+                    ApprovalType::Retention => null,
                 };
             }
         } catch (Throwable $exception) {

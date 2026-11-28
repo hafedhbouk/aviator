@@ -67,6 +67,11 @@ final class PaymentException extends RuntimeException
         return new self('Cette facture n\'a plus de reste dû : rien à relancer.');
     }
 
+    public static function retentionPayment(): self
+    {
+        return new self('Cet encaissement est une retenue sur caution approuvée : il ne s\'annule pas comme un encaissement.');
+    }
+
     public static function alreadyCancelled(): self
     {
         return new self('Cet encaissement est déjà annulé.');
