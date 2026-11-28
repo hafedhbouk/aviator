@@ -6,6 +6,7 @@ namespace App\Domain\Billing\Actions;
 
 use App\Domain\Billing\ClosedPeriodGuard;
 use App\Domain\Billing\Exceptions\InvoiceValidationException;
+use App\Domain\Billing\InvoiceBalance;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\User;
@@ -46,6 +47,10 @@ final class CancelInvoice
 
             if ($locked->status !== InvoiceStatus::Validated) {
                 throw InvoiceValidationException::invalidStatus($locked->status->label(), 'l\'annulation');
+            }
+
+            if (InvoiceBalance::paid($locked)->isPositive()) {
+                throw InvoiceValidationException::cancelWithAllocations();
             }
 
             $this->periods->assertOpen($locked->validated_at ?? CarbonImmutable::now(), 'l\'annulation de la facture');

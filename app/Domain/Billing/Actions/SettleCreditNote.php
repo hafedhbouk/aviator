@@ -6,6 +6,7 @@ namespace App\Domain\Billing\Actions;
 
 use App\Domain\Billing\ClosedPeriodGuard;
 use App\Domain\Billing\Exceptions\CreditNoteException;
+use App\Domain\Billing\InvoiceBalance;
 use App\Enums\InvoiceStatus;
 use App\Enums\InvoiceType;
 use App\Models\CreditNoteSettlement;
@@ -25,9 +26,9 @@ use InvalidArgumentException;
  * imputée, dans l'ordre des identifiants) : un avoir n'est jamais réglé au-delà de son
  * montant, ni imputé au-delà du reste dû de la facture.
  *
- * Le reste dû tient compte ici des imputations d'avoirs ; les encaissements (L7)
- * s'y ajouteront, avec le statut de paiement calculé. Un remboursement en espèces
- * passera par la caisse ouverte de l'agence (L8).
+ * Le reste dû tient compte des encaissements et des avoirs déjà imputés (InvoiceBalance) ;
+ * le statut de paiement de la facture est recalculé. Un remboursement en espèces passera
+ * par la caisse ouverte de l'agence (L8).
  */
 final class SettleCreditNote
 {
@@ -74,13 +75,13 @@ final class SettleCreditNote
                 throw CreditNoteException::invalidTarget("une facture au statut « {$invoice->status->label()} » ne reçoit pas d'imputation.");
             }
 
-            $remaining = $invoice->total_due_amount->minus(self::allocatedTo($invoice));
+            $remaining = InvoiceBalance::remaining($invoice);
 
             if ($value->isGreaterThan($remaining)) {
                 throw CreditNoteException::invalidTarget("il reste {$remaining->format()} dû sur la facture {$invoice->number}.");
             }
 
-            return CreditNoteSettlement::query()->create([
+            $settlement = CreditNoteSettlement::query()->create([
                 'credit_note_id' => $note->id,
                 'kind' => CreditNoteSettlement::ALLOCATION,
                 'amount' => $value,
@@ -88,16 +89,20 @@ final class SettleCreditNote
                 'settled_on' => CarbonImmutable::now()->timezone((string) config('app.timezone'))->startOfDay(),
                 'created_by' => $actor->id,
             ]);
+
+            InvoiceBalance::apply($invoice, $value);
+
+            return $settlement;
         }, $value);
     }
 
-    /** Reste à rembourser ou imputer d'un avoir. */
+    /**
+     * Reste à rembourser ou imputer d'un avoir, lu sur le cumul de sa ligne (à jour sous
+     * son verrou, voir InvoiceBalance).
+     */
     public static function remaining(Invoice $creditNote): Money
     {
-        $settled = CreditNoteSettlement::query()->where('credit_note_id', $creditNote->id)->get()
-            ->reduce(fn (Money $sum, CreditNoteSettlement $settlement): Money => $sum->plus($settlement->amount), Money::zero());
-
-        return $creditNote->total_due_amount->minus($settled);
+        return $creditNote->total_due_amount->minus($creditNote->settled_amount);
     }
 
     /** Total des avoirs imputés sur une facture. */
@@ -135,7 +140,10 @@ final class SettleCreditNote
                 throw CreditNoteException::settlementExceeded($remaining->format());
             }
 
-            return $write($note, $target === null ? null : $locked->get($target->id));
+            $settlement = $write($note, $target === null ? null : $locked->get($target->id));
+            $note->forceFill(['settled_amount' => $note->settled_amount->plus($amount)])->save();
+
+            return $settlement;
         });
     }
 

@@ -188,7 +188,7 @@ it('rembourse un avoir ou l\'impute sur une facture du même client, jamais au-d
 
     expect($refund->kind)->toBe(CreditNoteSettlement::REFUND)
         ->and($refund->payment_method_id)->toBe($cash->id)
-        ->and(SettleCreditNote::remaining($note)->toDecimalString())->toBe('30.000')
+        ->and(SettleCreditNote::remaining($note->refresh())->toDecimalString())->toBe('30.000')
         ->and(fn () => $settle->refund($note, '10,000', $transfer, null, $this->agent))->toThrow(CreditNoteException::class, 'exige une référence')
         ->and(fn () => $settle->refund($note, '30,001', $cash, null, $this->agent))->toThrow(CreditNoteException::class, 'Il reste 30,000');
 
@@ -196,7 +196,7 @@ it('rembourse un avoir ou l\'impute sur une facture du même client, jamais au-d
     $allocation = $settle->allocate($note, $invoice, '30,000', $this->agent);
 
     expect($allocation->invoice_id)->toBe($invoice->id)
-        ->and(SettleCreditNote::remaining($note)->isZero())->toBeTrue()
+        ->and(SettleCreditNote::remaining($note->refresh())->isZero())->toBeTrue()
         ->and(SettleCreditNote::allocatedTo($invoice)->toDecimalString())->toBe('30.000')
         ->and(fn () => $settle->allocate($note, $invoice, '0,001', $this->agent))->toThrow(CreditNoteException::class, 'Il reste 0,000')
         ->and(fn () => $allocation->update(['amount' => '1.000']))->toThrow(LogicException::class)

@@ -68,6 +68,11 @@ final class InvoiceValidationException extends RuntimeException
         return new self('Une facture émise ne s\'annule pas : elle se corrige par un avoir total ou partiel (Q79).');
     }
 
+    public static function cancelWithAllocations(): self
+    {
+        return new self('Un encaissement ou un avoir est imputé sur cette facture : annulez d\'abord l\'encaissement.');
+    }
+
     public static function closedPeriod(string $operation, string $period): self
     {
         return new self("La période {$period} est clôturée : {$operation} refusée (RG-12).");

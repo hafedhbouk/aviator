@@ -32,7 +32,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * (InvoiceBuilder) : une fois validée, la facture ne change plus, sauf
  * - son statut, selon InvoiceStatus::canBecome ;
  * - les informations d'émission ou d'annulation, enregistrées une seule fois ;
- * - son statut de paiement, calculé depuis les imputations.
+ * - son statut de paiement et ses cumuls de règlement, calculés depuis les imputations.
  *
  * Dinar seul (D26) : toute autre devise est refusée, rien n'est enregistré.
  *
@@ -59,6 +59,8 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property Money $total_incl_tax_amount
  * @property Money $stamp_duty_amount
  * @property Money $total_due_amount
+ * @property Money $paid_amount encaissements et avoirs imputés (cumul tenu sous verrou)
+ * @property Money $settled_amount avoir : montant remboursé ou imputé (cumul tenu sous verrou)
  * @property int|null $stamp_duty_rule_id
  * @property int|null $stamp_exemption_rule_id
  * @property string|null $stamp_exemption_reason
@@ -85,7 +87,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
     'agency_id', 'type', 'number', 'series', 'sequence_key', 'fiscal_year', 'status', 'payment_status',
     'contract_id', 'customer_id', 'credited_invoice_id', 'credit_reason', 'period_start', 'period_end', 'currency',
     'customer_snapshot', 'issuer_snapshot', 'total_excl_tax_amount', 'total_tax_amount', 'total_incl_tax_amount',
-    'stamp_duty_amount', 'total_due_amount', 'stamp_duty_rule_id', 'stamp_exemption_rule_id', 'stamp_exemption_reason',
+    'stamp_duty_amount', 'total_due_amount', 'paid_amount', 'settled_amount', 'stamp_duty_rule_id', 'stamp_exemption_rule_id', 'stamp_exemption_reason',
     'stamp_exemption_file_path', 'stamp_exemption_file_sha256', 'due_on', 'validated_at', 'issued_at',
     'issued_pdf_path', 'issued_pdf_sha256', 'cancellation_reason', 'cancelled_at',
     'created_by', 'validated_by', 'issued_by', 'cancelled_by',
@@ -102,8 +104,8 @@ class Invoice extends Model
         InvoiceStatus::Cancelled->value => ['cancellation_reason', 'cancelled_at', 'cancelled_by'],
     ];
 
-    /** Colonnes qui changent toujours, même sur une facture validée. */
-    private const ALWAYS_WRITABLE = ['payment_status', 'updated_at'];
+    /** Colonnes qui changent toujours, même sur une facture validée : règlements (L6, L7). */
+    private const ALWAYS_WRITABLE = ['payment_status', 'paid_amount', 'settled_amount', 'updated_at'];
 
     /** Colonnes obligatoires à la validation (D59, référentiel §4.1). */
     private const REQUIRED_AT_VALIDATION = ['number', 'series', 'sequence_key', 'fiscal_year', 'validated_at', 'customer_snapshot', 'issuer_snapshot'];
@@ -157,6 +159,8 @@ class Invoice extends Model
             'total_incl_tax_amount' => MoneyCast::class,
             'stamp_duty_amount' => MoneyCast::class,
             'total_due_amount' => MoneyCast::class,
+            'paid_amount' => MoneyCast::class,
+            'settled_amount' => MoneyCast::class,
             'due_on' => 'immutable_date',
             'validated_at' => 'immutable_datetime',
             'issued_at' => 'immutable_datetime',
