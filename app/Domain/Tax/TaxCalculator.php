@@ -62,6 +62,18 @@ final class TaxCalculator
             $groups[$key]['base'] = $groups[$key]['base']->plus($line->amountExcludingTax);
         }
 
+        return $this->fromBases(array_values($groups), $withStampDuty ? $this->stamps->standardAmount($date) : Money::zero());
+    }
+
+    /**
+     * Étapes 3 à 6 de la méthode (§5) sur des bases déjà regroupées : TVA de chaque base
+     * arrondie selon le réglage, TTC, timbre, net à payer. Sert aussi aux avoirs, calculés
+     * aux taux figés de la facture d'origine.
+     *
+     * @param  list<array{nature: string, rate: string|null, base: Money}>  $groups
+     */
+    public function fromBases(array $groups, Money $stamp): TaxBreakdown
+    {
         $rounding = $this->roundingMode();
         $bases = [];
         $totalHt = Money::zero();
@@ -78,7 +90,6 @@ final class TaxCalculator
         }
 
         $totalTtc = $totalHt->plus($totalVat);
-        $stamp = $withStampDuty ? $this->stamps->standardAmount($date) : Money::zero();
 
         return new TaxBreakdown(
             bases: $bases,

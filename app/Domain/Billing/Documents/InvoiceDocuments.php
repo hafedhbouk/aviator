@@ -40,6 +40,8 @@ final class InvoiceDocuments
             'customer' => $invoice->customer_snapshot ?? [],
             'contractNumber' => $invoice->contract_id === null ? null
                 : Contract::query()->withoutGlobalScopes()->whereKey($invoice->contract_id)->value('number'),
+            'creditedNumber' => $invoice->credited_invoice_id === null ? null
+                : Invoice::query()->withoutGlobalScopes()->whereKey($invoice->credited_invoice_id)->value('number'),
             'rates' => $this->rates($invoice),
             'company' => null,
             'unvalidated' => false,

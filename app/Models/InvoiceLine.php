@@ -52,6 +52,9 @@ class InvoiceLine extends Model
 
     public const SOURCE_CHARGE = 'contract_charge';
 
+    /** Ligne d'avoir : ligne de la facture d'origine qu'elle crédite (L6). */
+    public const SOURCE_INVOICE_LINE = 'invoice_line';
+
     /** Ligne reprise du contrat (location, option, prolongation, frais), par opposition à une ligne libre. */
     public function isFromContract(): bool
     {

@@ -7,9 +7,9 @@ namespace App\Domain\Billing\Actions;
 use App\Domain\Billing\ClosedPeriodGuard;
 use App\Domain\Billing\Exceptions\InvoiceValidationException;
 use App\Domain\Billing\InvoiceSnapshots;
+use App\Domain\Billing\InvoiceTaxWriter;
 use App\Domain\Tax\Exceptions\TaxRuleUnavailable;
 use App\Domain\Tax\FiscalGuard;
-use App\Domain\Tax\TaxBreakdown;
 use App\Domain\Tax\TaxCalculator;
 use App\Domain\Tax\TaxLine;
 use App\Domain\Tax\TaxRuleResolver;
@@ -21,7 +21,6 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
-use App\Models\InvoiceTax;
 use App\Models\SequenceSeries;
 use App\Models\StampDutyRule;
 use App\Models\TaxRule;
@@ -30,7 +29,6 @@ use App\Settings\BillingSettings;
 use App\Support\Files\PrivateFiles;
 use App\Support\Money\Money;
 use App\Support\Sequences\SequenceAllocator;
-use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +63,7 @@ final class ValidateInvoice
         private readonly FiscalGuard $fiscalGuard,
         private readonly ClosedPeriodGuard $periods,
         private readonly BillingSettings $settings,
+        private readonly InvoiceTaxWriter $taxes,
     ) {}
 
     /**
@@ -103,7 +102,14 @@ final class ValidateInvoice
             $stamp = $exemption === null ? $breakdown->stampDuty : Money::zero();
             $exemptionFile = $exemption === null ? null : $this->exemptionFile($locked, (string) ($stampExemption['file'] ?? ''));
 
-            $this->writeTaxes($locked, $lines, $rules, $breakdown);
+            $bases = [];
+
+            foreach ($lines as $line) {
+                $code = (string) $line->taxCode?->code;
+                $bases[$code] = ($bases[$code] ?? Money::zero())->plus($line->total_excl_tax_amount);
+            }
+
+            $this->taxes->write($locked, $bases, $rules, $breakdown);
 
             $number = $this->sequences->nextInSeries($series, $at);
             $key = SequenceSeries::query()->where('code', $series->value)->lockForUpdate()->firstOrFail()->format()->counterKey($series, $at);
@@ -194,98 +200,6 @@ final class ValidateInvoice
         }
 
         return $rules;
-    }
-
-    /**
-     * Une taxe par code, copie figée de sa règle. La TVA de chaque taux (calculée une
-     * fois sur la base agrégée, §5) est répartie entre ses codes au prorata de leur
-     * base, le millime restant au code de plus forte base : la somme par taux reste
-     * celle du calcul.
-     *
-     * @param  Collection<int, InvoiceLine>  $lines
-     * @param  array<string, TaxRule>  $rules
-     */
-    private function writeTaxes(Invoice $invoice, Collection $lines, array $rules, TaxBreakdown $breakdown): void
-    {
-        /** @var array<string, Money> $bases */
-        $bases = [];
-
-        foreach ($lines as $line) {
-            $code = (string) $line->taxCode?->code;
-            $bases[$code] = ($bases[$code] ?? Money::zero())->plus($line->total_excl_tax_amount);
-        }
-
-        /** @var array<string, list<string>> $byRate */
-        $byRate = [];
-
-        foreach ($bases as $code => $base) {
-            $byRate[self::rateKey($rules[$code])][] = $code;
-        }
-
-        $vat = [];
-
-        foreach ($breakdown->bases as $group) {
-            $key = $group['rate'] === null ? null : 'rate:'.$group['rate'];
-
-            if ($key === null || ! isset($byRate[$key])) {
-                continue;
-            }
-
-            $codes = $byRate[$key];
-            usort($codes, fn (string $a, string $b): int => $bases[$b]->compareTo($bases[$a]));
-            $allocated = Money::zero();
-
-            foreach (array_slice($codes, 1) as $code) {
-                $vat[$code] = $group['vat']->multipliedBy($bases[$code]->toBigDecimal(), RoundingMode::Unnecessary)
-                    ->dividedBy($group['base']->toBigDecimal(), RoundingMode::HalfUp);
-                $allocated = $allocated->plus($vat[$code]);
-            }
-
-            $vat[$codes[0]] = $group['vat']->minus($allocated);
-        }
-
-        // Un brouillon n'a pas de taxes. Suppression seulement s'il en existe : un DELETE
-        // sans ligne trouvée verrouille l'intervalle de l'index (gap lock) et bloque
-        // l'insertion des taxes d'une autre facture validée au même moment (interblocage).
-        if (InvoiceTax::query()->where('invoice_id', $invoice->id)->exists()) {
-            InvoiceTax::query()->where('invoice_id', $invoice->id)->delete();
-        }
-
-        foreach ($bases as $code => $base) {
-            $rule = $rules[$code];
-            InvoiceTax::query()->create([
-                'invoice_id' => $invoice->id,
-                'tax_rule_id' => $rule->id,
-                'tax_code_id' => $rule->tax_code_id,
-                'code' => $code,
-                'nature' => $rule->taxCode->nature,
-                'rate' => $rule->taxCode->nature === TaxNature::Taxable ? $rule->rate : null,
-                'base_amount' => $base,
-                'tax_amount' => $vat[$code] ?? Money::zero(),
-                'validation_status' => $rule->validation_status,
-                'rule_snapshot' => [
-                    'tax_rule_id' => $rule->id,
-                    'code' => $code,
-                    'label' => $rule->taxCode->label,
-                    'nature' => $rule->taxCode->nature->value,
-                    'rate' => $rule->rate,
-                    'requires_justification' => $rule->taxCode->requires_justification,
-                    'legal_reference' => $rule->taxCode->legal_reference,
-                    'valid_from' => $rule->valid_from->format('Y-m-d'),
-                    'valid_to' => $rule->valid_to?->format('Y-m-d'),
-                    'validation_status' => $rule->validation_status->value,
-                    'fiscal_reference_id' => $rule->fiscal_reference_id,
-                ],
-            ]);
-        }
-    }
-
-    /** Même clé de regroupement que TaxCalculator : « rate:19 », ou la nature sans taux. */
-    private static function rateKey(TaxRule $rule): string
-    {
-        return $rule->taxCode->nature === TaxNature::Taxable && $rule->rate !== null
-            ? 'rate:'.rtrim(rtrim($rule->rate, '0'), '.')
-            : 'nature:'.$rule->taxCode->nature->value;
     }
 
     /**

@@ -75,6 +75,23 @@ class InvoicePolicy
         return $invoice->status !== InvoiceStatus::Draft && $actor->canActOnAgency($invoice->agency_id);
     }
 
+    /**
+     * Avoir sur une facture : profil d'une agence de la facture (L6) ; l'action vérifie
+     * que la facture est émise et encore créditable.
+     */
+    public function creditNote(User $actor, Invoice $invoice): bool
+    {
+        return $invoice->status !== InvoiceStatus::Draft && $actor->canActOnAgency($invoice->agency_id);
+    }
+
+    /**
+     * Remboursement ou imputation d'un avoir (E19) : profil de l'agence de l'avoir.
+     */
+    public function settle(User $actor, Invoice $creditNote): bool
+    {
+        return $creditNote->status !== InvoiceStatus::Draft && $actor->canActOnAgency($creditNote->agency_id);
+    }
+
     protected function canDeleteDraft(User $user, Model $record): bool
     {
         return $record instanceof Invoice && $this->update($user, $record);

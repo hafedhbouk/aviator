@@ -48,6 +48,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @property int|null $contract_id
  * @property int $customer_id
  * @property int|null $credited_invoice_id
+ * @property string|null $credit_reason
  * @property CarbonImmutable|null $period_start
  * @property CarbonImmutable|null $period_end
  * @property string $currency
@@ -82,7 +83,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  */
 #[Fillable([
     'agency_id', 'type', 'number', 'series', 'sequence_key', 'fiscal_year', 'status', 'payment_status',
-    'contract_id', 'customer_id', 'credited_invoice_id', 'period_start', 'period_end', 'currency',
+    'contract_id', 'customer_id', 'credited_invoice_id', 'credit_reason', 'period_start', 'period_end', 'currency',
     'customer_snapshot', 'issuer_snapshot', 'total_excl_tax_amount', 'total_tax_amount', 'total_incl_tax_amount',
     'stamp_duty_amount', 'total_due_amount', 'stamp_duty_rule_id', 'stamp_exemption_rule_id', 'stamp_exemption_reason',
     'stamp_exemption_file_path', 'stamp_exemption_file_sha256', 'due_on', 'validated_at', 'issued_at',

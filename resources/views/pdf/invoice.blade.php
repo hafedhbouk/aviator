@@ -24,10 +24,15 @@
         Date : {{ $invoice->validated_at?->timezone($tz)->format('d/m/Y') }}
         · Agence émettrice : {{ $agency['name'] ?? '' }}@if (! empty($agency['city'])), {{ $agency['city'] }}@endif
         @if ($contractNumber) · Contrat {{ $contractNumber }} @endif
+        @if ($creditedNumber) · Facture initiale {{ $creditedNumber }} @endif
         @if ($invoice->period_start && $invoice->period_end)
             · Période du {{ $invoice->period_start->timezone($tz)->format('d/m/Y H:i') }} au {{ $invoice->period_end->timezone($tz)->format('d/m/Y H:i') }}
         @endif
     </p>
+
+    @if ($invoice->credit_reason)
+        <p><strong>Motif de l'avoir :</strong> {{ $invoice->credit_reason }}</p>
+    @endif
 
     <table>
         <tr>
